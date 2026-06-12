@@ -1,0 +1,33 @@
+# config/focus_tickers.txt
+# Phase 1 focus tickers — IC >= 0.03 AND n >= 100 in Phase 0 validation.
+# Sorted by expected signal quality (Phase 0 order).
+# Do NOT include: GME, AAPL, GOOG, AMZN, HOOD (near-zero IC)
+SMCI
+BB
+LCID
+MSTR
+SNAP
+DKNG
+NOK
+ASTS
+NFLX
+PYPL
+GS
+BBBY
+COIN
+RIVN
+JPM
+ROKU
+RIOT
+UBER
+F
+WMT
+PLTR
+META
+SPCE
+BABA
+TSLA
+NIO
+AMC
+BA
+MSFT

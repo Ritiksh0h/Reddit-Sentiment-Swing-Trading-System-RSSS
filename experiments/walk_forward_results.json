@@ -1,0 +1,40 @@
+{
+  "walk_forward_results": [
+    {
+      "window": "2019-2021\u21922022",
+      "train_label": "2019-2021",
+      "test_label": "2022",
+      "ic": 0.091159,
+      "pval": 0.033201,
+      "n_train": 2332,
+      "n_test": 546,
+      "robust": "YES"
+    },
+    {
+      "window": "2020-2022\u21922023",
+      "train_label": "2020-2022",
+      "test_label": "2023",
+      "ic": 0.034411,
+      "pval": 0.532092,
+      "n_train": 2716,
+      "n_test": 332,
+      "robust": "MARGINAL"
+    },
+    {
+      "window": "2021-2023\u21922024",
+      "train_label": "2021-2023",
+      "test_label": "2024",
+      "ic": 0.040035,
+      "pval": 0.351779,
+      "n_train": 2210,
+      "n_test": 543,
+      "robust": "MARGINAL"
+    }
+  ],
+  "mean_ic": 0.055202,
+  "min_ic": 0.034411,
+  "std_ic": 0.025529,
+  "verdict": "ACCEPTABLE \u2014 positive signal in all periods, some variance",
+  "phase3_decision": "PROCEED with caution, note regime risk in production",
+  "robust": true
+}

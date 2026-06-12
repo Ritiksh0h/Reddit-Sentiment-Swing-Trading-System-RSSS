@@ -1,0 +1,155 @@
+{
+  "run_date": "2026-06-11T17:11:30.211373",
+  "model": "combined",
+  "n_features": 25,
+  "shap_ranking": {
+    "close": 0.005329,
+    "volume": 0.002214,
+    "avg_sentiment_1d": 0.000679,
+    "atr_14": 0.000509,
+    "mention_growth_7d": 0.000354,
+    "total_upvotes_1d": 0.000103,
+    "rsi_14": 7.2e-05,
+    "avg_sentiment_hc": 0.0,
+    "sentiment_accel": 0.0,
+    "bullish_ratio": 0.0,
+    "weighted_sentiment": 0.0,
+    "unique_authors_1d": 0.0,
+    "total_comments_1d": 0.0,
+    "mention_growth_1d": 0.0,
+    "post_count_7d": 0.0,
+    "avg_sentiment_3d": 0.0,
+    "post_count_3d": 0.0,
+    "post_count_1d": 0.0,
+    "returns_20d": 0.0,
+    "returns_5d": 0.0,
+    "returns_1d": 0.0,
+    "relative_volume": 0.0,
+    "dist_from_50ma": 0.0,
+    "dist_from_20ma": 0.0,
+    "sentiment_std": 0.0
+  },
+  "top_5_reddit_features": {
+    "avg_sentiment_1d": 0.000679,
+    "mention_growth_7d": 0.000354,
+    "total_upvotes_1d": 0.000103,
+    "post_count_1d": 0.0,
+    "post_count_3d": 0.0
+  },
+  "top_5_market_features": {
+    "close": 0.005329,
+    "volume": 0.002214,
+    "atr_14": 0.000509,
+    "rsi_14": 7.2e-05,
+    "dist_from_20ma": 0.0
+  },
+  "ablation_table": {
+    "market_only": {
+      "ic": 0.000184,
+      "n_features": 10,
+      "features": [
+        "rsi_14",
+        "atr_14",
+        "dist_from_20ma",
+        "dist_from_50ma",
+        "relative_volume",
+        "returns_1d",
+        "returns_5d",
+        "returns_20d",
+        "volume",
+        "close"
+      ]
+    },
+    "reddit_volume": {
+      "ic": -0.084748,
+      "n_features": 8,
+      "features": [
+        "post_count_1d",
+        "post_count_3d",
+        "post_count_7d",
+        "mention_growth_1d",
+        "mention_growth_7d",
+        "total_upvotes_1d",
+        "total_comments_1d",
+        "unique_authors_1d"
+      ]
+    },
+    "reddit_sentiment": {
+      "ic": -0.083903,
+      "n_features": 7,
+      "features": [
+        "avg_sentiment_1d",
+        "avg_sentiment_3d",
+        "avg_sentiment_hc",
+        "weighted_sentiment",
+        "bullish_ratio",
+        "sentiment_accel",
+        "sentiment_std"
+      ]
+    },
+    "reddit_velocity": {
+      "ic": -0.116271,
+      "n_features": 5,
+      "features": [
+        "post_count_1d",
+        "mention_growth_1d",
+        "sentiment_accel",
+        "total_upvotes_1d",
+        "unique_authors_1d"
+      ]
+    },
+    "combined_core": {
+      "ic": -0.051532,
+      "n_features": 15,
+      "features": [
+        "rsi_14",
+        "atr_14",
+        "dist_from_20ma",
+        "dist_from_50ma",
+        "relative_volume",
+        "returns_1d",
+        "returns_5d",
+        "returns_20d",
+        "volume",
+        "close",
+        "post_count_1d",
+        "avg_sentiment_1d",
+        "mention_growth_1d",
+        "weighted_sentiment",
+        "sentiment_accel"
+      ]
+    },
+    "combined_all": {
+      "ic": -0.019584,
+      "n_features": 25,
+      "features": [
+        "rsi_14",
+        "atr_14",
+        "dist_from_20ma",
+        "dist_from_50ma",
+        "relative_volume",
+        "returns_1d",
+        "returns_5d",
+        "returns_20d",
+        "volume",
+        "close",
+        "post_count_1d",
+        "post_count_3d",
+        "post_count_7d",
+        "avg_sentiment_1d",
+        "avg_sentiment_3d",
+        "avg_sentiment_hc",
+        "mention_growth_1d",
+        "mention_growth_7d",
+        "total_upvotes_1d",
+        "total_comments_1d",
+        "unique_authors_1d",
+        "weighted_sentiment",
+        "bullish_ratio",
+        "sentiment_accel",
+        "sentiment_std"
+      ]
+    }
+  },
+  "shap_plot_saved": true
+}

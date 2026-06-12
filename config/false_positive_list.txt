@@ -1,0 +1,116 @@
+# config/false_positive_list.txt
+# Ticker false positives — tokens that look like tickers but are not.
+# One token per line. Case-insensitive match applied at extraction time.
+# Add new entries here; never hard-code this list in Python.
+#
+# Sources:
+#   - CLAUDE.md §4.1 — base list
+#   - Extended with common English words that appear as uppercase in Reddit posts
+
+# From spec (§4.1)
+I
+A
+THE
+FOR
+ARE
+BE
+DO
+OR
+AN
+IT
+IF
+GO
+SO
+ON
+IN
+AT
+US
+
+# Common English words frequently uppercased in Reddit
+ALL
+AND
+ARE
+ASK
+BIG
+BUY
+CAN
+CEO
+CFO
+COO
+DID
+DIP
+END
+ETF
+FED
+FYI
+GET
+GOT
+HAS
+HAD
+HIM
+HIS
+HOW
+IMO
+IRS
+ITS
+LET
+LOL
+LOW
+MAY
+MORE
+NEW
+NOT
+NOW
+OFF
+OLD
+ONE
+OPM
+OTC
+OUR
+OUT
+OWN
+PAY
+PER
+PUT
+RIP
+RUN
+SEC
+SET
+SIR
+STO
+TAX
+THE
+TOO
+TOP
+TWO
+USE
+WAS
+WHO
+WHY
+WTF
+YOY
+YOU
+YTD
+YTM
+
+# Finance abbreviations that are NOT tickers
+DD
+DCA
+FOMO
+HODL
+YOLO
+ATH
+ATL
+EPS
+IPO
+MOC
+MOO
+P&L
+PNL
+ROI
+RSI
+SMA
+EMA
+MACD
+TTM
+TTD

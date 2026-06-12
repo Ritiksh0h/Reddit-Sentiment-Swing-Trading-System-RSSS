@@ -1,0 +1,30 @@
+{
+  "run_date": "2026-06-11T17:11:26.853311",
+  "model": "combined",
+  "n_test_rows": 295,
+  "observed_ic": 0.020251,
+  "permutation_test": {
+    "observed_ic": 0.020251,
+    "n_permutations": 10,
+    "null_ic_mean": 0.010126,
+    "null_ic_std": 0.04404,
+    "null_ic_p95": 0.06512,
+    "p_value": 0.4,
+    "p_value_threshold": 0.05,
+    "verdict": "SPURIOUS"
+  },
+  "bootstrap_stability": {
+    "n_bootstrap": 5,
+    "ic_mean": 0.013031,
+    "ic_std": 0.035578,
+    "ic_ci_low": -0.014986,
+    "ic_ci_high": 0.074332,
+    "stability_threshold": 0.03,
+    "verdict": "UNSTABLE"
+  },
+  "overall_verdict": "FLAG",
+  "flags": [
+    "Permutation p-value=0.4000 >= 0.05 \u2014 signal may be spurious",
+    "Bootstrap IC std=0.0356 >= 0.03 \u2014 signal is unstable"
+  ]
+}

@@ -1,0 +1,78 @@
+# Reddit Sentiment Swing Trading System
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.env
+
+# --- Secrets (NEVER COMMIT) ---
+.env
+*.pem
+*.key
+secrets/
+
+# --- Data (too large for git) ---
+data/raw/
+data/feature_store/
+*.csv
+*.parquet
+*.json.gz
+
+# --- Model artifacts ---
+models/registry/
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.onnx
+
+# --- Logs ---
+logs/
+*.log
+*.log.*
+
+# --- Phase results (commit summary JSON only, not raw data) ---
+phase0_results/*.parquet
+phase0_results/*.pkl
+
+# --- Claude Code memory (local only) ---
+.claude/
+
+# --- IDE ---
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# --- Testing ---
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb
+
+# --- Database (local dev) ---
+*.db
+*.sqlite
+*.sqlite3

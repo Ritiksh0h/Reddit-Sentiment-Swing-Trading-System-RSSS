@@ -1,0 +1,46 @@
+{
+  "run_date": "2026-06-11T17:12:20.519878",
+  "test_period": "2024-01-02 \u2192 2024-12-31",
+  "spy_return": 0.2604788750634246,
+  "strategies": [
+    {
+      "strategy": "mention_growth",
+      "total_return": -0.1996,
+      "annualized_return": -0.1996,
+      "sharpe_ratio": -0.3634,
+      "max_drawdown": -0.2907,
+      "win_rate": 0.4861,
+      "n_trades": 72,
+      "spy_return": 0.2604788750634246,
+      "alpha": -0.4601,
+      "beats_spy": false,
+      "verdict": "UNDERPERFORMS_SPY"
+    },
+    {
+      "strategy": "top_sentiment",
+      "total_return": 0.0153,
+      "annualized_return": 0.0153,
+      "sharpe_ratio": 0.2313,
+      "max_drawdown": -0.2715,
+      "win_rate": 0.5,
+      "n_trades": 110,
+      "spy_return": 0.2604788750634246,
+      "alpha": -0.2452,
+      "beats_spy": false,
+      "verdict": "UNDERPERFORMS_SPY"
+    },
+    {
+      "strategy": "attention_volume",
+      "total_return": 0.131,
+      "annualized_return": 0.131,
+      "sharpe_ratio": 0.4975,
+      "max_drawdown": -0.2778,
+      "win_rate": 0.4896,
+      "n_trades": 96,
+      "spy_return": 0.2604788750634246,
+      "alpha": -0.1295,
+      "beats_spy": false,
+      "verdict": "UNDERPERFORMS_SPY"
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+"""
+Module: config/settings.py
+Purpose: Central configuration — environment variables, resolved paths, constants.
+         All values come from .env or OS environment. Never hardcoded here.
+Phase: All
+Last modified: 2026-06-11
+"""
+
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# ---------------------------------------------------------------------------
+# Project Paths
+# ---------------------------------------------------------------------------
+PROJECT_ROOT: Path = Path(__file__).parent.parent.resolve()
+
+MODEL_REGISTRY_PATH: Path = Path(
+    os.getenv("MODEL_REGISTRY_PATH", str(PROJECT_ROOT / "models" / "registry"))
+)
+FEATURE_STORE_PATH: Path = Path(
+    os.getenv("FEATURE_STORE_PATH", str(PROJECT_ROOT / "data" / "feature_store"))
+)
+RAW_DATA_PATH: Path = PROJECT_ROOT / "data" / "raw"
+LOG_PATH: Path = PROJECT_ROOT / "logs"
+PHASE0_RESULTS_PATH: Path = PROJECT_ROOT / "phase0_results"
+
+# Ensure critical directories exist at import time
+for _path in [MODEL_REGISTRY_PATH, FEATURE_STORE_PATH, RAW_DATA_PATH, LOG_PATH, PHASE0_RESULTS_PATH]:
+    _path.mkdir(parents=True, exist_ok=True)
+
+# ---------------------------------------------------------------------------
+# Reddit API (PRAW)
+# ---------------------------------------------------------------------------
+REDDIT_CLIENT_ID: str = os.getenv("REDDIT_CLIENT_ID", "")
+REDDIT_CLIENT_SECRET: str = os.getenv("REDDIT_CLIENT_SECRET", "")
+REDDIT_USER_AGENT: str = os.getenv("REDDIT_USER_AGENT", "rsss/0.1")
+
+# Subreddits monitored — per §4.1, no additions without spec update
+MONITORED_SUBREDDITS: list[str] = [
+    "wallstreetbets",
+    "stocks",
+    "investing",
+    "options",
+    "valueinvesting",
+]
+
+# ---------------------------------------------------------------------------
+# Market Data
+# ---------------------------------------------------------------------------
+POLYGON_API_KEY: str = os.getenv("POLYGON_API_KEY", "")
+
+# ---------------------------------------------------------------------------
+# Database
+# ---------------------------------------------------------------------------
+DB_URL: str = os.getenv("DB_URL", "sqlite:///rsss_dev.db")
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()
+
+# ---------------------------------------------------------------------------
+# FinBERT
+# ---------------------------------------------------------------------------
+FINBERT_MODEL_NAME: str = "ProsusAI/finbert"
+FINBERT_MAX_LENGTH: int = 512
+FINBERT_BATCH_SIZE: int = 32
+# "cuda", "mps", or "cpu" — resolved at runtime in NLP module; never hardcode GPU
+FINBERT_DEVICE: str = os.getenv("FINBERT_DEVICE", "cpu")
+
+# ---------------------------------------------------------------------------
+# Market Calendar & Timezone
+# ---------------------------------------------------------------------------
+MARKET_TIMEZONE: str = "America/New_York"
+MARKET_OPEN_HOUR_ET: int = 9
+MARKET_OPEN_MINUTE_ET: int = 30
+MARKET_CLOSE_HOUR_ET: int = 16
+
+# ---------------------------------------------------------------------------
+# Train / Test Split — NON-NEGOTIABLE per §3.2
+# ---------------------------------------------------------------------------
+TRAIN_END_DATE: str = "2023-12-31"
+TEST_START_DATE: str = "2024-01-01"
+
+# ---------------------------------------------------------------------------
+# Phase 1 — Research Pipeline  (aliases used by pipeline/ scripts)
+# ---------------------------------------------------------------------------
+DATA_RAW: Path = RAW_DATA_PATH
+DATA_PROC: Path = PROJECT_ROOT / "data" / "processed"
+DATA_FEAT: Path = PROJECT_ROOT / "data" / "features"
+MODELS_DIR: Path = MODEL_REGISTRY_PATH
+REPORTS_DIR: Path = PROJECT_ROOT / "reports"
+
+SENTIMENT_PARQUET: Path = DATA_RAW / "merged_with_sentiment.parquet"
+FEATURES_PARQUET: Path = DATA_FEAT / "features.parquet"
+
+EXPERIMENT_RESULTS_DIR: Path = PROJECT_ROOT / "experiments"
+
+# Phase 1 train/test split (same dates, shorter alias names for pipeline scripts)
+TRAIN_END: str = TRAIN_END_DATE    # "2023-12-31"
+TEST_START: str = TEST_START_DATE  # "2024-01-01"
+
+# Market cutoff (09:30 ET = feature boundary)
+MARKET_TZ: str = MARKET_TIMEZONE
+CUTOFF_HOUR: int = MARKET_OPEN_HOUR_ET    # 9
+CUTOFF_MIN: int = MARKET_OPEN_MINUTE_ET   # 30
+
+# Create Phase 1 directories on import
+for _p1_path in [DATA_PROC, DATA_FEAT, REPORTS_DIR]:
+    _p1_path.mkdir(parents=True, exist_ok=True)
+
+# ---------------------------------------------------------------------------
+# Phase 0 — Signal Validation
+# ---------------------------------------------------------------------------
+# Ordered by WSB mention frequency — highest first for best IC signal chance
+PHASE0_TICKERS: list[str] = [
+    "NVDA", "TSLA", "AMD", "AAPL",
+    "GME", "AMC", "PLTR", "MARA", "COIN",
+    "SPY",   # benchmark
+]
+
+# Known HuggingFace dataset candidates (ranked by fit for this project).
+# Web search was unavailable at scaffold time — verify IDs before use.
+# See scripts/phase0_validate.py for loading logic.
+PHASE0_HF_DATASETS: list[dict] = [
+    {
+        "id": "Lelon/reddit-wsb-posts",
+        "notes": "Pushshift-derived WSB posts 2012-2022, ~500k+. Best fit.",
+        "text_col": "title",
+        "body_col": "selftext",
+        "score_col": "score",
+        "ts_col": "created_utc",
+        "author_col": "author",
+        "post_id_col": "id",
+        "subreddit_col": "subreddit",
+    },
+    {
+        "id": "RomanBlanco/reddit_wsb_2021",
+        "notes": "WSB-specific, focused on GME squeeze ~Jan-mid 2021. Narrow window.",
+        "text_col": "title",
+        "body_col": "selftext",
+        "score_col": "score",
+        "ts_col": "created_utc",
+        "author_col": "author",
+        "post_id_col": "id",
+        "subreddit_col": "subreddit",
+    },
+    {
+        "id": "SocialGrep/one-million-reddit-comments",
+        "notes": "Comments only (no title/selftext). Fallback if post datasets unavailable.",
+        "text_col": "body",
+        "body_col": None,
+        "score_col": "score",
+        "ts_col": "created_utc",
+        "author_col": "author",
+        "post_id_col": "id",
+        "subreddit_col": "subreddit",
+    },
+]

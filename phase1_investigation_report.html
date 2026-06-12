@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSSS — Phase 1 Investigation Report</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500&display=swap');
+
+:root {
+  --bg:         #07090f;
+  --surface:    #0d1117;
+  --surface2:   #131b25;
+  --border:     #1c2a3a;
+  --border2:    #243344;
+  --text:       #c4d4e4;
+  --dim:        #4a6a8a;
+  --green:      #00d68f;
+  --green-bg:   #001f15;
+  --red:        #ff4560;
+  --red-bg:     #1f0008;
+  --amber:      #ffb700;
+  --amber-bg:   #1f1400;
+  --blue:       #38b6ff;
+  --blue-bg:    #001a2f;
+  --purple:     #a78bfa;
+  --purple-bg:  #12082a;
+  --display:    'Syne', sans-serif;
+  --mono:       'JetBrains Mono', monospace;
+  --body:       'Inter', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-weight: 300;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(7,9,15,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 48px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-brand {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.nav-links {
+  display: flex;
+  gap: 28px;
+  list-style: none;
+}
+.nav-links a {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  text-decoration: none;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text); }
+
+/* ── HERO ── */
+.hero {
+  padding: 120px 64px 80px;
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 64px;
+  align-items: end;
+}
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--red);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.hero h1 {
+  font-family: var(--display);
+  font-size: 52px;
+  font-weight: 800;
+  line-height: 1.05;
+  color: #e8f4ff;
+  margin-bottom: 24px;
+}
+.hero h1 em {
+  font-style: normal;
+  color: var(--amber);
+}
+.hero-lead {
+  font-size: 15px;
+  color: var(--text);
+  max-width: 560px;
+  line-height: 1.8;
+}
+.hero-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.hero-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 16px 20px;
+  border-radius: 3px;
+}
+.hero-stat .hs-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.hero-stat .hs-val {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1;
+}
+.hero-stat .hs-sub {
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: 4px;
+}
+
+/* ── VERDICT BANNER ── */
+.verdict-banner {
+  margin: 0;
+  padding: 20px 64px;
+  background: var(--amber-bg);
+  border-bottom: 1px solid var(--amber);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.verdict-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+.verdict-text {
+  font-size: 13px;
+  color: var(--text);
+}
+.verdict-text strong { color: var(--amber); font-weight: 500; }
+
+/* ── LAYOUT ── */
+.page { max-width: 1200px; margin: 0 auto; padding: 0 64px 100px; }
+
+.section {
+  padding-top: 72px;
+}
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 20px;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.section-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+}
+.section h2 {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  color: #e8f4ff;
+}
+.section p {
+  font-size: 14px;
+  color: var(--text);
+  max-width: 720px;
+  margin-bottom: 12px;
+  line-height: 1.8;
+}
+
+/* ── CONTRADICTION BOX ── */
+.contradiction {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  padding: 28px 32px;
+  margin: 28px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+.c-side {}
+.c-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.c-label.green { color: var(--green); border-color: var(--green); }
+.c-label.red   { color: var(--red);   border-color: var(--red); }
+.c-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.c-row:last-child { border: none; }
+.c-metric { color: var(--dim); }
+.c-val-green { color: var(--green); font-weight: 600; }
+.c-val-red   { color: var(--red);   font-weight: 600; }
+.c-val-amber { color: var(--amber); font-weight: 600; }
+
+/* ── MODEL COMPARISON TABLE ── */
+.model-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 13px;
+  margin: 24px 0;
+}
+.model-table th {
+  text-align: left;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 0 20px 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+}
+.model-table td {
+  padding: 12px 20px 12px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.model-table tr:last-child td { border: none; }
+.model-name { color: #e8f4ff; font-weight: 600; }
+.ic-positive { color: var(--green); font-weight: 600; }
+.ic-negative { color: var(--red);   font-weight: 600; }
+.ic-neutral  { color: var(--amber); font-weight: 600; }
+.tag {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 2px;
+  font-weight: 600;
+}
+.tag-green  { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green); }
+.tag-red    { background: var(--red-bg);    color: var(--red);    border: 1px solid var(--red); }
+.tag-amber  { background: var(--amber-bg);  color: var(--amber);  border: 1px solid var(--amber); }
+.tag-blue   { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue); }
+.tag-dim    { background: var(--surface2);  color: var(--dim);    border: 1px solid var(--border); }
+
+/* ── DENSITY CHART ── */
+.density-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+.density-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px 24px;
+}
+.dc-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.dc-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.dc-stat:last-child { border: none; }
+.dc-key { color: var(--dim); }
+.dc-val { font-weight: 600; }
+
+/* ── IC BY YEAR TABLE ── */
+.year-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 12px;
+  margin: 24px 0;
+}
+.year-table th {
+  text-align: left;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 0 16px 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+}
+.year-table td {
+  padding: 10px 16px 10px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.year-table tr:last-child td { border: none; }
+.year-label { color: #e8f4ff; font-weight: 600; font-size: 13px; }
+
+/* ── IC BAR ── */
+.ic-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ic-bar-track {
+  width: 120px;
+  height: 6px;
+  background: var(--surface2);
+  border-radius: 3px;
+  overflow: visible;
+  position: relative;
+}
+.ic-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  position: absolute;
+}
+.ic-bar-fill.pos { background: var(--green); left: 50%; }
+.ic-bar-fill.neg { background: var(--red);   right: 50%; }
+.ic-center-line {
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  width: 1px;
+  height: 10px;
+  background: var(--dim);
+}
+.ic-num { font-weight: 600; min-width: 60px; }
+
+/* ── REGIME TABLE ── */
+.regime-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 24px 0;
+}
+.regime-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 16px 18px;
+}
+.rc-period {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+.rc-arrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  margin: 2px 0;
+}
+.rc-test {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+.rc-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 0;
+}
+.rc-model { color: var(--dim); }
+
+/* ── FINDINGS ── */
+.findings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 28px 0;
+}
+.finding {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 22px 26px;
+}
+.finding.key-finding {
+  border-color: var(--amber);
+  background: var(--amber-bg);
+  grid-column: 1 / -1;
+}
+.f-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+.finding.key-finding .f-label { color: var(--amber); }
+.f-title {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  color: #e8f4ff;
+  margin-bottom: 10px;
+}
+.finding p {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.7;
+  max-width: 100%;
+  margin: 0;
+}
+
+/* ── OPTIONS ── */
+.options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 28px 0;
+}
+.option-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 24px 26px;
+  position: relative;
+}
+.option-card.recommended {
+  border-color: var(--green);
+}
+.option-num {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--border2);
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.option-card.recommended .option-num { color: var(--green); opacity: 0.4; }
+.option-title {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  color: #e8f4ff;
+  margin-bottom: 10px;
+}
+.option-body {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.7;
+  margin-bottom: 14px;
+}
+.option-pros, .option-cons {
+  font-family: var(--mono);
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+.option-pros { color: var(--green); }
+.option-cons { color: var(--red); }
+.rec-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--green);
+  border: 1px solid var(--green);
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+
+/* ── ARCHITECTURE ── */
+.arch-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 28px 32px;
+  margin: 24px 0;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.arch-step {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+  align-items: start;
+}
+.arch-step:last-child { margin-bottom: 0; }
+.arch-num {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--green);
+  color: var(--green);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.arch-content {}
+.arch-title {
+  color: #e8f4ff;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.arch-desc {
+  color: var(--dim);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.arch-code {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 8px 12px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--blue);
+}
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 24px 64px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+}
+
+/* ── DIVIDER ── */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 48px 0;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--surface2);
+  color: var(--blue);
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+@media (max-width: 960px) {
+  nav { padding: 0 24px; }
+  .hero, .page { padding-left: 24px; padding-right: 24px; }
+  .verdict-banner { padding-left: 24px; padding-right: 24px; }
+  .hero { grid-template-columns: 1fr; }
+  .contradiction, .density-grid, .findings, .options { grid-template-columns: 1fr; }
+  .regime-grid { grid-template-columns: repeat(2, 1fr); }
+  footer { padding: 20px 24px; flex-direction: column; gap: 8px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">RSSS — Phase 1 Investigation</div>
+  <ul class="nav-links">
+    <li><a href="#contradiction">Contradiction</a></li>
+    <li><a href="#density">Density</a></li>
+    <li><a href="#models">Models</a></li>
+    <li><a href="#regime">Regime</a></li>
+    <li><a href="#findings">Findings</a></li>
+    <li><a href="#path">Path Forward</a></li>
+  </ul>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div>
+    <div class="hero-eyebrow">Research Sprint — Investigation Report</div>
+    <h1>Reddit Sentiment<br>is <em>Non-Stationary</em></h1>
+    <p class="hero-lead">
+      Phase 1 pipeline fired a hard gate: Combined model IC (0.049) fell below Market-only IC (0.066).
+      Five investigations reveal why — and what to build next.
+      The signal is not dead. The architecture needs one fundamental change.
+    </p>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hs-label">Market IC (2024)</div>
+      <div class="hs-val" style="color:var(--green)">0.092</div>
+      <div class="hs-sub">Strong, consistent</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hs-label">Reddit IC (2024)</div>
+      <div class="hs-val" style="color:var(--red)">-0.017</div>
+      <div class="hs-sub">Negative contribution</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hs-label">High-density sent. IC</div>
+      <div class="hs-val" style="color:var(--amber)">+0.115</div>
+      <div class="hs-sub">≥10 posts/day only</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hs-label">Low-density sent. IC</div>
+      <div class="hs-val" style="color:var(--dim)">+0.019</div>
+      <div class="hs-sub">&lt;10 posts/day</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── VERDICT ── -->
+<div class="verdict-banner">
+  <div class="verdict-tag">⚠ Redesign Required</div>
+  <div class="verdict-text">
+    Reddit sentiment is <strong>regime-dependent and non-stationary</strong>.
+    It was negative IC in 2021–2023, positive IC in 2024.
+    A static model cannot exploit this safely.
+    <strong>Reddit attention (not sentiment) should be used as a stock selection filter, not a directional predictor.</strong>
+  </div>
+</div>
+
+<div class="page">
+
+<!-- ── SECTION 1: THE CONTRADICTION ── -->
+<div class="section" id="contradiction">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>The Contradiction That Triggered the Investigation</h2>
+  </div>
+  <p>Phase 0 confirmed signal at weighted IC = 0.048 across 51 tickers. Phase 1 returned Reddit-only IC of -0.017. These two findings cannot coexist without explanation. Four possible causes were identified.</p>
+
+  <div class="contradiction">
+    <div class="c-side">
+      <div class="c-label green">Phase 0 — Signal Validated</div>
+      <div class="c-row"><span class="c-metric">Weighted IC (5d)</span><span class="c-val-green">+0.0483</span></div>
+      <div class="c-row"><span class="c-metric">Tickers above threshold</span><span class="c-val-green">39 / 51</span></div>
+      <div class="c-row"><span class="c-metric">% above IC 0.05</span><span class="c-val-green">64.7%</span></div>
+      <div class="c-row"><span class="c-metric">Method</span><span class="c-val-green">Raw Spearman IC</span></div>
+      <div class="c-row"><span class="c-metric">Verdict</span><span class="c-val-green">PROCEED</span></div>
+    </div>
+    <div class="c-side">
+      <div class="c-label red">Phase 1 — Hard Gate Fired</div>
+      <div class="c-row"><span class="c-metric">Market Only IC</span><span class="c-val-green">+0.0659</span></div>
+      <div class="c-row"><span class="c-metric">Reddit Only IC</span><span class="c-val-red">-0.0174</span></div>
+      <div class="c-row"><span class="c-metric">Combined IC</span><span class="c-val-amber">+0.0495</span></div>
+      <div class="c-row"><span class="c-metric">Reddit adds value</span><span class="c-val-red">NO (-0.016)</span></div>
+      <div class="c-row"><span class="c-metric">Verdict</span><span class="c-val-red">REDDIT_NOT_ADDITIVE</span></div>
+    </div>
+  </div>
+
+  <div class="findings" style="margin-top:0">
+    <div class="finding">
+      <div class="f-label">Possibility A</div>
+      <div class="f-title">Feature engineering destroyed the signal</div>
+      <p>Phase 0 used raw per-post sentiment. Phase 1 aggregated into 24h windows. Aggregation over sparse windows may have averaged out the signal into noise.</p>
+    </div>
+    <div class="finding">
+      <div class="f-label">Possibility B — Most likely</div>
+      <div class="f-title">Attention signal diluted by weak sentiment features</div>
+      <p>Phase 0's strongest features were post_count and mention_growth (attention). Phase 1 added 7 sentiment features that may be adding noise and confusing the model.</p>
+    </div>
+    <div class="finding">
+      <div class="f-label">Possibility C — Confirmed</div>
+      <div class="f-title">Signal existed in 2021–2023 but disappeared in 2024</div>
+      <p>Non-stationarity. The relationship between Reddit features and returns flipped sign across different market regimes. Confirmed by year-by-year IC analysis.</p>
+    </div>
+    <div class="finding">
+      <div class="f-label">Possibility D</div>
+      <div class="f-title">Insufficient data density in test period</div>
+      <p>75% of test rows had fewer than 9 posts per day. Sentiment averaged over 5 posts is statistically meaningless. Confirmed by density split analysis.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION 2: DENSITY INVESTIGATION ── -->
+<div class="section" id="density">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>Investigation — Post Density Threshold</h2>
+  </div>
+  <p>The minimum post count filter was 3. Splitting the test set by density (≥10 posts vs &lt;10 posts) revealed dramatically different IC values, confirming that low-density rows are pure noise.</p>
+
+  <div class="density-grid">
+    <div class="density-card">
+      <div class="dc-label">Test set distribution (2024)</div>
+      <div class="dc-stat"><span class="dc-key">Total test rows</span><span class="dc-val" style="color:var(--blue)">2,187</span></div>
+      <div class="dc-stat"><span class="dc-key">Median post_count_1d</span><span class="dc-val" style="color:var(--amber)">5 posts/day</span></div>
+      <div class="dc-stat"><span class="dc-key">75th percentile</span><span class="dc-val" style="color:var(--amber)">9 posts/day</span></div>
+      <div class="dc-stat"><span class="dc-key">Rows with &lt;10 posts</span><span class="dc-val" style="color:var(--red)">1,644 (75%)</span></div>
+      <div class="dc-stat"><span class="dc-key">Rows with ≥10 posts</span><span class="dc-val" style="color:var(--green)">543 (25%)</span></div>
+    </div>
+    <div class="density-card">
+      <div class="dc-label">Tickers with thin 2024 coverage</div>
+      <div class="dc-stat"><span class="dc-key">ROKU</span><span class="dc-val" style="color:var(--red)">3.4 avg posts/day</span></div>
+      <div class="dc-stat"><span class="dc-key">GS</span><span class="dc-val" style="color:var(--red)">3.4 avg posts/day</span></div>
+      <div class="dc-stat"><span class="dc-key">JPM</span><span class="dc-val" style="color:var(--red)">3.8 avg posts/day</span></div>
+      <div class="dc-stat"><span class="dc-key">DKNG</span><span class="dc-val" style="color:var(--red)">4.0 avg posts/day</span></div>
+      <div class="dc-stat"><span class="dc-key">TSLA</span><span class="dc-val" style="color:var(--green)">20.3 avg posts/day</span></div>
+    </div>
+  </div>
+
+  <table class="model-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>IC — High Density (≥10 posts)</th>
+        <th>IC — Low Density (&lt;10 posts)</th>
+        <th>Delta</th>
+        <th>Verdict</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="model-name">avg_sentiment_1d</td>
+        <td class="ic-positive">+0.1150</td>
+        <td class="ic-neutral">+0.0185</td>
+        <td class="ic-positive">+0.096</td>
+        <td><span class="tag tag-green">Density-dependent</span></td>
+      </tr>
+      <tr>
+        <td class="model-name">weighted_sentiment</td>
+        <td class="ic-positive">+0.1183</td>
+        <td class="ic-neutral">+0.0296</td>
+        <td class="ic-positive">+0.089</td>
+        <td><span class="tag tag-green">Density-dependent</span></td>
+      </tr>
+      <tr>
+        <td class="model-name">mention_growth_1d</td>
+        <td class="ic-neutral">+0.0547</td>
+        <td class="ic-negative">-0.0477</td>
+        <td class="ic-neutral">+0.102</td>
+        <td><span class="tag tag-amber">Mixed</span></td>
+      </tr>
+      <tr>
+        <td class="model-name">post_count_1d</td>
+        <td class="ic-neutral">+0.0440</td>
+        <td class="ic-neutral">-0.0016</td>
+        <td class="ic-neutral">+0.046</td>
+        <td><span class="tag tag-amber">Weak</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px 20px;margin-top:8px;font-size:13px">
+    <span style="font-family:var(--mono);color:var(--amber);font-size:10px;letter-spacing:0.12em;text-transform:uppercase">Key finding — </span>
+    On high-density rows, sentiment IC is 0.115. The signal exists. The 3-post minimum threshold was too low — it included 75% noise rows that drowned the 25% signal rows. Raising the threshold to 10 posts is necessary but not sufficient, because it reduces the test set to 543 rows across only 23 tickers.
+  </div>
+</div>
+
+<!-- ── SECTION 3: MODEL COMPARISON ── -->
+<div class="section" id="models">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>Investigation — Attention vs Sentiment vs Market</h2>
+  </div>
+  <p>Retrained all model variants on the density-filtered dataset (post_count_1d ≥ 10). This runs the attention-only vs sentiment-only comparison to identify where the signal actually lives.</p>
+
+  <table class="model-table">
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Features</th>
+        <th>IC (test 2024)</th>
+        <th>n_test</th>
+        <th>vs Market</th>
+        <th>Verdict</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="model-name">Market Only</td>
+        <td style="font-size:11px;color:var(--dim)">RSI, momentum, volume, MAs</td>
+        <td class="ic-positive">+0.0920</td>
+        <td style="font-family:var(--mono);font-size:12px">543</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--dim)">baseline</td>
+        <td><span class="tag tag-green">Best model</span></td>
+      </tr>
+      <tr>
+        <td class="model-name">Attention Only</td>
+        <td style="font-size:11px;color:var(--dim)">post_count, mention_growth, upvotes</td>
+        <td class="ic-negative">-0.1248</td>
+        <td style="font-family:var(--mono);font-size:12px">543</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--red)">-0.217</td>
+        <td><span class="tag tag-red">Harmful</span></td>
+      </tr>
+      <tr>
+        <td class="model-name">Sentiment Only</td>
+        <td style="font-size:11px;color:var(--dim)">avg_sentiment, weighted_sent, accel</td>
+        <td class="ic-neutral">+0.0076</td>
+        <td style="font-family:var(--mono);font-size:12px">543</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--red)">-0.084</td>
+        <td><span class="tag tag-dim">Near zero</span></td>
+      </tr>
+      <tr>
+        <td class="model-name">Reddit Full</td>
+        <td style="font-size:11px;color:var(--dim)">Attention + Sentiment combined</td>
+        <td class="ic-neutral">+0.0029</td>
+        <td style="font-family:var(--mono);font-size:12px">543</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--red)">-0.089</td>
+        <td><span class="tag tag-red">Worse than parts</span></td>
+      </tr>
+      <tr>
+        <td class="model-name">Combined</td>
+        <td style="font-size:11px;color:var(--dim)">Market + Reddit Full</td>
+        <td class="ic-positive">+0.0881</td>
+        <td style="font-family:var(--mono);font-size:12px">543</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--red)">-0.004</td>
+        <td><span class="tag tag-amber">Slightly worse</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="findings" style="margin-top:16px">
+    <div class="finding">
+      <div class="f-label">Surprising finding</div>
+      <div class="f-title">Attention features actively hurt the model (IC -0.12)</div>
+      <p>High post counts and mention growth spikes are negatively correlated with future returns. When Reddit attention peaks, the stock has already moved — the attention is trailing the price, not leading it. This is the "buy the rumor, sell the news" effect captured quantitatively.</p>
+    </div>
+    <div class="finding">
+      <div class="f-label">Raw IC vs model IC discrepancy</div>
+      <div class="f-title">Raw sentiment IC is +0.115 but model IC is +0.008</div>
+      <p>The raw Spearman correlation shows strong signal. The XGBoost model can't exploit it. The model was trained on 2019-2023 where sentiment IC was negative (-0.005 to -0.103). It correctly learned to ignore or invert sentiment — then 2024 arrived with the opposite relationship.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION 4: REGIME ANALYSIS ── -->
+<div class="section" id="regime">
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <h2>Investigation — Regime Split and Non-Stationarity</h2>
+  </div>
+  <p>The most important finding in the entire investigation. Reddit sentiment IC reversed sign between training and test periods. This is not noise — it's a structural regime shift that makes static ML models unreliable on this feature set.</p>
+
+  <h3 style="font-family:var(--mono);font-size:13px;color:var(--dim);letter-spacing:0.1em;text-transform:uppercase;margin:24px 0 12px">Raw Sentiment IC by Year</h3>
+
+  <table class="year-table">
+    <thead>
+      <tr>
+        <th>Year</th>
+        <th>avg_sentiment_1d</th>
+        <th>weighted_sentiment</th>
+        <th>post_count_1d</th>
+        <th>n rows</th>
+        <th>Market context</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="year-label">2019</td>
+        <td>
+          <div class="ic-bar-wrap">
+            <div class="ic-bar-track">
+              <div class="ic-center-line"></div>
+              <div class="ic-bar-fill pos" style="width:43%"></div>
+            </div>
+            <span class="ic-num" style="color:var(--green)">+0.086</span>
+          </div>
+        </td>
+        <td class="ic-positive">+0.071</td>
+        <td class="ic-negative">-0.151</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--dim)">162</td>
+        <td style="font-size:12px;color:var(--dim)">Normal bull, retail growing</td>
+      </tr>
+      <tr>
+        <td class="year-label">2020</td>
+        <td>
+          <div class="ic-bar-wrap">
+            <div class="ic-bar-track">
+              <div class="ic-center-line"></div>
+              <div class="ic-bar-fill pos" style="width:14%"></div>
+            </div>
+            <span class="ic-num" style="color:var(--green)">+0.028</span>
+          </div>
+        </td>
+        <td class="ic-positive">+0.043</td>
+        <td class="ic-neutral">+0.057</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--dim)">838</td>
+        <td style="font-size:12px;color:var(--dim)">COVID crash + recovery</td>
+      </tr>
+      <tr>
+        <td class="year-label">2021</td>
+        <td>
+          <div class="ic-bar-wrap">
+            <div class="ic-bar-track">
+              <div class="ic-center-line"></div>
+              <div class="ic-bar-fill neg" style="width:9%"></div>
+            </div>
+            <span class="ic-num" style="color:var(--red)">-0.018</span>
+          </div>
+        </td>
+        <td class="ic-negative">-0.024</td>
+        <td class="ic-negative">-0.011</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--dim)">1,332</td>
+        <td style="font-size:12px;color:var(--dim)">GME squeeze, meme mania, retail FOMO at peak</td>
+      </tr>
+      <tr>
+        <td class="year-label">2022</td>
+        <td>
+          <div class="ic-bar-wrap">
+            <div class="ic-bar-track">
+              <div class="ic-center-line"></div>
+              <div class="ic-bar-fill neg" style="width:42%"></div>
+            </div>
+            <span class="ic-num" style="color:var(--red)">-0.083</span>
+          </div>
+        </td>
+        <td class="ic-negative">-0.105</td>
+        <td class="ic-negative">-0.069</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--dim)">546</td>
+        <td style="font-size:12px;color:var(--dim)">Bear market, Fed tightening, retail panic</td>
+      </tr>
+      <tr>
+        <td class="year-label">2023</td>
+        <td>
+          <div class="ic-bar-wrap">
+            <div class="ic-bar-track">
+              <div class="ic-center-line"></div>
+              <div class="ic-bar-fill neg" style="width:51%"></div>
+            </div>
+            <span class="ic-num" style="color:var(--red)">-0.103</span>
+          </div>
+        </td>
+        <td class="ic-negative">-0.123</td>
+        <td class="ic-positive">+0.114</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--dim)">332</td>
+        <td style="font-size:12px;color:var(--dim)">Recovery year, retail lagging institutions</td>
+      </tr>
+      <tr>
+        <td class="year-label">2024</td>
+        <td>
+          <div class="ic-bar-wrap">
+            <div class="ic-bar-track">
+              <div class="ic-center-line"></div>
+              <div class="ic-bar-fill pos" style="width:57%"></div>
+            </div>
+            <span class="ic-num" style="color:var(--green)">+0.115</span>
+          </div>
+        </td>
+        <td class="ic-positive">+0.118</td>
+        <td class="ic-neutral">+0.044</td>
+        <td style="font-family:var(--mono);font-size:12px;color:var(--dim)">543</td>
+        <td style="font-size:12px;color:var(--dim)">AI bull market, retail correctly bullish on AI names</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 style="font-family:var(--mono);font-size:13px;color:var(--dim);letter-spacing:0.1em;text-transform:uppercase;margin:32px 0 16px">Rolling Train → Test Model Performance</h3>
+
+  <div class="regime-grid">
+    <div class="regime-card">
+      <div class="rc-period">Train: 2019–2020</div>
+      <div class="rc-arrow">↓</div>
+      <div class="rc-test">Test: 2021</div>
+      <div class="rc-row"><span class="rc-model">Market</span><span style="color:var(--green);font-family:var(--mono);font-size:12px">+0.0625</span></div>
+      <div class="rc-row"><span class="rc-model">Combined</span><span style="color:var(--red);font-family:var(--mono);font-size:12px">+0.0415</span></div>
+      <div style="margin-top:8px"><span class="tag tag-red">Reddit hurts</span></div>
+    </div>
+    <div class="regime-card">
+      <div class="rc-period">Train: 2020–2021</div>
+      <div class="rc-arrow">↓</div>
+      <div class="rc-test">Test: 2022</div>
+      <div class="rc-row"><span class="rc-model">Market</span><span style="color:var(--green);font-family:var(--mono);font-size:12px">+0.1001</span></div>
+      <div class="rc-row"><span class="rc-model">Combined</span><span style="color:var(--green);font-family:var(--mono);font-size:12px">+0.1047</span></div>
+      <div style="margin-top:8px"><span class="tag tag-green">Reddit adds +0.005</span></div>
+    </div>
+    <div class="regime-card">
+      <div class="rc-period">Train: 2021–2022</div>
+      <div class="rc-arrow">↓</div>
+      <div class="rc-test">Test: 2023</div>
+      <div class="rc-row"><span class="rc-model">Market</span><span style="color:var(--green);font-family:var(--mono);font-size:12px">+0.1770</span></div>
+      <div class="rc-row"><span class="rc-model">Combined</span><span style="color:var(--amber);font-family:var(--mono);font-size:12px">+0.1413</span></div>
+      <div style="margin-top:8px"><span class="tag tag-red">Reddit hurts -0.036</span></div>
+    </div>
+    <div class="regime-card">
+      <div class="rc-period">Train: 2022–2023</div>
+      <div class="rc-arrow">↓</div>
+      <div class="rc-test">Test: 2024</div>
+      <div class="rc-row"><span class="rc-model">Market</span><span style="color:var(--green);font-family:var(--mono);font-size:12px">+0.0379</span></div>
+      <div class="rc-row"><span class="rc-model">Combined</span><span style="color:var(--red);font-family:var(--mono);font-size:12px">+0.0228</span></div>
+      <div style="margin-top:8px"><span class="tag tag-red">Reddit hurts -0.015</span></div>
+    </div>
+  </div>
+
+  <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:20px 24px;margin-top:16px;font-size:13px;color:var(--text)">
+    <span style="font-family:var(--mono);color:var(--purple);font-size:10px;letter-spacing:0.12em;text-transform:uppercase">Regime Insight — </span>
+    Reddit added value in only 1 of 4 rolling windows (2020-21 → 2022). In 3 of 4 windows it actively hurt the model. The SPY 200MA regime classifier did not explain this — 2021 and 2024 were both classified as bull markets with opposite sentiment IC (+0.115 vs -0.018). The regime driver is not price trend. It is whether retail sentiment is leading or lagging institutional price action.
+  </div>
+</div>
+
+<!-- ── SECTION 5: KEY FINDINGS ── -->
+<div class="section" id="findings">
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <h2>Key Findings — What the Data Actually Says</h2>
+  </div>
+
+  <div class="findings">
+    <div class="finding key-finding">
+      <div class="f-label">Central Finding</div>
+      <div class="f-title">Reddit sentiment is non-stationary. It was a contrarian indicator in 2021–2023 and a directional indicator in 2019 and 2024.</div>
+      <p>A static XGBoost model trained on 2019-2023 correctly learned to fade Reddit sentiment (because IC was -0.08 to -0.10 in 2022-2023). Then 2024 arrived with sentiment IC of +0.115. The model had no mechanism to adapt. This is not a model failure — it is a data non-stationarity problem that no amount of hyperparameter tuning will fix.</p>
+    </div>
+    <div class="finding">
+      <div class="f-label">Finding 1</div>
+      <div class="f-title">Market features are the reliable signal</div>
+      <p>Market-only IC ranged from 0.038 to 0.177 across all test years. It's the stable foundation. RSI, momentum, and relative volume consistently predict 5-day returns regardless of market regime.</p>
+    </div>
+    <div class="finding">
+      <div class="f-label">Finding 2</div>
+      <div class="f-title">Attention features are a contrarian indicator</div>
+      <p>Attention-only model IC is -0.125. High Reddit attention reliably precedes underperformance. When a stock spikes in mentions, it has already moved. The attention is trailing the price, not leading it. This could be exploited as a short signal, but not a long one.</p>
+    </div>
+    <div class="finding">
+      <div class="f-label">Finding 3</div>
+      <div class="f-title">Sentiment works but only at sufficient density</div>
+      <p>Below 10 posts/day: sentiment IC ≈ 0.019 (noise). Above 10 posts/day: sentiment IC = 0.115 (real signal). 75% of test rows were below the density threshold, making the overall signal appear to not exist.</p>
+    </div>
+    <div class="finding">
+      <div class="f-label">Finding 4</div>
+      <div class="f-title">The project is not dead — the architecture is wrong</div>
+      <p>Market features have strong consistent signal. Reddit provides value as a stock selection filter (which stocks have crowd attention right now) not as a directional predictor. These are different functions requiring different architectures.</p>
+    </div>
+    <div class="finding">
+      <div class="f-label">Finding 5</div>
+      <div class="f-title">Cross-sectional ranking confirms the contrarian effect</div>
+      <p>Top 10% mention growth stocks returned -0.37% on average over the next 5 days. Bottom 10% returned +1.14%. The spread is -1.51% — statistically suggesting that high mention growth is a negative signal for long positions.</p>
+    </div>
+    <div class="finding">
+      <div class="f-label">Finding 6</div>
+      <div class="f-title">3,210 training rows is likely insufficient</div>
+      <p>After density filtering, train set drops to 3,210 rows across 29 tickers over 5 years (~110 rows/ticker/year). XGBoost with 15 Reddit features on this sample size cannot reliably learn Reddit-market interactions. The other 3 subreddits could triple this.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── SECTION 6: PATH FORWARD ── -->
+<div class="section" id="path">
+  <div class="section-header">
+    <span class="section-num">06</span>
+    <h2>Path Forward — Three Options</h2>
+  </div>
+  <p>Based on all five investigations, three architecturally distinct paths exist. They are not equally viable.</p>
+
+  <div class="options">
+    <div class="option-card recommended">
+      <div class="rec-badge">Recommended</div>
+      <div class="option-num">01</div>
+      <div class="option-title">Reddit as Attention Filter + Market Model</div>
+      <div class="option-body">Use Reddit attention (post_count, mention_growth) purely as a stock selection filter — only consider stocks with elevated Reddit attention. Use market features alone to predict direction. Sidesteps the sentiment non-stationarity entirely.</div>
+      <div class="option-pros">+ Market IC is stable (0.04–0.18 across all years)</div>
+      <div class="option-pros">+ Reddit reduces the investable universe, improving signal concentration</div>
+      <div class="option-cons">- Doesn't use the 0.115 sentiment IC available in high-density rows</div>
+      <div class="option-cons">- Attention filter may exclude good opportunities with low Reddit coverage</div>
+    </div>
+    <div class="option-card">
+      <div class="option-num">02</div>
+      <div class="option-title">Regime-Aware Sentiment Model</div>
+      <div class="option-body">Add a rolling regime detector: compute the 60-day rolling correlation between sentiment and returns. When positive, use sentiment normally. When negative, drop or invert it. Theoretically exploits the full signal including the 0.115 IC.</div>
+      <div class="option-pros">+ Exploits high-IC sentiment in bullish regimes</div>
+      <div class="option-pros">+ Adapts to changing market conditions</div>
+      <div class="option-cons">- Adds significant complexity and regime transition risk</div>
+      <div class="option-cons">- Rolling correlation needs ~60 days of data to stabilise</div>
+      <div class="option-cons">- Risk of overfitting to the 2024 regime in particular</div>
+    </div>
+    <div class="option-card">
+      <div class="option-num">03</div>
+      <div class="option-title">Expand Dataset Before Deciding</div>
+      <div class="option-body">Add r/stocks, r/investing, r/options to triple the row count. Rerun all investigations on the larger dataset. 3,210 training rows may not be enough to distinguish signal from noise reliably.</div>
+      <div class="option-pros">+ More data reduces variance in IC estimates</div>
+      <div class="option-pros">+ r/stocks and r/investing may have different non-stationarity patterns</div>
+      <div class="option-cons">- May not resolve regime non-stationarity</div>
+      <div class="option-cons">- Adds significant compute time before any architectural decision</div>
+    </div>
+  </div>
+
+  <h3 style="font-family:var(--display);font-size:18px;font-weight:700;color:#e8f4ff;margin:36px 0 16px">Recommended Architecture — Option 1</h3>
+
+  <div class="arch-box">
+    <div class="arch-step">
+      <div class="arch-num">1</div>
+      <div class="arch-content">
+        <div class="arch-title">Reddit Attention Filter</div>
+        <div class="arch-desc">Each trading day, identify stocks with elevated Reddit attention. Only these enter the prediction pipeline.</div>
+        <div class="arch-code">post_count_1d ≥ 10  AND  mention_growth_7d ≥ 0.3</div>
+      </div>
+    </div>
+    <div class="arch-step">
+      <div class="arch-num">2</div>
+      <div class="arch-content">
+        <div class="arch-title">Market-Only XGBoost</div>
+        <div class="arch-desc">Predict 5-day forward return using RSI, momentum, relative volume, and MA distances. IC consistently 0.04–0.18 across all years. No sentiment features.</div>
+        <div class="arch-code">features = [returns_1d, returns_5d, rsi_14, atr_14, relative_volume, dist_from_20ma, dist_from_50ma]</div>
+      </div>
+    </div>
+    <div class="arch-step">
+      <div class="arch-num">3</div>
+      <div class="arch-content">
+        <div class="arch-title">Rank and Select</div>
+        <div class="arch-desc">Rank attention-filtered stocks by predicted 5-day return. Select top 3. This uses Reddit for what it's good at (finding which stocks have crowd attention) and market features for what they're good at (predicting direction).</div>
+        <div class="arch-code">candidates = attention_filtered_stocks.sort_values('predicted_return_5d').tail(3)</div>
+      </div>
+    </div>
+    <div class="arch-step">
+      <div class="arch-num">4</div>
+      <div class="arch-content">
+        <div class="arch-title">Backtest and Validate</div>
+        <div class="arch-desc">Compare three versions on 2024 test data: no filter (all stocks), attention filter only, attention filter + market model. If the filter improves Sharpe ratio over no filter, Reddit is adding value in its correct role.</div>
+        <div class="arch-code">compare: unfiltered_market vs attention_filtered_market vs SPY</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--green-bg);border:1px solid var(--green);border-radius:4px;padding:20px 24px;margin-top:16px">
+    <div style="font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px">Bottom Line</div>
+    <p style="font-size:14px;color:var(--text);max-width:100%;margin:0;line-height:1.7">
+      The project is not dead. The original assumption — that Reddit predicts direction — was wrong. The correct assumption is that Reddit identifies which stocks have crowd attention, and market features predict what happens to those stocks. These are different jobs. Build the architecture around that separation and you have a defensible, testable system.
+    </p>
+  </div>
+</div>
+
+</div>
+
+<footer>
+  <div>RSSS — Reddit Sentiment Swing Trading System</div>
+  <div>Phase 1 Investigation Complete — Architecture Redesign Required</div>
+  <div>June 11, 2026</div>
+</footer>
+
+</body>
+</html>
