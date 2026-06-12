@@ -7,23 +7,30 @@ trained to predict short-term return distributions inside a risk-controlled port
 
 ---
 
-## Current Phase: Phase 0 — Signal Validation
+## Current Phase: Phase 3 — Production System
 
-Before building any infrastructure, validate that Reddit sentiment actually has a
-measurable Information Coefficient (IC ≥ 0.03) against next-day returns.
+Phase 2 is complete. Experiment C is the confirmed winner. Phase 3 builds the production
+signal generator, portfolio engine, and API using the Experiment C architecture.
+
+### Phase 2 Results (final)
+
+| Metric | Value | Threshold | Status |
+|--------|-------|-----------|--------|
+| IC (test 2024) | 0.111 | > 0.05 | PASS |
+| Sharpe ratio | 2.829 | > 1.0 | PASS |
+| Total return | 87.6% | > SPY | PASS |
+| SPY 2024 | 26.1% | benchmark | — |
+| QQQ 2024 | 25.5% | benchmark | — |
+| Walk-forward min IC | 0.034 | ≥ 0.03 | ACCEPTABLE |
+
+**Winner: Experiment C — Expanded Dataset + Combined Model (XGBoost, MARKET + SENTIMENT features)**
 
 ```bash
-# Quick start — Phase 0 validation
-pip install -r requirements.txt
-python scripts/phase0_validate.py --list-datasets
-python scripts/phase0_validate.py --dataset RomanBlanco/reddit_wsb_2021 --debug
-python scripts/phase0_validate.py --dataset Lelon/reddit-wsb-posts
+# Reproduce Phase 2 results
+python experiments/experiment_c/train.py
+python experiments/compare.py
+python experiments/walk_forward.py
 ```
-
-Output: `phase0_results/ic_report.json`
-
-- `"overall_verdict": "PROCEED"` → IC ≥ 0.03, proceed to Phase 1
-- `"overall_verdict": "ABORT"` → IC < 0.03, reassess thesis
 
 ---
 
@@ -31,13 +38,12 @@ Output: `phase0_results/ic_report.json`
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| **0** | **Active** | Signal validation (IC check on 10 tickers) |
-| 1 | Pending | Data pipeline (Reddit PRAW + market data) |
-| 2 | Pending | Feature store + leakage validation |
-| 3 | Pending | Baseline XGBoost models + SHAP |
-| 4 | Pending | Signal engine + portfolio logic |
-| 5 | Pending | Backtesting engine (2015–2024) |
-| 6 | Pending | FastAPI + paper trading |
+| 0 | Done | Signal validation — IC ≥ 0.03 confirmed on WSB data |
+| 1 | Done | Feature pipeline — Reddit + market features, leakage-free |
+| 2 | Done | Three-experiment architecture search, winner selected |
+| **3** | **Active** | Production signal generator, portfolio engine, FastAPI |
+| 4 | Pending | Paper trading + live monitoring |
+| 5 | Pending | Walk-forward re-training, regime adaptation |
 
 ---
 
@@ -51,7 +57,6 @@ pip install -r requirements.txt
 
 # Copy env template
 cp .env.example .env
-# Edit .env — add POLYGON_API_KEY when available
 ```
 
 ---
@@ -59,14 +64,13 @@ cp .env.example .env
 ## Testing
 
 ```bash
-# Run all tests
 pytest tests/ -v
 
-# Run leakage tests (mandatory before any alignment.py change)
-pytest tests/test_alignment.py -v
+# Backtest engine tests (5 tests — concentration, missing price, threshold, cap)
+pytest tests/test_backtest.py -v
 
-# With coverage
-pytest tests/ --cov=. --cov-report=term-missing
+# Leakage tests (run before any features/alignment.py change)
+pytest tests/test_alignment.py -v
 ```
 
 ---
@@ -77,9 +81,9 @@ pytest tests/ --cov=. --cov-report=term-missing
 2. **Time-based split** — train ≤ 2023-12-31, test ≥ 2024-01-01, never shuffle
 3. **FinBERT only** — no keyword heuristics, no default fill for missing sentiment
 4. **Versioned models** — never overwrite a model file in-place
-5. **If backtest Sharpe > 2.5** — assume leakage first, investigate before celebrating
+5. **Thresholds are locked** — never lower IC > 0.05 or Sharpe > 1.0 to manufacture a winner
 
-See `CLAUDE.md` for full specification.
+See `experiments/winner.md` for the Phase 3 architecture spec.
 
 ---
 
@@ -89,6 +93,8 @@ See `CLAUDE.md` for full specification.
 config/          — settings, thresholds, ticker/FP lists
 data/            — Reddit + market loaders, feature store
 features/        — alignment (critical), reddit + market feature computation
+pipeline/        — feature builder, baselines, training, backtests, validation
+experiments/     — A/B/C architecture search, shared backtest/trainer, compare
 models/          — trainer, inference, registry
 signals/         — BUY/HOLD/AVOID generator, ranking, filters
 portfolio/       — position engine, sizing, risk rules
@@ -96,6 +102,5 @@ backtest/        — main loop, simulator, execution model, metrics
 analytics/       — reports, benchmark comparison
 api/             — FastAPI endpoints
 utils/           — logger, time utils, validators
-tests/           — mandatory tests (alignment tests run first)
-scripts/         — phase0_validate.py, seed, retrain, backtest runner
+tests/           — mandatory tests (alignment + backtest engine)
 ```
