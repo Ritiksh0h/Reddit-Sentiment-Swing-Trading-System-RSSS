@@ -38,7 +38,10 @@ try:
         data = _yf.download(ticker, start=start, end=end, auto_adjust=True, progress=False)
         if data.empty:
             return 0.0
-        return float(data["Close"].iloc[-1] / data["Close"].iloc[0] - 1)
+        if isinstance(data.columns, __import__("pandas").MultiIndex):
+            data.columns = data.columns.get_level_values(0)
+        close = data["Close"]
+        return float(close.iloc[-1] / close.iloc[0] - 1)
 except ImportError:
     def _fetch_return(ticker: str, **_) -> float:
         return {"SPY": 0.2605, "QQQ": 0.2550}.get(ticker, 0.0)

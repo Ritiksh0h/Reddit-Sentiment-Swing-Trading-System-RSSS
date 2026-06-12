@@ -9,9 +9,9 @@ Experiment C passed all three Phase 2 criteria and achieved the highest Sharpe r
 | IC (test 2024)  | 0.1108       | > 0.05    | PASS |
 | Sharpe ratio    | 2.829      | > 1.0     | PASS |
 | Total return    | 87.6%        | > SPY     | PASS |
-| SPY 2024        | 26.1%        | benchmark | —      |
+| SPY 2024        | 26.0%        | benchmark | —      |
 | Beats SPY       | YES         | required  | PASS |
-| QQQ 2024        | 25.5%        | benchmark | —      |
+| QQQ 2024        | 28.8%        | benchmark | —      |
 | Beats QQQ       | YES         | optional  | PASS |
 
 ## Architecture

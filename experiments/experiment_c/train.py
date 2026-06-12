@@ -64,7 +64,10 @@ try:
                             auto_adjust=True, progress=False)
         if data.empty:
             return {"SPY": SPY_2024_RETURN, "QQQ": QQQ_2024_RETURN}.get(ticker, 0.0)
-        return float(data["Close"].iloc[-1] / data["Close"].iloc[0] - 1)
+        if isinstance(data.columns, __import__("pandas").MultiIndex):
+            data.columns = data.columns.get_level_values(0)
+        close = data["Close"]
+        return float(close.iloc[-1] / close.iloc[0] - 1)
 except ImportError:
     def _fetch_2024_return(ticker: str) -> float:
         return {"SPY": SPY_2024_RETURN, "QQQ": QQQ_2024_RETURN}.get(ticker, 0.0)
