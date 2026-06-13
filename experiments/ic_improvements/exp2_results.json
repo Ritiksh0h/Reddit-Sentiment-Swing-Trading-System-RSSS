@@ -1,0 +1,22 @@
+{
+  "Baseline (raw features)": {
+    "ic": 0.10325642458569534,
+    "improvement": 0.0,
+    "n_features": 14
+  },
+  "Reddit ranked only": {
+    "ic": 0.08512043887094704,
+    "improvement": -0.018135985714748296,
+    "n_features": 14
+  },
+  "Market+Reddit ranked": {
+    "ic": 0.10164420704980531,
+    "improvement": -0.001612217535890026,
+    "n_features": 17
+  },
+  "All ranked": {
+    "ic": 0.008310383484107729,
+    "improvement": -0.09494604110158761,
+    "n_features": 9
+  }
+}

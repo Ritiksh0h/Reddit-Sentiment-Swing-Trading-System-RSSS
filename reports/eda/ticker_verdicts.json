@@ -1,0 +1,236 @@
+{
+  "AMC": {
+    "n_total": 321,
+    "n_train": "312",
+    "n_test": "9",
+    "ic_sentiment": 0.03224942081444188,
+    "ic_momentum": -0.053764076740001165,
+    "ic_rsi": -0.13455295466418993,
+    "verdict": "KEEP"
+  },
+  "ASTS": {
+    "n_total": 26,
+    "n_train": "8",
+    "n_test": "18",
+    "ic_sentiment": 0.13654589555485908,
+    "ic_momentum": -0.0947008547008547,
+    "ic_rsi": -0.15418803418803417,
+    "verdict": "DROP"
+  },
+  "BA": {
+    "n_total": 71,
+    "n_train": "48",
+    "n_test": "23",
+    "ic_sentiment": -0.010098638972140032,
+    "ic_momentum": -0.20922199865861832,
+    "ic_rsi": -0.1982226693494299,
+    "verdict": "MARGINAL"
+  },
+  "BABA": {
+    "n_total": 153,
+    "n_train": "146",
+    "n_test": "7",
+    "ic_sentiment": -0.03891557478963206,
+    "ic_momentum": -0.08658678782517791,
+    "ic_rsi": -0.1214500154128637,
+    "verdict": "MARGINAL"
+  },
+  "BB": {
+    "n_total": 78,
+    "n_train": "75",
+    "n_test": "3",
+    "ic_sentiment": 0.019759522008291033,
+    "ic_momentum": -0.2802549381623207,
+    "ic_rsi": -0.2687456135412888,
+    "verdict": "MARGINAL"
+  },
+  "BBBY": {
+    "n_total": 107,
+    "n_train": "107",
+    "n_test": "0",
+    "ic_sentiment": -0.03757055665642144,
+    "ic_momentum": -0.09484903701091323,
+    "ic_rsi": -0.21414996375320833,
+    "verdict": "MARGINAL"
+  },
+  "COIN": {
+    "n_total": 112,
+    "n_train": "71",
+    "n_test": "41",
+    "ic_sentiment": -0.05740807476242617,
+    "ic_momentum": -0.11072197355383197,
+    "ic_rsi": -0.14866573273652922,
+    "verdict": "MARGINAL"
+  },
+  "DKNG": {
+    "n_total": 58,
+    "n_train": "58",
+    "n_test": "0",
+    "ic_sentiment": 0.10857055757017331,
+    "ic_momentum": 0.025377587744932175,
+    "ic_rsi": -0.0061213817712018215,
+    "verdict": "KEEP"
+  },
+  "F": {
+    "n_total": 72,
+    "n_train": "71",
+    "n_test": "1",
+    "ic_sentiment": -0.004668876424647057,
+    "ic_momentum": -0.19412823975818386,
+    "ic_rsi": -0.0286192038073188,
+    "verdict": "MARGINAL"
+  },
+  "LCID": {
+    "n_total": 29,
+    "n_train": "28",
+    "n_test": "1",
+    "ic_sentiment": 0.1301713725695155,
+    "ic_momentum": 0.4985221674876846,
+    "ic_rsi": 0.4270935960591132,
+    "verdict": "DROP"
+  },
+  "META": {
+    "n_total": 177,
+    "n_train": "141",
+    "n_test": "36",
+    "ic_sentiment": -0.02432856031583846,
+    "ic_momentum": -0.2553323176537803,
+    "ic_rsi": -0.23415886151555548,
+    "verdict": "MARGINAL"
+  },
+  "MSFT": {
+    "n_total": 373,
+    "n_train": "310",
+    "n_test": "63",
+    "ic_sentiment": 0.0020757863744305283,
+    "ic_momentum": 0.003657017751161851,
+    "ic_rsi": -0.09483573134111614,
+    "verdict": "MARGINAL"
+  },
+  "MSTR": {
+    "n_total": 33,
+    "n_train": "2",
+    "n_test": "31",
+    "ic_sentiment": -0.23303244364948464,
+    "ic_momentum": -0.28375668449197866,
+    "ic_rsi": -0.1574197860962567,
+    "verdict": "DROP"
+  },
+  "NFLX": {
+    "n_total": 114,
+    "n_train": "106",
+    "n_test": "8",
+    "ic_sentiment": -0.1014374703418624,
+    "ic_momentum": -0.10844251837751363,
+    "ic_rsi": -0.14888722383102815,
+    "verdict": "MARGINAL"
+  },
+  "NIO": {
+    "n_total": 181,
+    "n_train": "177",
+    "n_test": "4",
+    "ic_sentiment": 0.02645393673541245,
+    "ic_momentum": 0.0033088458502823145,
+    "ic_rsi": 0.06189869062797239,
+    "verdict": "KEEP"
+  },
+  "NOK": {
+    "n_total": 62,
+    "n_train": "62",
+    "n_test": "0",
+    "ic_sentiment": 0.2538451126570951,
+    "ic_momentum": 0.048777416836644764,
+    "ic_rsi": 0.03331570597567425,
+    "verdict": "KEEP"
+  },
+  "PLTR": {
+    "n_total": 203,
+    "n_train": "166",
+    "n_test": "37",
+    "ic_sentiment": -0.03264548009357621,
+    "ic_momentum": -0.12608341390499528,
+    "ic_rsi": -0.07425312221167062,
+    "verdict": "MARGINAL"
+  },
+  "PYPL": {
+    "n_total": 50,
+    "n_train": "40",
+    "n_test": "10",
+    "ic_sentiment": 0.039408880933074354,
+    "ic_momentum": 0.17176470588235296,
+    "ic_rsi": 0.09138055222088834,
+    "verdict": "MARGINAL"
+  },
+  "RIOT": {
+    "n_total": 29,
+    "n_train": "27",
+    "n_test": "2",
+    "ic_sentiment": 0.3904421756429322,
+    "ic_momentum": -0.05221674876847289,
+    "ic_rsi": 0.08423645320197042,
+    "verdict": "DROP"
+  },
+  "RIVN": {
+    "n_total": 21,
+    "n_train": "11",
+    "n_test": "10",
+    "ic_sentiment": 0.05521273431829084,
+    "ic_momentum": 0.08571428571428572,
+    "ic_rsi": -0.03766233766233767,
+    "verdict": "DROP"
+  },
+  "SMCI": {
+    "n_total": 34,
+    "n_train": "0",
+    "n_test": "34",
+    "ic_sentiment": 0.3324408730080371,
+    "ic_momentum": 0.21466768525592053,
+    "ic_rsi": 0.044461420932009166,
+    "verdict": "DROP"
+  },
+  "SNAP": {
+    "n_total": 62,
+    "n_train": "58",
+    "n_test": "4",
+    "ic_sentiment": -0.09662258974074435,
+    "ic_momentum": 0.01971745863866435,
+    "ic_rsi": 0.010198685502757423,
+    "verdict": "MARGINAL"
+  },
+  "SPCE": {
+    "n_total": 125,
+    "n_train": "124",
+    "n_test": "1",
+    "ic_sentiment": 0.18803879367744755,
+    "ic_momentum": 0.16972043010752685,
+    "ic_rsi": 0.17975422427035326,
+    "verdict": "KEEP"
+  },
+  "TSLA": {
+    "n_total": 1149,
+    "n_train": "952",
+    "n_test": "197",
+    "ic_sentiment": 0.08356713210507018,
+    "ic_momentum": 0.1056858384064761,
+    "ic_rsi": 0.11433421552158209,
+    "verdict": "KEEP"
+  },
+  "UBER": {
+    "n_total": 38,
+    "n_train": "36",
+    "n_test": "2",
+    "ic_sentiment": -0.004050799818652685,
+    "ic_momentum": -0.17737170368749317,
+    "ic_rsi": -0.15417441733231205,
+    "verdict": "MARGINAL"
+  },
+  "WMT": {
+    "n_total": 29,
+    "n_train": "28",
+    "n_test": "1",
+    "ic_sentiment": 0.0036950363625514095,
+    "ic_momentum": -0.41871921182266003,
+    "ic_rsi": -0.3655172413793103,
+    "verdict": "DROP"
+  }
+}

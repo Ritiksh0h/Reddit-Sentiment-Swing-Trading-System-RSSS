@@ -1,0 +1,21 @@
+{
+  "baseline_ic": 0.0935,
+  "final_ic": 0.152243,
+  "improvements": {
+    "exp1_neutral_target": -0.021869,
+    "exp2_percentile_rank": 0.0,
+    "exp3_zscore_gate": 0.037546,
+    "exp4_combined": 0.058743,
+    "exp5_ranking_obj": 0.0
+  },
+  "adopted": {
+    "exp1_neutral_target": false,
+    "exp2_percentile_rank": false,
+    "exp3_zscore_gate": true,
+    "exp4_combined": true,
+    "exp5_ranking_obj": false
+  },
+  "recommendation": "STRONG \u2014 IC >= 0.10 achieved",
+  "action": "Incorporate adopted experiments into pipeline/01_feature_builder.py",
+  "phase3_ready": true
+}
