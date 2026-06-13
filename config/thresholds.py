@@ -150,3 +150,29 @@ EXPERIMENT_MIN_IC: float = 0.05          # must exceed to be a valid winner
 EXPERIMENT_MIN_SHARPE: float = 1.0       # must exceed to be a valid winner
 
 TAKE_PROFIT_CAP: float = 0.15            # close position early if unrealized gain >= 15%
+
+# ---------------------------------------------------------------------------
+# Signal Validation Sprint — Clean Feature Set (adopted unconditionally)
+# Redundant features removed per correlation matrix (EDA Task 4):
+#   rsi_14/returns_20d/post_count_3d/weighted_sentiment/mention_growth_1d/
+#   unique_authors_1d/avg_sentiment_3d/atr_14/sentiment_std/total_upvotes_1d/
+#   total_comments_1d all dropped (IC < 0.002 or |r| > 0.75 with kept feature)
+# ---------------------------------------------------------------------------
+CLEAN_FEATURES: list = [
+    # Market family (5)
+    'returns_1d',
+    'returns_5d',
+    'relative_volume',
+    'dist_from_20ma',
+    'dist_from_50ma',
+    # Sentiment family (3)
+    'avg_sentiment_1d',
+    'sentiment_accel',
+    'bullish_ratio',
+    # Attention family (2)
+    'post_count_1d',
+    'mention_growth_7d',
+]
+
+# Tickers with insufficient training rows (<30) or leakage risk
+DROP_TICKERS: list = ['ASTS', 'LCID', 'MSTR', 'RIOT', 'RIVN', 'SMCI', 'WMT']

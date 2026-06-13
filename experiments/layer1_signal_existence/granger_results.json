@@ -1,0 +1,157 @@
+{
+  "results": {
+    "SENTIMENT": {
+      "2019": {
+        "avg_sentiment_1d": {
+          "p_value": 0.0749,
+          "significant": false,
+          "n": 161
+        },
+        "sentiment_accel": {
+          "p_value": 0.1208,
+          "significant": false,
+          "n": 161
+        }
+      },
+      "2020": {
+        "avg_sentiment_1d": {
+          "p_value": 0.2884,
+          "significant": false,
+          "n": 817
+        },
+        "sentiment_accel": {
+          "p_value": 0.877,
+          "significant": false,
+          "n": 817
+        }
+      },
+      "2021": {
+        "avg_sentiment_1d": {
+          "p_value": 0.1369,
+          "significant": false,
+          "n": 1269
+        },
+        "sentiment_accel": {
+          "p_value": 0.6685,
+          "significant": false,
+          "n": 1269
+        }
+      },
+      "2022": {
+        "avg_sentiment_1d": {
+          "p_value": 0.9552,
+          "significant": false,
+          "n": 534
+        },
+        "sentiment_accel": {
+          "p_value": 0.368,
+          "significant": false,
+          "n": 534
+        }
+      },
+      "2023": {
+        "avg_sentiment_1d": {
+          "p_value": 0.5938,
+          "significant": false,
+          "n": 325
+        },
+        "sentiment_accel": {
+          "p_value": 0.0723,
+          "significant": false,
+          "n": 325
+        }
+      },
+      "2024": {
+        "avg_sentiment_1d": {
+          "p_value": 0.9522,
+          "significant": false,
+          "n": 446
+        },
+        "sentiment_accel": {
+          "p_value": 0.1828,
+          "significant": false,
+          "n": 446
+        }
+      }
+    },
+    "ATTENTION": {
+      "2019": {
+        "post_count_1d": {
+          "p_value": 0.8462,
+          "significant": false,
+          "n": 161
+        },
+        "mention_growth_7d": {
+          "p_value": 0.4165,
+          "significant": false,
+          "n": 161
+        }
+      },
+      "2020": {
+        "post_count_1d": {
+          "p_value": 0.0524,
+          "significant": false,
+          "n": 817
+        },
+        "mention_growth_7d": {
+          "p_value": 0.9476,
+          "significant": false,
+          "n": 817
+        }
+      },
+      "2021": {
+        "post_count_1d": {
+          "p_value": 0.0278,
+          "significant": true,
+          "n": 1269
+        },
+        "mention_growth_7d": {
+          "p_value": 0.0113,
+          "significant": true,
+          "n": 1269
+        }
+      },
+      "2022": {
+        "post_count_1d": {
+          "p_value": 0.674,
+          "significant": false,
+          "n": 534
+        },
+        "mention_growth_7d": {
+          "p_value": 0.4704,
+          "significant": false,
+          "n": 534
+        }
+      },
+      "2023": {
+        "post_count_1d": {
+          "p_value": 0.0761,
+          "significant": false,
+          "n": 325
+        },
+        "mention_growth_7d": {
+          "p_value": 0.5965,
+          "significant": false,
+          "n": 325
+        }
+      },
+      "2024": {
+        "post_count_1d": {
+          "p_value": 0.9365,
+          "significant": false,
+          "n": 446
+        },
+        "mention_growth_7d": {
+          "p_value": 0.3298,
+          "significant": false,
+          "n": 446
+        }
+      }
+    }
+  },
+  "sentiment_sig_years": 0,
+  "attention_sig_years": 1,
+  "any_signal": false,
+  "proceed_to_layer2": false,
+  "limitation_note": "Granger detects predictive lag only, not true causality."
+}

@@ -1,0 +1,73 @@
+{
+  "original_walk_forward_ics": [
+    0.09694317638012365,
+    0.06530159229545733,
+    0.006617401646082463
+  ],
+  "clean_walk_forward_ics": [
+    0.0378353266969531,
+    0.03260832328316991,
+    0.07003381235579702
+  ],
+  "regime_gate": {
+    "verdict": "ADOPT",
+    "mean_ic": 0.0468,
+    "pct_positive": 1.0,
+    "worst_ic": 0.0326,
+    "ic_std": 0.0165,
+    "gates": {
+      "mean_ic_positive": true,
+      "sign_consistency_60": true,
+      "worst_window_gt_m002": true,
+      "variance_below_008": true
+    }
+  },
+  "permutation_test": {
+    "real_ic": 0.0575,
+    "perm_ic_mean": 0.0202,
+    "perm_ic_std": 0.0469,
+    "p_value": 0.2,
+    "stage_a_pass": false,
+    "stage_b_pass": false,
+    "n_permutations": 100
+  },
+  "effective_ic": {
+    "effective_ic": 0.0022873514320723137,
+    "coverage": 0.1256,
+    "stability": 0.6466,
+    "turnover_penalty": 0.002381
+  },
+  "r4_walkforward_pass": false,
+  "orig_mean_ic": 0.0563,
+  "clean_mean_ic": 0.0468,
+  "verdict": "REJECT",
+  "note": "Gates failed: ['R2_permutation', 'R4_walkforward']. Keep original 17 features unchanged.",
+  "adopted_features": [
+    "returns_1d",
+    "returns_5d",
+    "returns_20d",
+    "rsi_14",
+    "atr_14",
+    "relative_volume",
+    "dist_from_20ma",
+    "dist_from_50ma",
+    "avg_sentiment_1d",
+    "avg_sentiment_3d",
+    "weighted_sentiment",
+    "sentiment_std",
+    "sentiment_accel",
+    "bullish_ratio",
+    "post_count_1d",
+    "mention_growth_1d",
+    "mention_growth_7d"
+  ],
+  "dropped_tickers": [
+    "ASTS",
+    "LCID",
+    "MSTR",
+    "RIOT",
+    "RIVN",
+    "SMCI",
+    "WMT"
+  ]
+}

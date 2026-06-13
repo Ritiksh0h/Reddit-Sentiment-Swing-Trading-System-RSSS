@@ -1,0 +1,49 @@
+{
+  "ml_classifier_available": true,
+  "classifier_coefficients": {
+    "spy_ret_20d": 0.0168,
+    "spy_ret_60d": 0.0332,
+    "spy_vol_20d": -0.5007,
+    "spy_above_200": -0.0503,
+    "spy_above_50": 0.1482,
+    "spy_momentum_diff": -0.0238
+  },
+  "production_rules": {
+    "positive": "SPY above 200MA AND spy_ret_60d > 0 AND rolling_30d_IC > 0.03",
+    "negative": "SPY below 200MA OR spy_ret_60d < -0.10",
+    "neutral": "everything else"
+  },
+  "position_sizing": {
+    "positive": 1.0,
+    "neutral": 0.75,
+    "negative": 0.5
+  },
+  "known_yearly_regimes": {
+    "2019": {
+      "ic": 0.086,
+      "expected": "POSITIVE"
+    },
+    "2020": {
+      "ic": 0.028,
+      "expected": "POSITIVE"
+    },
+    "2021": {
+      "ic": -0.018,
+      "expected": "NEUTRAL"
+    },
+    "2022": {
+      "ic": -0.083,
+      "expected": "NEGATIVE"
+    },
+    "2023": {
+      "ic": -0.103,
+      "expected": "NEUTRAL"
+    },
+    "2024": {
+      "ic": 0.115,
+      "expected": "POSITIVE"
+    }
+  },
+  "hard_case_note": "2021 and 2023 both have SPY uptrend but negative IC. Rule-based classifier cannot separate them. Use rolling_30d_IC as live signal.",
+  "target_leakage_check": "CLEAN: regime target uses backward-looking IC only. Regime features use SPY only, no stock-level returns."
+}
