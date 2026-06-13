@@ -152,27 +152,38 @@ EXPERIMENT_MIN_SHARPE: float = 1.0       # must exceed to be a valid winner
 TAKE_PROFIT_CAP: float = 0.15            # close position early if unrealized gain >= 15%
 
 # ---------------------------------------------------------------------------
-# Signal Validation Sprint — Clean Feature Set (adopted unconditionally)
-# Redundant features removed per correlation matrix (EDA Task 4):
-#   rsi_14/returns_20d/post_count_3d/weighted_sentiment/mention_growth_1d/
-#   unique_authors_1d/avg_sentiment_3d/atr_14/sentiment_std/total_upvotes_1d/
-#   total_comments_1d all dropped (IC < 0.002 or |r| > 0.75 with kept feature)
+# Phase 3 Feature Set — 11 features (8 market + 3 attention)
+# L1 Granger test: sentiment 0/6 years significant → 6 sentiment features dropped.
+# L3 family validation: pruning rejected → returns_20d/rsi_14/atr_14/mention_growth_1d
+#   re-included from original 17. CLEAN_FEATURES alias kept for backward compat.
 # ---------------------------------------------------------------------------
-CLEAN_FEATURES: list = [
-    # Market family (5)
+PHASE3_FEATURES: list = [
+    # Market family (8)
     'returns_1d',
     'returns_5d',
+    'returns_20d',
+    'rsi_14',
+    'atr_14',
     'relative_volume',
     'dist_from_20ma',
     'dist_from_50ma',
-    # Sentiment family (3)
-    'avg_sentiment_1d',
-    'sentiment_accel',
-    'bullish_ratio',
-    # Attention family (2)
+    # Attention family (3)
     'post_count_1d',
+    'mention_growth_1d',
     'mention_growth_7d',
 ]
+
+# Sentiment features dropped per L1 Granger (0/6 years significant)
+SENTIMENT_FEATURES_DROPPED: list = [
+    'avg_sentiment_1d',
+    'avg_sentiment_3d',
+    'weighted_sentiment',
+    'sentiment_std',
+    'sentiment_accel',
+    'bullish_ratio',
+]
+
+CLEAN_FEATURES = PHASE3_FEATURES  # backward-compat alias
 
 # Tickers with insufficient training rows (<30) or leakage risk
 DROP_TICKERS: list = ['ASTS', 'LCID', 'MSTR', 'RIOT', 'RIVN', 'SMCI', 'WMT']

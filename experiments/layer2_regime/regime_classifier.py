@@ -105,7 +105,8 @@ if use_ml and len(train) >= 20 and len(test) >= 10:
     X_tr_s   = scaler.fit_transform(X_tr)
     X_te_s   = scaler.transform(X_te)
 
-    clf = LogisticRegression(random_state=42, max_iter=1000, C=1.0)
+    clf = LogisticRegression(random_state=42, max_iter=1000, C=1.0,
+                            class_weight='balanced')
     clf.fit(X_tr_s, y_tr)
 
     train_acc = clf.score(X_tr_s, y_tr)
@@ -114,6 +115,8 @@ if use_ml and len(train) >= 20 and len(test) >= 10:
     print(classification_report(y_te, clf.predict(X_te_s),
                                  target_names=['Negative', 'Positive'],
                                  zero_division=0))
+    print('DIAGNOSTIC NOTE: ML classifier is exploratory only. class_weight=balanced '
+          'fixes majority-class collapse. Production sizing uses rule-based logic below.')
     for feat, coef in zip(REGIME_FEATURES, clf.coef_[0]):
         clf_coefs[feat] = round(float(coef), 4)
         print(f'  {feat:<25} coef={coef:>+8.4f}')
@@ -156,6 +159,9 @@ for regime, rule in REGIME_RULES.items():
 
 output = {
     'ml_classifier_available':  bool(use_ml),
+    'ml_classifier_purpose':    'Diagnostic only — exploratory correlation between SPY features and sentiment IC regimes.',
+    'ml_classifier_note':       'class_weight=balanced corrects majority-class collapse from 62/38 imbalance. Positive recall was 5% without it. ML output does NOT drive production sizing.',
+    'production_regime_basis':  'Rule-based: SPY above 200MA + spy_ret_60d > 0 + rolling_30d_IC > 0.03.',
     'classifier_coefficients':  clf_coefs,
     'production_rules':         REGIME_RULES,
     'position_sizing':          POSITION_SIZING,

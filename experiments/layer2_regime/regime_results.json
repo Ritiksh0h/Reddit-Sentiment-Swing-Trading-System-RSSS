@@ -1,12 +1,15 @@
 {
   "ml_classifier_available": true,
+  "ml_classifier_purpose": "Diagnostic only \u2014 exploratory correlation between SPY features and sentiment IC regimes.",
+  "ml_classifier_note": "class_weight=balanced corrects majority-class collapse from 62/38 imbalance. Positive recall was 5% without it. ML output does NOT drive production sizing.",
+  "production_regime_basis": "Rule-based: SPY above 200MA + spy_ret_60d > 0 + rolling_30d_IC > 0.03.",
   "classifier_coefficients": {
-    "spy_ret_20d": 0.0168,
-    "spy_ret_60d": 0.0332,
-    "spy_vol_20d": -0.5007,
-    "spy_above_200": -0.0503,
-    "spy_above_50": 0.1482,
-    "spy_momentum_diff": -0.0238
+    "spy_ret_20d": -0.0137,
+    "spy_ret_60d": 0.0203,
+    "spy_vol_20d": -0.5032,
+    "spy_above_200": -0.046,
+    "spy_above_50": 0.1648,
+    "spy_momentum_diff": -0.0319
   },
   "production_rules": {
     "positive": "SPY above 200MA AND spy_ret_60d > 0 AND rolling_30d_IC > 0.03",
