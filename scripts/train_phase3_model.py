@@ -27,9 +27,16 @@ FEATURES     = ARCH['features']   # 11 features
 DROP_TICKERS = set(ARCH['drop_tickers'])
 
 XGB_PARAMS = dict(
-    n_estimators=500, max_depth=4, learning_rate=0.05,
-    subsample=0.8, colsample_bytree=0.8, min_child_weight=10,
-    reg_alpha=0.1, reg_lambda=1.0, random_state=42, n_jobs=-1,
+    n_estimators=200,       # was 500 — fewer trees for smaller feature set
+    max_depth=3,            # was 4 — shallower trees reduce overfit
+    learning_rate=0.05,
+    subsample=0.6,          # was 0.8 — more aggressive sampling
+    colsample_bytree=0.6,   # was 0.8 — sample fewer features per tree
+    min_child_weight=20,    # was 10 — require more samples per leaf
+    reg_alpha=0.5,          # was 0.1 — stronger L1 regularization
+    reg_lambda=2.0,         # was 1.0 — stronger L2 regularization
+    random_state=42,
+    n_jobs=-1,
     objective='reg:squarederror',
 )
 
