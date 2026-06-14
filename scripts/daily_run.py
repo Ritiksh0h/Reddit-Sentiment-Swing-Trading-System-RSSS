@@ -154,26 +154,58 @@ def run(reddit_counts: dict, today: str = None) -> dict:
         if pos.ticker not in current_prices:
             try:
                 import yfinance as _yf
-                mkt = _yf.download(
-                    pos.ticker, period='5d',
-                    auto_adjust=True, progress=False,
-                )
+                from datetime import date as _date, timedelta as _td
+
+                # Use date-specific fetch when today is a historical simulation date.
+                # - Live trading:  today == actual date → period='5d' is correct
+                # - Backfill test: today == historical date → fetch that specific date
+                #
+                # Detection: if today < actual current date, we're in backfill mode.
+                actual_today = _date.today().isoformat()
+                is_backfill  = today < actual_today
+
+                if is_backfill:
+                    # Fetch a 3-day window around the exit date for reliability.
+                    # yfinance may not return data for weekends or holidays,
+                    # so we take the last available close in the window.
+                    exit_date  = _date.fromisoformat(today)
+                    fetch_end  = (exit_date + _td(days=3)).isoformat()
+                    mkt = _yf.download(
+                        pos.ticker,
+                        start=today,
+                        end=fetch_end,
+                        auto_adjust=True,
+                        progress=False,
+                    )
+                else:
+                    # Live trading — fetch recent prices, take latest close
+                    mkt = _yf.download(
+                        pos.ticker,
+                        period='5d',
+                        auto_adjust=True,
+                        progress=False,
+                    )
+
                 if isinstance(mkt.columns, pd.MultiIndex):
                     mkt.columns = mkt.columns.get_level_values(0)
+
                 if len(mkt) > 0:
                     live_price = float(mkt['Close'].iloc[-1])
                     current_prices[pos.ticker] = live_price
+                    fetch_mode = 'historical' if is_backfill else 'live'
                     logger.info(
                         f'exit_price_fetched ticker={pos.ticker} '
-                        f'price={live_price:.4f} (not in today signals)'
+                        f'price={live_price:.4f} mode={fetch_mode} '
+                        f'(not in today signals)'
                     )
                 else:
                     current_prices[pos.ticker] = pos.entry_price
                     logger.warning(
                         f'exit_price_fallback ticker={pos.ticker} '
                         f'using entry_price={pos.entry_price:.4f} '
-                        f'(yfinance returned empty)'
+                        f'(yfinance returned empty for date={today})'
                     )
+
             except Exception as e:
                 current_prices[pos.ticker] = pos.entry_price
                 logger.warning(
