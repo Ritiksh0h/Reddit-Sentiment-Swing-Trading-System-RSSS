@@ -10,6 +10,8 @@ Usage:
 import argparse
 import json
 import logging
+import socket
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,7 +31,40 @@ logging.basicConfig(
 logger = logging.getLogger('daily_run_live')
 
 
+def ensure_api_running(port: int = 8000) -> None:
+    """
+    Start uvicorn API server if not already running on the given port.
+    Called at the start of every daily run so the status endpoint
+    is always available after the pipeline executes.
+
+    Uses socket check to avoid launching a duplicate process.
+    Uvicorn runs in background — does not block the pipeline.
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        already_running = s.connect_ex(('localhost', port)) == 0
+
+    if already_running:
+        logger.info(f'api_server_already_running port={port}')
+        return
+
+    project_root = str(Path(__file__).parent.parent)
+    subprocess.Popen(
+        [
+            sys.executable, '-m', 'uvicorn',
+            'api.main:app',
+            '--port', str(port),
+            '--log-level', 'warning',
+        ],
+        cwd=project_root,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    logger.info(f'api_server_started port={port}')
+
+
 def main():
+    ensure_api_running()
+
     parser = argparse.ArgumentParser(description='RSSS live daily run')
     parser.add_argument('--dry-run', action='store_true',
                         help='Log signals but do not execute trades')

@@ -85,14 +85,23 @@ def run(reddit_counts: dict, today: str = None) -> dict:
         regime = None
 
     # ── 4. Data drift check ────────────────────────────────────────────────
+    # Drift check uses MAX post count (not mean) because:
+    # - Historical mean (53.2) = a busy ticker, not universe average
+    # - Universe average drops near-zero when few tickers are found
+    # - Max answers: "did at least one ticker have normal Reddit activity?"
+    post_counts     = [v.get('post_count_1d', 0) for v in reddit_counts.values()]
+    mention_growths = [
+        v.get('mention_growth_7d', 0)
+        for v in reddit_counts.values()
+        if v.get('mention_growth_7d', 1.0) != 1.0  # exclude placeholders
+    ]
+
     live_means = {
-        'post_count_1d': (
-            sum(v.get('post_count_1d', 0) for v in reddit_counts.values()) /
-            max(len(reddit_counts), 1)
-        ),
+        'post_count_1d': max(post_counts) if post_counts else 0,
+        # Only pass real values; drift_monitor skips this if history is immature
         'mention_growth_7d': (
-            sum(v.get('mention_growth_7d', 0) for v in reddit_counts.values()) /
-            max(len(reddit_counts), 1)
+            sum(mention_growths) / len(mention_growths)
+            if mention_growths else 1.0
         ),
     }
 
