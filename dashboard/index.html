@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RSSS — Trading Dashboard</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<style>
+/* ── Design tokens ─────────────────────────────────────── */
+:root {
+  --bg:      #07090f;
+  --s1:      #0d1117;
+  --s2:      #131b25;
+  --border:  #1c2a3a;
+  --text:    #c4d4e4;
+  --dim:     #4a6a8a;
+  --green:   #00d68f;
+  --gbg:     rgba(0,214,143,0.08);
+  --red:     #ff4560;
+  --rbg:     rgba(255,69,96,0.08);
+  --amber:   #ffb700;
+  --abg:     rgba(255,183,0,0.08);
+  --blue:    #38b6ff;
+  --bbg:     rgba(56,182,255,0.08);
+  --mono:    'JetBrains Mono', monospace;
+  --body:    'Inter', sans-serif;
+  --display: 'Syne', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: var(--body); font-size: 14px; line-height: 1.6; }
+
+/* ── Header ───────────────────────────────────────────── */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(7,9,15,0.95); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.brand { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--green); letter-spacing: 0.1em; white-space: nowrap; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.status-dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.status-dot.red   { background: var(--red);   box-shadow: 0 0 6px var(--red); }
+.status-dot.amber { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+.last-updated { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+select, button {
+  font-family: var(--mono); font-size: 11px;
+  background: var(--s2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 3px;
+  padding: 5px 10px; cursor: pointer;
+}
+button:hover { border-color: var(--green); color: var(--green); }
+.btn-green { background: var(--gbg); border-color: var(--green); color: var(--green); }
+.btn-red   { background: var(--rbg); border-color: var(--red);   color: var(--red); }
+
+/* ── Layout ───────────────────────────────────────────── */
+main { padding: 20px 24px; max-width: 1600px; margin: 0 auto; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; }
+.full   { grid-column: 1 / -1; }
+.section { margin-bottom: 20px; }
+
+/* ── Panel ────────────────────────────────────────────── */
+.panel { background: var(--s1); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px; border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.panel-header:hover { background: rgba(255,255,255,0.02); }
+.panel-title { font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); }
+.panel-body { padding: 18px; }
+.panel.collapsed .panel-body { display: none; }
+.collapse-icon { font-size: 10px; color: var(--dim); transition: transform 0.15s; }
+
+/* ── KPI Cards ────────────────────────────────────────── */
+.kpi-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; margin-bottom: 20px; }
+.kpi { background: var(--s1); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px; }
+.kpi-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; }
+.kpi-value { font-family: var(--mono); font-size: 26px; font-weight: 600; line-height: 1; color: #e8f4ff; }
+.kpi-sub   { font-size: 11px; color: var(--dim); margin-top: 4px; }
+.kpi.good  { border-color: var(--green); background: var(--gbg); }
+.kpi.bad   { border-color: var(--red);   background: var(--rbg); }
+.kpi.warn  { border-color: var(--amber); background: var(--abg); }
+
+/* ── Tables ───────────────────────────────────────────── */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+th { text-align: left; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--dim); padding: 0 12px 10px 0; border-bottom: 1px solid var(--border); font-weight: 400; white-space: nowrap; }
+td { padding: 9px 12px 9px 0; border-bottom: 1px solid rgba(28,42,58,0.5); vertical-align: middle; }
+tr:last-child td { border: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.pos { color: var(--green); }
+.neg { color: var(--red); }
+.neu { color: var(--amber); }
+.dim-text { color: var(--dim); }
+.ticker-badge { font-family: var(--mono); font-size: 11px; font-weight: 600; background: var(--s2); border: 1px solid var(--border); padding: 2px 8px; border-radius: 3px; color: #e8f4ff; }
+
+/* ── Badges ───────────────────────────────────────────── */
+.regime { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 2px; letter-spacing: 0.1em; text-transform: uppercase; }
+.regime.positive { background: var(--gbg); color: var(--green); border: 1px solid var(--green); }
+.regime.neutral  { background: var(--abg); color: var(--amber); border: 1px solid var(--amber); }
+.regime.negative { background: var(--rbg); color: var(--red);   border: 1px solid var(--red); }
+.regime.unknown  { background: var(--s2);  color: var(--dim);   border: 1px solid var(--border); }
+
+.gate { display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 3px; letter-spacing: 0.1em; text-transform: uppercase; }
+.gate.GREEN { background: var(--gbg); color: var(--green); border: 1px solid var(--green); }
+.gate.AMBER { background: var(--abg); color: var(--amber); border: 1px solid var(--amber); }
+.gate.RED   { background: var(--rbg); color: var(--red);   border: 1px solid var(--red); }
+.gate.NONE  { background: var(--s2);  color: var(--dim);   border: 1px solid var(--border); }
+
+/* ── Filters ──────────────────────────────────────────── */
+.filter-bar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+.filter-bar select, .filter-bar input {
+  font-family: var(--mono); font-size: 11px; background: var(--s2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 3px; padding: 5px 10px;
+}
+
+/* ── Settings sliders ─────────────────────────────────── */
+.setting-row { display: grid; grid-template-columns: 220px 1fr 70px; gap: 12px; align-items: center; margin-bottom: 14px; }
+.setting-label { font-family: var(--mono); font-size: 11px; color: var(--text); }
+input[type=range] { width: 100%; accent-color: var(--green); background: transparent; cursor: pointer; }
+.setting-val { font-family: var(--mono); font-size: 12px; color: var(--green); text-align: right; }
+
+/* ── Charts ───────────────────────────────────────────── */
+.chart-wrap      { position: relative; }
+.chart-wrap      canvas { max-height: 260px; }
+.chart-wrap-tall canvas { max-height: 320px; }
+
+/* ── Perf stats row ───────────────────────────────────── */
+.stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+.stat { padding: 10px 14px; background: var(--s2); border-radius: 4px; }
+.stat-lbl { font-family: var(--mono); font-size: 9px; color: var(--dim); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 4px; }
+.stat-val { font-family: var(--mono); font-size: 20px; font-weight: 600; }
+
+/* ── Empty / pre ──────────────────────────────────────── */
+.empty { padding: 32px; text-align: center; font-family: var(--mono); font-size: 12px; color: var(--dim); }
+pre.log-view { font-family: var(--mono); font-size: 11px; color: var(--dim); line-height: 1.6; overflow-x: auto; white-space: pre-wrap; }
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 1024px) { .grid-2, .grid-3, .grid-4, .kpi-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px)  { .grid-2, .grid-3, .grid-4, .kpi-grid { grid-template-columns: 1fr; } header { padding: 0 12px; } main { padding: 12px; } }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="brand">⬡ RSSS DASHBOARD</div>
+  <div class="header-right">
+    <span id="sys-indicator">
+      <span class="status-dot amber" id="sys-dot"></span>
+      <span id="sys-label" style="font-family:var(--mono);font-size:11px;">LOADING</span>
+    </span>
+    <span class="last-updated" id="last-updated">—</span>
+    <select id="refresh-select" onchange="setRefreshInterval(this.value)">
+      <option value="30000">Refresh 30s</option>
+      <option value="60000" selected>Refresh 1m</option>
+      <option value="300000">Refresh 5m</option>
+      <option value="0">Manual</option>
+    </select>
+    <button onclick="refreshAll()">↻ Refresh</button>
+  </div>
+</header>
+
+<!-- ── MAIN ───────────────────────────────────────────────────────────────── -->
+<main>
+
+  <!-- KPI Row -->
+  <div class="kpi-grid">
+    <div class="kpi" id="kpi-system">
+      <div class="kpi-label">System Status</div>
+      <div class="kpi-value" id="kpi-system-val">—</div>
+      <div class="kpi-sub" id="kpi-system-sub">Checking...</div>
+    </div>
+    <div class="kpi" id="kpi-regime">
+      <div class="kpi-label">Market Regime</div>
+      <div class="kpi-value" id="kpi-regime-val">—</div>
+      <div class="kpi-sub">Position size multiplier</div>
+    </div>
+    <div class="kpi" id="kpi-positions">
+      <div class="kpi-label">Open Positions</div>
+      <div class="kpi-value" id="kpi-positions-val">—</div>
+      <div class="kpi-sub">Max 3</div>
+    </div>
+    <div class="kpi" id="kpi-cash">
+      <div class="kpi-label">Available Cash</div>
+      <div class="kpi-value" id="kpi-cash-val">—</div>
+      <div class="kpi-sub" id="kpi-cash-pct">of $10,000</div>
+    </div>
+    <div class="kpi" id="kpi-ic">
+      <div class="kpi-label">Live IC Gate</div>
+      <div class="kpi-value" id="kpi-ic-val">—</div>
+      <div class="kpi-sub" id="kpi-ic-sub">30-day rolling</div>
+    </div>
+  </div>
+
+  <!-- Row 1: Equity Curve + Open Positions -->
+  <div class="grid-2 section">
+
+    <!-- Equity Curve -->
+    <div class="panel">
+      <div class="panel-header" onclick="togglePanel(this)">
+        <span class="panel-title">Equity Curve vs SPY</span>
+        <span class="collapse-icon">▾</span>
+      </div>
+      <div class="panel-body">
+        <div class="stat-row">
+          <div class="stat">
+            <div class="stat-lbl">Total Return</div>
+            <div class="stat-val" id="perf-return">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-lbl">Alpha vs SPY</div>
+            <div class="stat-val" id="perf-alpha">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-lbl">Win Rate</div>
+            <div class="stat-val" id="perf-winrate">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-lbl">Profit Factor</div>
+            <div class="stat-val" id="perf-pf">—</div>
+          </div>
+        </div>
+        <div class="chart-wrap-tall">
+          <canvas id="equity-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Open Positions -->
+    <div class="panel">
+      <div class="panel-header" onclick="togglePanel(this)">
+        <span class="panel-title">Open Positions</span>
+        <span class="collapse-icon">▾</span>
+      </div>
+      <div class="panel-body">
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ticker</th><th>Entry Price</th><th>Predicted Ret</th>
+                <th>Days Held</th><th>Regime</th><th>Posts</th>
+              </tr>
+            </thead>
+            <tbody id="positions-tbody">
+              <tr><td colspan="6" class="empty">No open positions</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Signal Log (full width) -->
+  <div class="panel section">
+    <div class="panel-header" onclick="togglePanel(this)">
+      <span class="panel-title">Signal Log</span>
+      <span class="collapse-icon">▾</span>
+    </div>
+    <div class="panel-body">
+      <div class="filter-bar">
+        <select id="filter-action" onchange="filterSignals()">
+          <option value="">All Actions</option>
+          <option value="OPEN">OPEN</option>
+          <option value="CLOSE">CLOSE</option>
+        </select>
+        <select id="filter-ticker" onchange="filterSignals()">
+          <option value="">All Tickers</option>
+        </select>
+        <input type="date" id="filter-date-start" onchange="filterSignals()" style="color:var(--text);">
+        <input type="date" id="filter-date-end"   onchange="filterSignals()" style="color:var(--text);">
+        <button onclick="clearFilters()">Clear</button>
+        <span id="signal-count" style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:4px;"></span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Ticker</th><th>Action</th>
+              <th>Predicted Ret</th><th>Regime</th><th>Post Count</th>
+              <th>Fill Price</th><th>Slippage</th>
+            </tr>
+          </thead>
+          <tbody id="signals-tbody">
+            <tr><td colspan="8" class="empty">No signals yet — run backfill test or wait for Monday</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Reddit Activity + Model Intelligence -->
+  <div class="grid-2 section">
+
+    <!-- Reddit Activity -->
+    <div class="panel">
+      <div class="panel-header" onclick="togglePanel(this)">
+        <span class="panel-title">Reddit Activity</span>
+        <span class="collapse-icon">▾</span>
+      </div>
+      <div class="panel-body">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--dim);">Drift Monitor:</span>
+          <span id="drift-status" style="font-family:var(--mono);font-size:11px;">—</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="posts-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Model Intelligence -->
+    <div class="panel">
+      <div class="panel-header" onclick="togglePanel(this)">
+        <span class="panel-title">Model Intelligence</span>
+        <span class="collapse-icon">▾</span>
+      </div>
+      <div class="panel-body">
+        <div style="display:flex;gap:24px;align-items:flex-start;margin-bottom:16px;">
+          <div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;">Live IC</div>
+            <div style="font-family:var(--mono);font-size:28px;font-weight:600;" id="model-ic">—</div>
+          </div>
+          <div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;">Gate</div>
+            <span id="model-gate" class="gate NONE">—</span>
+          </div>
+          <div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;">Baseline IC</div>
+            <div style="font-family:var(--mono);font-size:28px;font-weight:600;color:var(--dim);" id="model-baseline">0.073</div>
+          </div>
+        </div>
+        <div id="feature-note" style="font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:10px;">
+          Features (11-feature locked model):
+        </div>
+        <div class="chart-wrap">
+          <canvas id="feature-chart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Backfill Test Panel -->
+  <div class="panel section">
+    <div class="panel-header" onclick="togglePanel(this)">
+      <span class="panel-title">Backfill Test</span>
+      <span class="collapse-icon">▾</span>
+    </div>
+    <div class="panel-body">
+      <div class="filter-bar" style="margin-bottom:16px;">
+        <label style="font-family:var(--mono);font-size:11px;color:var(--dim);">Start</label>
+        <input type="date" id="bf-start" style="color:var(--text);">
+        <label style="font-family:var(--mono);font-size:11px;color:var(--dim);">End</label>
+        <input type="date" id="bf-end" style="color:var(--text);">
+        <button class="btn-green" onclick="runBackfill()">▶ Run Backfill</button>
+        <button onclick="loadBackfillLog()">↻ Refresh Log</button>
+        <span id="bf-status" style="font-family:var(--mono);font-size:11px;color:var(--dim);"></span>
+      </div>
+      <div id="bf-results" class="empty">
+        Select a date range and click Run Backfill. Results appear in logs/backfill_test.log.
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Panel -->
+  <div class="panel section">
+    <div class="panel-header" onclick="togglePanel(this)">
+      <span class="panel-title">Settings (Read-Only Reference)</span>
+      <span class="collapse-icon">▾</span>
+    </div>
+    <div class="panel-body">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--amber);margin-bottom:16px;padding:10px;background:var(--abg);border:1px solid var(--amber);border-radius:4px;">
+        ⚠ These settings are for reference only. Changes saved here do NOT auto-apply to the running pipeline — they record your intent for the next manual update to thresholds.py.
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Density Gate (min posts/day)</span>
+        <input type="range" id="s-density" min="5" max="25" step="1" value="10"
+               oninput="document.getElementById('s-density-val').textContent=this.value">
+        <span class="setting-val" id="s-density-val">10</span>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Min Predicted Return (%)</span>
+        <input type="range" id="s-minret" min="0.5" max="5" step="0.5" value="1"
+               oninput="document.getElementById('s-minret-val').textContent=this.value+'%'">
+        <span class="setting-val" id="s-minret-val">1%</span>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Max Positions</span>
+        <input type="range" id="s-maxpos" min="1" max="5" step="1" value="3"
+               oninput="document.getElementById('s-maxpos-val').textContent=this.value">
+        <span class="setting-val" id="s-maxpos-val">3</span>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Take-Profit Cap (%)</span>
+        <input type="range" id="s-tp" min="5" max="30" step="1" value="15"
+               oninput="document.getElementById('s-tp-val').textContent=this.value+'%'">
+        <span class="setting-val" id="s-tp-val">15%</span>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Regime — Positive Size</span>
+        <input type="range" id="s-rpos" min="50" max="100" step="5" value="100"
+               oninput="document.getElementById('s-rpos-val').textContent=this.value+'%'">
+        <span class="setting-val" id="s-rpos-val">100%</span>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Regime — Neutral Size</span>
+        <input type="range" id="s-rneu" min="30" max="100" step="5" value="75"
+               oninput="document.getElementById('s-rneu-val').textContent=this.value+'%'">
+        <span class="setting-val" id="s-rneu-val">75%</span>
+      </div>
+      <div class="setting-row">
+        <span class="setting-label">Regime — Negative Size</span>
+        <input type="range" id="s-rneg" min="10" max="80" step="5" value="50"
+               oninput="document.getElementById('s-rneg-val').textContent=this.value+'%'">
+        <span class="setting-val" id="s-rneg-val">50%</span>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button class="btn-green" onclick="saveSettings()">Save to API</button>
+        <button onclick="resetSettings()">Reset to Defaults</button>
+        <span id="settings-status" style="font-family:var(--mono);font-size:11px;color:var(--dim);margin-left:8px;"></span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────
+const CONFIG = {
+  apiBase:         'http://localhost:8000',
+  refreshInterval: 60000,
+};
+
+let refreshTimer = null;
+let allSignals   = [];
+let equityChart  = null;
+let postsChart   = null;
+let featureChart = null;
+
+// ── Panel collapse ─────────────────────────────────────────────────────────
+function togglePanel(header) {
+  header.parentElement.classList.toggle('collapsed');
+  const icon = header.querySelector('.collapse-icon');
+  icon.textContent = header.parentElement.classList.contains('collapsed') ? '▸' : '▾';
+}
+
+// ── Fetch helper ───────────────────────────────────────────────────────────
+async function apiFetch(path) {
+  try {
+    const r = await fetch(CONFIG.apiBase + path);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (e) {
+    return null;
+  }
+}
+
+// ── Main refresh ───────────────────────────────────────────────────────────
+async function refreshAll() {
+  document.getElementById('last-updated').textContent = 'Refreshing...';
+
+  const [status, portfolio, perf, signals, icData, modelMeta] = await Promise.all([
+    apiFetch('/status'),
+    apiFetch('/portfolio'),
+    apiFetch('/performance'),
+    apiFetch('/signals/recent?n=100'),
+    apiFetch('/ic-monitor'),
+    apiFetch('/model-metadata'),
+  ]);
+
+  updateStatusKPIs(status, portfolio, icData);
+  updatePerformance(perf, portfolio);
+  updatePositions(portfolio);
+  updateSignals(signals);
+  updateModelPanel(icData, modelMeta, signals);
+  loadSettings();
+
+  document.getElementById('last-updated').textContent =
+    'Updated ' + new Date().toLocaleTimeString();
+}
+
+// ── Status KPIs ────────────────────────────────────────────────────────────
+function updateStatusKPIs(status, portfolio, icData) {
+  const ok  = status?.system_ok;
+  const dot = document.getElementById('sys-dot');
+  dot.className = 'status-dot ' + (status === null ? 'amber' : ok ? 'green' : 'red');
+  document.getElementById('sys-label').textContent =
+    status === null ? 'API OFFLINE' : ok ? 'ONLINE' : 'OFFLINE';
+
+  const sysKpi = document.getElementById('kpi-system');
+  sysKpi.className = 'kpi ' + (status === null ? 'warn' : ok ? 'good' : 'bad');
+  document.getElementById('kpi-system-val').textContent =
+    status === null ? 'N/A' : ok ? 'OK' : 'DOWN';
+  document.getElementById('kpi-system-sub').textContent =
+    status ? `Last run: ${status.last_run_date || 'never'}` : 'API unreachable';
+
+  // Regime
+  const positions = portfolio?.positions || [];
+  const regimeRaw = positions.length > 0
+    ? (positions[0].regime_state || 'unknown')
+    : 'unknown';
+  const regimeKpi = document.getElementById('kpi-regime');
+  regimeKpi.className = 'kpi ' +
+    (regimeRaw === 'positive' ? 'good' : regimeRaw === 'negative' ? 'bad' : 'warn');
+  document.getElementById('kpi-regime-val').innerHTML =
+    `<span class="regime ${regimeRaw}">${regimeRaw.toUpperCase()}</span>`;
+
+  // Positions count
+  const nPos = status?.n_positions ?? 0;
+  document.getElementById('kpi-positions-val').textContent = nPos;
+  document.getElementById('kpi-positions').className =
+    'kpi ' + (nPos >= 3 ? 'warn' : nPos > 0 ? 'good' : '');
+
+  // Cash
+  const cash = status?.cash ?? 0;
+  document.getElementById('kpi-cash-val').textContent =
+    '$' + cash.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+  const cashPct = cash / 10000 * 100;
+  document.getElementById('kpi-cash-pct').textContent =
+    `${cashPct.toFixed(0)}% of $10,000`;
+
+  // IC gate
+  const latest = icData && icData.length > 0 ? icData[icData.length - 1] : null;
+  const gate   = latest?.gate || 'NONE';
+  const liveIC = latest?.live_ic;
+  document.getElementById('kpi-ic-val').innerHTML =
+    `<span class="gate ${gate}">${gate}</span>`;
+  document.getElementById('kpi-ic').className =
+    'kpi ' + (gate === 'GREEN' ? 'good' : gate === 'RED' ? 'bad' : gate === 'AMBER' ? 'warn' : '');
+  document.getElementById('kpi-ic-sub').textContent =
+    liveIC != null ? `IC = ${liveIC.toFixed(4)}` : 'No data yet (30+ days needed)';
+}
+
+// ── Performance ────────────────────────────────────────────────────────────
+function updatePerformance(perf, portfolio) {
+  const noData = !perf || perf.message || perf.n_trades === 0;
+
+  if (noData) {
+    ['perf-return', 'perf-alpha', 'perf-winrate', 'perf-pf'].forEach(id => {
+      document.getElementById(id).textContent = '—';
+      document.getElementById(id).className   = 'stat-val';
+    });
+  } else {
+    const ret = perf.total_pnl || 0;
+    const el  = document.getElementById('perf-return');
+    el.textContent = (ret >= 0 ? '+' : '') + (ret * 100).toFixed(1) + '%';
+    el.className   = 'stat-val ' + (ret >= 0 ? 'pos' : 'neg');
+
+    const wr = document.getElementById('perf-winrate');
+    wr.textContent = ((perf.win_rate || 0) * 100).toFixed(0) + '%';
+    wr.className   = 'stat-val ' + ((perf.win_rate || 0) >= 0.5 ? 'pos' : 'neu');
+
+    document.getElementById('perf-pf').textContent =
+      (perf.profit_factor || 0).toFixed(2);
+    document.getElementById('perf-pf').className = 'stat-val ' +
+      ((perf.profit_factor || 0) >= 1.0 ? 'pos' : 'neg');
+  }
+
+  buildEquityChart(portfolio);
+}
+
+function buildEquityChart(portfolio) {
+  const ctx = document.getElementById('equity-chart').getContext('2d');
+  const cash = portfolio?.cash || 10000;
+
+  if (equityChart) { equityChart.destroy(); equityChart = null; }
+  equityChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Start', 'Now'],
+      datasets: [
+        {
+          label: 'Portfolio',
+          data: [10000, cash],
+          borderColor: '#00d68f',
+          backgroundColor: 'rgba(0,214,143,0.08)',
+          fill: true, tension: 0.4, pointRadius: 5,
+          pointBackgroundColor: '#00d68f', borderWidth: 2,
+        },
+        {
+          label: 'SPY (flat)',
+          data: [10000, 10000],
+          borderColor: '#4a6a8a', borderDash: [4, 4],
+          fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#4a6a8a', font: { family: 'JetBrains Mono', size: 10 } } },
+        tooltip: { backgroundColor: '#0d1117', borderColor: '#1c2a3a', borderWidth: 1 }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#4a6a8a', font: { family: 'JetBrains Mono', size: 10 } },
+          grid:  { color: 'rgba(28,42,58,0.5)' }
+        },
+        y: {
+          ticks: { color: '#4a6a8a', font: { family: 'JetBrains Mono', size: 10 },
+                   callback: v => '$' + v.toLocaleString() },
+          grid:  { color: 'rgba(28,42,58,0.5)' }
+        }
+      }
+    }
+  });
+}
+
+// ── Positions ──────────────────────────────────────────────────────────────
+function updatePositions(portfolio) {
+  const tbody     = document.getElementById('positions-tbody');
+  const positions = portfolio?.positions || [];
+
+  if (!positions.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No open positions</td></tr>';
+    return;
+  }
+
+  const today = new Date();
+  tbody.innerHTML = positions.map(p => {
+    const entry  = new Date(p.entry_date);
+    const days   = Math.max(0, Math.floor((today - entry) / 86400000));
+    const pred   = ((p.predicted_return || 0) * 100).toFixed(1);
+    const regime = p.regime_state || 'neutral';
+    const posts  = p.feature_vector?.post_count_1d ?? '—';
+
+    return `<tr>
+      <td><span class="ticker-badge">${p.ticker}</span></td>
+      <td class="dim-text">$${(p.entry_price || 0).toFixed(2)}</td>
+      <td class="pos">+${pred}%</td>
+      <td class="dim-text">${days}d</td>
+      <td><span class="regime ${regime}">${regime.toUpperCase()}</span></td>
+      <td class="dim-text">${posts}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Signals ────────────────────────────────────────────────────────────────
+function updateSignals(signals) {
+  if (!signals || !signals.length) return;
+  allSignals = signals;
+
+  // Populate ticker dropdown
+  const tickers = [...new Set(signals.map(s => s.ticker).filter(Boolean))].sort();
+  const sel     = document.getElementById('filter-ticker');
+  const cur     = sel.value;
+  sel.innerHTML = '<option value="">All Tickers</option>' +
+    tickers.map(t => `<option value="${t}">${t}</option>`).join('');
+  sel.value = cur;
+
+  filterSignals();
+}
+
+function filterSignals() {
+  const action    = document.getElementById('filter-action').value;
+  const ticker    = document.getElementById('filter-ticker').value;
+  const dateStart = document.getElementById('filter-date-start').value;
+  const dateEnd   = document.getElementById('filter-date-end').value;
+
+  const filtered = allSignals.filter(s => {
+    if (action    && !s.action?.includes(action)) return false;
+    if (ticker    && s.ticker !== ticker)         return false;
+    if (dateStart && s.date   <  dateStart)       return false;
+    if (dateEnd   && s.date   >  dateEnd)         return false;
+    return true;
+  });
+
+  document.getElementById('signal-count').textContent =
+    `${filtered.length} of ${allSignals.length} entries`;
+
+  const tbody = document.getElementById('signals-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">No signals match filters</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.slice(0, 60).map(s => {
+    const pred    = ((s.predicted_return_5d || 0) * 100).toFixed(1);
+    const regime  = s.regime_state || 'neutral';
+    const posts   = s.feature_vector_11?.post_count_1d ?? '—';
+    const slip    = ((s.slippage_applied || 0) * 100).toFixed(2);
+    const price   = (s.fill_price || 0).toFixed(2);
+    const isOpen  = s.action === 'OPEN';
+    const isClose = s.action?.startsWith('CLOSE');
+    const aCls    = isOpen ? 'pos' : isClose ? 'neg' : 'dim-text';
+
+    return `<tr>
+      <td class="dim-text">${s.date || '—'}</td>
+      <td><span class="ticker-badge">${s.ticker || '—'}</span></td>
+      <td class="${aCls}">${s.action || '—'}</td>
+      <td class="${parseFloat(pred) >= 0 ? 'pos' : 'neg'}">${pred}%</td>
+      <td><span class="regime ${regime}">${regime.toUpperCase()}</span></td>
+      <td class="dim-text">${posts}</td>
+      <td class="dim-text">$${price}</td>
+      <td class="dim-text">${slip}%</td>
+    </tr>`;
+  }).join('');
+}
+
+function clearFilters() {
+  document.getElementById('filter-action').value     = '';
+  document.getElementById('filter-ticker').value     = '';
+  document.getElementById('filter-date-start').value = '';
+  document.getElementById('filter-date-end').value   = '';
+  filterSignals();
+}
+
+// ── Model panel ────────────────────────────────────────────────────────────
+function updateModelPanel(icData, modelMeta, signals) {
+  // IC gate
+  const latest = icData && icData.length > 0 ? icData[icData.length - 1] : null;
+  if (latest) {
+    document.getElementById('model-ic').textContent = latest.live_ic?.toFixed(4) || '—';
+    const gate = document.getElementById('model-gate');
+    gate.textContent = latest.gate;
+    gate.className   = 'gate ' + latest.gate;
+  }
+
+  if (modelMeta?.ic_test) {
+    document.getElementById('model-baseline').textContent =
+      modelMeta.ic_test.toFixed(4);
+  }
+
+  // Feature importance bar chart
+  const features = modelMeta?.features || [];
+  if (features.length) {
+    buildFeatureChart(features);
+  }
+
+  // Post counts from recent signals
+  if (signals && signals.length) {
+    buildPostsChart(signals);
+  }
+}
+
+function buildFeatureChart(features) {
+  const ctx = document.getElementById('feature-chart').getContext('2d');
+  const imp = features.map(() => parseFloat((100 / features.length).toFixed(1)));
+  const colors = features.map(f =>
+    f.includes('sentiment') || f.includes('bullish')   ? '#38b6ff' :
+    f.includes('post') || f.includes('mention')        ? '#a78bfa' :
+    '#00d68f'
+  );
+
+  if (featureChart) { featureChart.destroy(); featureChart = null; }
+  featureChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: features.map(f => f.replace(/_/g, ' ')),
+      datasets: [{
+        label: 'Importance',
+        data: imp,
+        backgroundColor: colors,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: '#0d1117', borderColor: '#1c2a3a', borderWidth: 1 }
+      },
+      scales: {
+        x: { ticks: { color: '#4a6a8a', font: { family: 'JetBrains Mono', size: 9 } },
+             grid:  { color: 'rgba(28,42,58,0.5)' } },
+        y: { ticks: { color: '#c4d4e4', font: { family: 'JetBrains Mono', size: 10 } },
+             grid:  { display: false } }
+      }
+    }
+  });
+}
+
+function buildPostsChart(signals) {
+  const ctx = document.getElementById('posts-chart').getContext('2d');
+
+  // Aggregate max post count per ticker from recent signals
+  const byTicker = {};
+  signals.slice(0, 30).forEach(s => {
+    const t = s.ticker;
+    const p = s.feature_vector_11?.post_count_1d || 0;
+    if (!byTicker[t]) byTicker[t] = 0;
+    byTicker[t] = Math.max(byTicker[t], p);
+  });
+
+  const labels = Object.keys(byTicker).sort((a, b) => byTicker[b] - byTicker[a]).slice(0, 12);
+  const data   = labels.map(t => byTicker[t]);
+  const colors = data.map(v => v >= 10 ? '#00d68f' : '#ff4560');
+
+  if (postsChart) { postsChart.destroy(); postsChart = null; }
+  postsChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Post Count',
+        data,
+        backgroundColor: colors,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0d1117', borderColor: '#1c2a3a', borderWidth: 1,
+          callbacks: {
+            afterLabel: ctx => ctx.raw >= 10
+              ? '✓ Above density gate (10)'
+              : '✗ Below density gate — filtered out'
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#c4d4e4', font: { family: 'JetBrains Mono', size: 10 } }, grid: { display: false } },
+        y: { ticks: { color: '#4a6a8a', font: { family: 'JetBrains Mono', size: 10 } }, grid: { color: 'rgba(28,42,58,0.5)' } }
+      }
+    }
+  });
+
+  const maxPosts = data.length > 0 ? Math.max(...data) : 0;
+  document.getElementById('drift-status').innerHTML =
+    maxPosts >= 26.6
+      ? '<span class="pos">✓ Post count normal (max=' + maxPosts + ')</span>'
+      : maxPosts > 0
+        ? '<span class="neg">⚠ Low post count — API may be under-returning (max=' + maxPosts + ')</span>'
+        : '<span class="dim-text">No data</span>';
+}
+
+// ── Backfill ───────────────────────────────────────────────────────────────
+async function runBackfill() {
+  const start = document.getElementById('bf-start').value;
+  const end   = document.getElementById('bf-end').value;
+
+  if (!start || !end) {
+    document.getElementById('bf-status').textContent = '⚠ Select both dates first';
+    return;
+  }
+  if (start >= end) {
+    document.getElementById('bf-status').textContent = '⚠ Start must be before end';
+    return;
+  }
+
+  document.getElementById('bf-status').textContent = '⏳ Starting...';
+  document.getElementById('bf-results').innerHTML =
+    '<div class="empty">Backfill running — check logs/backfill_test.log. Refreshes automatically in 60s.</div>';
+
+  try {
+    const r = await fetch(CONFIG.apiBase + `/backfill?start=${start}&end=${end}`, { method: 'POST' });
+    const data = await r.json();
+    if (data.status === 'started') {
+      document.getElementById('bf-status').textContent = '✓ Started';
+      setTimeout(loadBackfillLog, 60000);
+    } else {
+      document.getElementById('bf-status').textContent = '✗ ' + (data.error || 'Failed');
+    }
+  } catch (e) {
+    document.getElementById('bf-status').textContent = '✗ API unreachable';
+  }
+}
+
+async function loadBackfillLog() {
+  const data = await apiFetch('/backfill-log');
+  if (!data?.lines?.length) return;
+  document.getElementById('bf-results').innerHTML =
+    '<pre class="log-view">' + data.lines.join('\n') + '</pre>';
+  document.getElementById('bf-status').textContent = `${data.lines.length} log lines`;
+}
+
+// ── Settings ───────────────────────────────────────────────────────────────
+function loadSettings() {
+  apiFetch('/settings').then(s => {
+    if (!s || Object.keys(s).length === 0) return;
+    if (s.density_gate !== undefined) {
+      document.getElementById('s-density').value = s.density_gate;
+      document.getElementById('s-density-val').textContent = s.density_gate;
+    }
+    if (s.min_pred_return !== undefined) {
+      const v = (s.min_pred_return * 100).toFixed(1);
+      document.getElementById('s-minret').value = v;
+      document.getElementById('s-minret-val').textContent = v + '%';
+    }
+    if (s.max_positions !== undefined) {
+      document.getElementById('s-maxpos').value = s.max_positions;
+      document.getElementById('s-maxpos-val').textContent = s.max_positions;
+    }
+    if (s.take_profit_cap !== undefined) {
+      const v = (s.take_profit_cap * 100).toFixed(0);
+      document.getElementById('s-tp').value = v;
+      document.getElementById('s-tp-val').textContent = v + '%';
+    }
+    if (s.regime_sizing) {
+      if (s.regime_sizing.positive !== undefined) {
+        const v = (s.regime_sizing.positive * 100).toFixed(0);
+        document.getElementById('s-rpos').value = v;
+        document.getElementById('s-rpos-val').textContent = v + '%';
+      }
+      if (s.regime_sizing.neutral !== undefined) {
+        const v = (s.regime_sizing.neutral * 100).toFixed(0);
+        document.getElementById('s-rneu').value = v;
+        document.getElementById('s-rneu-val').textContent = v + '%';
+      }
+      if (s.regime_sizing.negative !== undefined) {
+        const v = (s.regime_sizing.negative * 100).toFixed(0);
+        document.getElementById('s-rneg').value = v;
+        document.getElementById('s-rneg-val').textContent = v + '%';
+      }
+    }
+  });
+}
+
+async function saveSettings() {
+  const settings = {
+    density_gate:    parseInt(document.getElementById('s-density').value),
+    min_pred_return: parseFloat(document.getElementById('s-minret').value) / 100,
+    max_positions:   parseInt(document.getElementById('s-maxpos').value),
+    take_profit_cap: parseFloat(document.getElementById('s-tp').value) / 100,
+    regime_sizing: {
+      positive: parseFloat(document.getElementById('s-rpos').value) / 100,
+      neutral:  parseFloat(document.getElementById('s-rneu').value) / 100,
+      negative: parseFloat(document.getElementById('s-rneg').value) / 100,
+    }
+  };
+
+  try {
+    const r = await fetch(CONFIG.apiBase + '/settings', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(settings),
+    });
+    const data = await r.json();
+    const el   = document.getElementById('settings-status');
+    el.textContent = data.status === 'saved' ? '✓ Saved' : '✗ Error';
+    el.style.color = data.status === 'saved' ? 'var(--green)' : 'var(--red)';
+    setTimeout(() => { el.textContent = ''; el.style.color = 'var(--dim)'; }, 3000);
+  } catch (e) {
+    const el = document.getElementById('settings-status');
+    el.textContent = '✗ API unreachable';
+    el.style.color = 'var(--red)';
+  }
+}
+
+function resetSettings() {
+  const defaults = [
+    ['s-density', '10',  's-density-val', '10'],
+    ['s-minret',  '1',   's-minret-val',  '1%'],
+    ['s-maxpos',  '3',   's-maxpos-val',  '3'],
+    ['s-tp',      '15',  's-tp-val',      '15%'],
+    ['s-rpos',    '100', 's-rpos-val',    '100%'],
+    ['s-rneu',    '75',  's-rneu-val',    '75%'],
+    ['s-rneg',    '50',  's-rneg-val',    '50%'],
+  ];
+  defaults.forEach(([inputId, val, labelId, label]) => {
+    document.getElementById(inputId).value   = val;
+    document.getElementById(labelId).textContent = label;
+  });
+  const el = document.getElementById('settings-status');
+  el.textContent = 'Reset to defaults (not saved)';
+  el.style.color = 'var(--amber)';
+  setTimeout(() => { el.textContent = ''; el.style.color = 'var(--dim)'; }, 2000);
+}
+
+// ── Refresh interval ───────────────────────────────────────────────────────
+function setRefreshInterval(ms) {
+  if (refreshTimer) clearInterval(refreshTimer);
+  const msInt = parseInt(ms);
+  if (msInt > 0) refreshTimer = setInterval(refreshAll, msInt);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Set default backfill dates (last 30 days)
+  const today = new Date();
+  const past  = new Date(today - 30 * 86400000);
+  document.getElementById('bf-end').value   = today.toISOString().slice(0, 10);
+  document.getElementById('bf-start').value = past.toISOString().slice(0, 10);
+
+  refreshAll();
+  setRefreshInterval(60000);
+});
+</script>
+</body>
+</html>

@@ -113,9 +113,10 @@ def check_drift(live_values: dict) -> dict:
                 f'mean ({hist_mean:.3f}). Possible data spike or API issue.'
             )
 
-    # skip_day only on post_count anomaly — the reliable API outage signal.
-    # mention_growth anomalies alone do not skip the day.
-    skip_day = any('post_count_1d' in a for a in alerts)
+    # skip_day fires only when post_count_1d is BELOW threshold (API undercount).
+    # An above-threshold spike means Reddit is unusually active — not an API failure.
+    # mention_growth anomalies alone never skip the day.
+    skip_day = any('post_count_1d' in a and 'below' in a for a in alerts)
 
     if alerts:
         for alert in alerts:
