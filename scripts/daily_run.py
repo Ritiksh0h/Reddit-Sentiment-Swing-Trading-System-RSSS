@@ -25,6 +25,8 @@ import logging
 import sys
 from datetime import datetime, date, timedelta, timezone
 
+import pandas as pd
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(name)s %(message)s',
@@ -254,6 +256,33 @@ def run(reddit_counts: dict, today: str = None) -> dict:
 
     # ── 9. Save state ──────────────────────────────────────────────────────
     save_portfolio(state)
+
+    # ── 10. Record daily performance snapshot ─────────────────────────────
+    try:
+        import yfinance as _yf
+        current_prices_for_value = {}
+        for pos in state.positions:
+            try:
+                mkt = _yf.download(pos.ticker, period='2d',
+                                   auto_adjust=True, progress=False)
+                if isinstance(mkt.columns, pd.MultiIndex):
+                    mkt.columns = mkt.columns.get_level_values(0)
+                current_prices_for_value[pos.ticker] = float(mkt['Close'].iloc[-1])
+            except Exception:
+                current_prices_for_value[pos.ticker] = pos.entry_price
+
+        from portfolio.paper_trader import record_daily_snapshot
+        portfolio_value = state.total_value(current_prices_for_value)
+        record_daily_snapshot(
+            portfolio_value=portfolio_value,
+            starting_capital=10000.0,
+            n_trades_today=sum(1 for a in summary['actions'] if 'OPEN' in a),
+            actions=summary['actions'],
+            date=today,
+        )
+    except Exception as e:
+        logger.warning(f'performance_snapshot_failed error={e}')
+
     logger.info(f'daily_run_complete actions={len(summary["actions"])}')
     return summary
 

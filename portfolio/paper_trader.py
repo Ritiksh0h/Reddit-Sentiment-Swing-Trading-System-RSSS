@@ -12,7 +12,57 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-PERF_FILE = 'data/paper_performance.json'
+PERF_FILE      = 'data/paper_performance.json'
+PERF_JSONL     = 'data/paper_performance.jsonl'
+
+
+def record_daily_snapshot(
+    portfolio_value: float,
+    starting_capital: float,
+    n_trades_today: int,
+    actions: list,
+    date: str = None,
+) -> dict:
+    """
+    Record end-of-day portfolio snapshot vs SPY benchmark.
+    Appends to data/paper_performance.jsonl (append-only, one record per day).
+    """
+    if date is None:
+        date = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+
+    try:
+        spy = yf.download('SPY', period='5d', auto_adjust=True, progress=False)
+        if isinstance(spy.columns, pd.MultiIndex):
+            spy.columns = spy.columns.get_level_values(0)
+        spy_return_5d = float(
+            (spy['Close'].iloc[-1] - spy['Close'].iloc[0]) / spy['Close'].iloc[0]
+        )
+    except Exception as e:
+        logger.warning(f'spy_fetch_failed error={e}')
+        spy_return_5d = None
+
+    portfolio_return = (portfolio_value - starting_capital) / starting_capital
+
+    snapshot = {
+        'date':             date,
+        'portfolio_value':  round(portfolio_value, 2),
+        'starting_capital': round(starting_capital, 2),
+        'portfolio_return': round(portfolio_return, 4),
+        'spy_return_5d':    round(spy_return_5d, 4) if spy_return_5d is not None else None,
+        'alpha':            round(portfolio_return - spy_return_5d, 4)
+                            if spy_return_5d is not None else None,
+        'n_trades_today':   n_trades_today,
+        'actions':          actions,
+        'timestamp':        datetime.now(timezone.utc).isoformat(),
+    }
+
+    Path('data').mkdir(exist_ok=True)
+    with open(PERF_JSONL, 'a') as f:
+        f.write(json.dumps(snapshot) + '\n')
+
+    logger.info(f'daily_snapshot_recorded portfolio_return={portfolio_return:.4f} '
+                f'spy_return={spy_return_5d}')
+    return snapshot
 
 
 def record_daily_pnl(
