@@ -144,10 +144,42 @@ def run(reddit_counts: dict, today: str = None) -> dict:
         return summary
 
     # ── 7. Close expired/capped positions ──────────────────────────────────
+    # Build current_prices from today's signals first
     current_prices = {s.ticker: s.price for s in signals}
-    # fallback for tickers not in today's signals
-    for p in state.positions:
-        current_prices.setdefault(p.ticker, p.entry_price)
+
+    # For positions whose ticker is NOT in today's signal batch,
+    # fetch the actual current price from yfinance.
+    # Using entry_price as fallback records 0% PnL — that is wrong.
+    for pos in state.positions:
+        if pos.ticker not in current_prices:
+            try:
+                import yfinance as _yf
+                mkt = _yf.download(
+                    pos.ticker, period='5d',
+                    auto_adjust=True, progress=False,
+                )
+                if isinstance(mkt.columns, pd.MultiIndex):
+                    mkt.columns = mkt.columns.get_level_values(0)
+                if len(mkt) > 0:
+                    live_price = float(mkt['Close'].iloc[-1])
+                    current_prices[pos.ticker] = live_price
+                    logger.info(
+                        f'exit_price_fetched ticker={pos.ticker} '
+                        f'price={live_price:.4f} (not in today signals)'
+                    )
+                else:
+                    current_prices[pos.ticker] = pos.entry_price
+                    logger.warning(
+                        f'exit_price_fallback ticker={pos.ticker} '
+                        f'using entry_price={pos.entry_price:.4f} '
+                        f'(yfinance returned empty)'
+                    )
+            except Exception as e:
+                current_prices[pos.ticker] = pos.entry_price
+                logger.warning(
+                    f'exit_price_error ticker={pos.ticker} '
+                    f'error={e} using entry_price={pos.entry_price:.4f}'
+                )
 
     to_close = check_exits(state, current_prices, today)
     for exit_info in to_close:
