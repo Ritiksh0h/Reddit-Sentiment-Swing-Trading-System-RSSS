@@ -1,0 +1,87 @@
+"""
+Paper trading tracker.
+Records simulated PnL and computes performance vs SPY benchmark.
+"""
+import json
+import logging
+from datetime import datetime, timezone
+from pathlib import Path
+
+import yfinance as yf
+import pandas as pd
+
+logger = logging.getLogger(__name__)
+
+PERF_FILE = 'data/paper_performance.json'
+
+
+def record_daily_pnl(
+    portfolio_value: float,
+    prev_portfolio_value: float,
+    date: str,
+) -> float:
+    """Record daily PnL fraction. Returns daily return."""
+    if prev_portfolio_value <= 0:
+        return 0.0
+    daily_return = (portfolio_value - prev_portfolio_value) / prev_portfolio_value
+
+    Path('data').mkdir(exist_ok=True)
+    perf = {}
+    if Path(PERF_FILE).exists():
+        with open(PERF_FILE) as f:
+            perf = json.load(f)
+
+    perf[date] = {
+        'portfolio_value': round(portfolio_value, 2),
+        'daily_return':    round(daily_return, 6),
+        'recorded_at':     datetime.now(timezone.utc).isoformat(),
+    }
+
+    with open(PERF_FILE, 'w') as f:
+        json.dump(perf, f, indent=2)
+
+    return daily_return
+
+
+def compute_summary(initial_capital: float = 10000.0) -> dict:
+    """Compute paper trading summary vs SPY."""
+    if not Path(PERF_FILE).exists():
+        return {'error': 'No performance data yet'}
+
+    with open(PERF_FILE) as f:
+        perf = json.load(f)
+
+    if not perf:
+        return {'error': 'No performance data yet'}
+
+    dates   = sorted(perf.keys())
+    returns = [perf[d]['daily_return'] for d in dates]
+
+    final_value  = perf[dates[-1]]['portfolio_value']
+    total_return = (final_value - initial_capital) / initial_capital
+
+    import numpy as np
+    arr = np.array(returns)
+    sharpe = (arr.mean() / arr.std() * (252 ** 0.5)) if arr.std() > 0 else 0.0
+
+    # Fetch SPY return over same period
+    try:
+        spy = yf.download('SPY', start=dates[0], end=dates[-1],
+                          auto_adjust=True, progress=False)
+        if isinstance(spy.columns, pd.MultiIndex):
+            spy.columns = spy.columns.get_level_values(0)
+        spy_return = float(spy['Close'].iloc[-1] / spy['Close'].iloc[0] - 1)
+    except Exception:
+        spy_return = None
+
+    return {
+        'n_days':        len(dates),
+        'start_date':    dates[0],
+        'end_date':      dates[-1],
+        'initial_cap':   initial_capital,
+        'final_value':   round(final_value, 2),
+        'total_return':  round(total_return, 4),
+        'sharpe_ratio':  round(sharpe, 3),
+        'spy_return':    round(spy_return, 4) if spy_return is not None else None,
+        'alpha':         round(total_return - spy_return, 4) if spy_return is not None else None,
+    }

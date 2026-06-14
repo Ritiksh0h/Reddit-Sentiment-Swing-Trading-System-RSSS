@@ -1,0 +1,64 @@
+"""
+Execution logger.
+Appends structured JSON records to logs/paper_trades.jsonl.
+
+Every signal (not just executed trades) is logged.
+This lets you reconstruct exactly what the system saw on any given day.
+
+Fields logged per signal (from phase3_locked_architecture.json):
+    ticker, date, feature_vector_11, regime_state, regime_multiplier,
+    predicted_return_5d, atr_14, position_size_dollars, slippage_applied,
+    fill_price, signal_timestamp, action
+"""
+import json
+import logging
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Optional
+
+LOG_FILE = 'logs/paper_trades.jsonl'
+logger   = logging.getLogger(__name__)
+
+
+def log_signal(
+    ticker:                str,
+    date:                  str,
+    feature_vector:        dict,
+    regime_state:          str,
+    regime_multiplier:     float,
+    predicted_return_5d:   float,
+    atr_14:                float,
+    position_size_dollars: float,
+    slippage_applied:      float,
+    fill_price:            float,
+    signal_timestamp:      str,
+    action:                str,
+    raw_finbert_scores:    Optional[dict] = None,
+    notes:                 str = '',
+) -> None:
+    """Append one signal record to the execution log."""
+    Path('logs').mkdir(exist_ok=True)
+
+    record = {
+        'ticker':                ticker,
+        'date':                  date,
+        'action':                action,
+        'feature_vector_11':     feature_vector,
+        'raw_finbert_scores':    raw_finbert_scores,
+        'regime_state':          regime_state,
+        'regime_multiplier':     regime_multiplier,
+        'predicted_return_5d':   predicted_return_5d,
+        'atr_14':                atr_14,
+        'position_size_dollars': position_size_dollars,
+        'slippage_applied':      slippage_applied,
+        'fill_price':            fill_price,
+        'signal_timestamp':      signal_timestamp,
+        'log_timestamp':         datetime.now(timezone.utc).isoformat(),
+        'notes':                 notes,
+    }
+
+    with open(LOG_FILE, 'a') as f:
+        f.write(json.dumps(record) + '\n')
+
+    logger.info(f'signal_logged ticker={ticker} action={action} '
+                f'predicted_return={predicted_return_5d:.4f}')
