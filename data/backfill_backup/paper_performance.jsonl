@@ -1,0 +1,2 @@
+{"date": "2026-06-04", "portfolio_value": 9991.44, "starting_capital": 10000.0, "portfolio_return": -0.0009, "spy_return_5d": 0.0034, "alpha": -0.0043, "n_trades_today": 2, "actions": ["OPEN PLTR pred=0.014", "OPEN AAPL pred=0.014"], "timestamp": "2026-06-14T15:45:10.946468+00:00"}
+{"date": "2026-06-10", "portfolio_value": 9987.57, "starting_capital": 10000.0, "portfolio_return": -0.0012, "spy_return_5d": 0.0034, "alpha": -0.0047, "n_trades_today": 1, "actions": ["OPEN COIN pred=0.011"], "timestamp": "2026-06-14T15:45:23.360305+00:00"}

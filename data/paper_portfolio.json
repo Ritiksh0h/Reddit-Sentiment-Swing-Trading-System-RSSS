@@ -1,8 +1,106 @@
 {
-  "cash": 10000.0,
+  "cash": 9995.1348804,
   "positions": [],
-  "closed_trades": [],
-  "ticker_last_trade": {},
+  "closed_trades": [
+    {
+      "ticker": "COIN",
+      "entry_date": "2026-05-14",
+      "exit_date": "2026-05-21",
+      "entry_price": 159.9907,
+      "exit_price": 159.9907,
+      "n_shares": 15,
+      "pnl_pct": 0.0,
+      "exit_reason": "hold_period_expired"
+    },
+    {
+      "ticker": "AAPL",
+      "entry_date": "2026-05-18",
+      "exit_date": "2026-05-25",
+      "entry_price": 291.4942,
+      "exit_price": 291.4942,
+      "n_shares": 8,
+      "pnl_pct": 0.0,
+      "exit_reason": "hold_period_expired"
+    },
+    {
+      "ticker": "NVDA",
+      "entry_date": "2026-05-19",
+      "exit_date": "2026-05-26",
+      "entry_price": 205.5394,
+      "exit_price": 205.5394,
+      "n_shares": 12,
+      "pnl_pct": 0.0,
+      "exit_reason": "hold_period_expired"
+    },
+    {
+      "ticker": "AMC",
+      "entry_date": "2026-05-25",
+      "exit_date": "2026-06-01",
+      "entry_price": 2.3433,
+      "exit_price": 2.3433,
+      "n_shares": 965,
+      "pnl_pct": 0.0,
+      "exit_reason": "hold_period_expired"
+    },
+    {
+      "ticker": "COIN",
+      "entry_date": "2026-05-26",
+      "exit_date": "2026-06-02",
+      "entry_price": 160.0996,
+      "exit_price": 159.78,
+      "n_shares": 15,
+      "pnl_pct": -0.002,
+      "exit_reason": "hold_period_expired"
+    },
+    {
+      "ticker": "GME",
+      "entry_date": "2026-05-27",
+      "exit_date": "2026-06-04",
+      "entry_price": 21.8092,
+      "exit_price": 21.8092,
+      "n_shares": 114,
+      "pnl_pct": 0.0,
+      "exit_reason": "hold_period_expired"
+    },
+    {
+      "ticker": "COIN",
+      "entry_date": "2026-06-02",
+      "exit_date": "2026-06-12",
+      "entry_price": 159.986,
+      "exit_price": 159.986,
+      "n_shares": 15,
+      "pnl_pct": 0.0,
+      "exit_reason": "hold_period_expired"
+    },
+    {
+      "ticker": "TSLA",
+      "entry_date": "2026-06-04",
+      "exit_date": "2026-06-12",
+      "entry_price": 407.1461,
+      "exit_price": 407.1461,
+      "n_shares": 6,
+      "pnl_pct": 0.0,
+      "exit_reason": "hold_period_expired"
+    },
+    {
+      "ticker": "AMC",
+      "entry_date": "2026-06-05",
+      "exit_date": "2026-06-12",
+      "entry_price": 2.3446,
+      "exit_price": 2.3446,
+      "n_shares": 965,
+      "pnl_pct": 0.0,
+      "exit_reason": "hold_period_expired"
+    }
+  ],
+  "ticker_last_trade": {
+    "COIN": "2026-06-02",
+    "AAPL": "2026-05-18",
+    "NVDA": "2026-05-19",
+    "AMC": "2026-06-05",
+    "GME": "2026-05-27",
+    "TSLA": "2026-06-04"
+  },
   "daily_pnl": {},
-  "created_at": "2026-06-14T14:57:36.222407"
+  "created_at": "2026-06-14T15:46:47.664734"
 }
