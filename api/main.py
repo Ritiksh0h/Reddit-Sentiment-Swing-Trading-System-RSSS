@@ -218,6 +218,35 @@ def save_settings(settings: dict):
     return {'status': 'saved'}
 
 
+@app.get('/predictions')
+def get_predictions(n: int = 30):
+    """
+    Return the latest day's OPEN signals with multi-horizon predictions.
+    Sorted bullish-first then bearish, by predicted_return_5d.
+    """
+    trades = _load_trade_log(300)
+    opens  = [t for t in trades if t.get('action') == 'OPEN']
+    if not opens:
+        return []
+
+    latest_date = max(t.get('date', '') for t in opens)
+    day_opens   = [t for t in opens if t.get('date') == latest_date]
+
+    bullish = sorted(
+        [t for t in day_opens if t.get('signal') == 'BULLISH'],
+        key=lambda x: x.get('predicted_return_5d', 0), reverse=True,
+    )
+    neutral = sorted(
+        [t for t in day_opens if t.get('signal', 'NEUTRAL') == 'NEUTRAL'],
+        key=lambda x: abs(x.get('predicted_return_5d', 0)), reverse=True,
+    )
+    bearish = sorted(
+        [t for t in day_opens if t.get('signal') == 'BEARISH'],
+        key=lambda x: x.get('predicted_return_5d', 0),
+    )
+    return (bullish + neutral + bearish)[:n]
+
+
 @app.get('/settings')
 def get_settings():
     """Return current dashboard settings."""

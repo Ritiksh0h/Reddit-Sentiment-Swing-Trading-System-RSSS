@@ -152,10 +152,11 @@ EXPERIMENT_MIN_SHARPE: float = 1.0       # must exceed to be a valid winner
 TAKE_PROFIT_CAP: float = 0.15            # close position early if unrealized gain >= 15%
 
 # ---------------------------------------------------------------------------
-# Phase 3 Feature Set — 11 features (8 market + 3 attention)
+# Phase 3 Feature Set — 14 features (8 market + 3 attention + 3 news/StockTwits)
 # L1 Granger test: sentiment 0/6 years significant → 6 sentiment features dropped.
 # L3 family validation: pruning rejected → returns_20d/rsi_14/atr_14/mention_growth_1d
 #   re-included from original 17. CLEAN_FEATURES alias kept for backward compat.
+# News + StockTwits features added in Phase 4 (June 2026). Historical rows default 0.0.
 # ---------------------------------------------------------------------------
 PHASE3_FEATURES: list = [
     # Market family (8)
@@ -171,6 +172,10 @@ PHASE3_FEATURES: list = [
     'post_count_1d',
     'mention_growth_1d',
     'mention_growth_7d',
+    # News + StockTwits family (3)
+    'news_sentiment_1d',
+    'st_sentiment_1d',
+    'st_bull_pct',
 ]
 
 # Sentiment features dropped per L1 Granger (0/6 years significant)

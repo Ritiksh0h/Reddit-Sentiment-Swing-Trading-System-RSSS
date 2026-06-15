@@ -9,6 +9,8 @@ Fields logged per signal (from phase3_locked_architecture.json):
     ticker, date, feature_vector_11, regime_state, regime_multiplier,
     predicted_return_5d, atr_14, position_size_dollars, slippage_applied,
     fill_price, signal_timestamp, action
+    + multi-horizon: predicted_1d/3d, signal, price_target_1d/3d/5d,
+      confidence, news_count_1d, st_count_1d
 """
 import json
 import logging
@@ -35,6 +37,15 @@ def log_signal(
     action:                str,
     raw_finbert_scores:    Optional[dict] = None,
     notes:                 str = '',
+    predicted_1d:          float = 0.0,
+    predicted_3d:          float = 0.0,
+    signal:                str = 'NEUTRAL',
+    price_target_1d:       float = 0.0,
+    price_target_3d:       float = 0.0,
+    price_target_5d:       float = 0.0,
+    confidence:            float = 0.0,
+    news_count_1d:         int = 0,
+    st_count_1d:           int = 0,
 ) -> None:
     """Append one signal record to the execution log."""
     Path('logs').mkdir(exist_ok=True)
@@ -48,6 +59,15 @@ def log_signal(
         'regime_state':          regime_state,
         'regime_multiplier':     regime_multiplier,
         'predicted_return_5d':   predicted_return_5d,
+        'predicted_1d':          predicted_1d,
+        'predicted_3d':          predicted_3d,
+        'signal':                signal,
+        'price_target_1d':       price_target_1d,
+        'price_target_3d':       price_target_3d,
+        'price_target_5d':       price_target_5d,
+        'confidence':            confidence,
+        'news_count_1d':         news_count_1d,
+        'st_count_1d':           st_count_1d,
         'atr_14':                atr_14,
         'position_size_dollars': position_size_dollars,
         'slippage_applied':      slippage_applied,

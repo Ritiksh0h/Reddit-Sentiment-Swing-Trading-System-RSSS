@@ -144,6 +144,18 @@ input[type=range] { width: 100%; accent-color: var(--green); background: transpa
 .empty { padding: 32px; text-align: center; font-family: var(--mono); font-size: 12px; color: var(--dim); }
 pre.log-view { font-family: var(--mono); font-size: 11px; color: var(--dim); line-height: 1.6; overflow-x: auto; white-space: pre-wrap; }
 
+/* ── Signal badges ────────────────────────────────────────── */
+.sig { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 2px; letter-spacing: 0.1em; text-transform: uppercase; display: inline-block; }
+.sig.BULLISH { background: var(--gbg); color: var(--green); border: 1px solid var(--green); }
+.sig.BEARISH { background: var(--rbg); color: var(--red);   border: 1px solid var(--red); }
+.sig.NEUTRAL { background: var(--abg); color: var(--amber); border: 1px solid var(--amber); }
+
+/* ── Confidence bar ───────────────────────────────────────── */
+.conf-bar-wrap { display: flex; align-items: center; gap: 8px; min-width: 90px; }
+.conf-bar { flex: 1; height: 4px; background: var(--s2); border-radius: 2px; overflow: hidden; }
+.conf-bar-fill { height: 100%; border-radius: 2px; background: var(--green); }
+.conf-pct { font-family: var(--mono); font-size: 10px; color: var(--dim); white-space: nowrap; }
+
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 1024px) { .grid-2, .grid-3, .grid-4, .kpi-grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 640px)  { .grid-2, .grid-3, .grid-4, .kpi-grid { grid-template-columns: 1fr; } header { padding: 0 12px; } main { padding: 12px; } }
@@ -199,6 +211,41 @@ pre.log-view { font-family: var(--mono); font-size: 11px; color: var(--dim); lin
       <div class="kpi-label">Live IC Gate</div>
       <div class="kpi-value" id="kpi-ic-val">—</div>
       <div class="kpi-sub" id="kpi-ic-sub">30-day rolling</div>
+    </div>
+  </div>
+
+  <!-- Predictions Panel (full width) -->
+  <div class="panel section">
+    <div class="panel-header" onclick="togglePanel(this)">
+      <span class="panel-title">Today's Multi-Horizon Predictions</span>
+      <span id="pred-summary-badges" style="display:flex;gap:8px;align-items:center;"></span>
+      <span class="collapse-icon">▾</span>
+    </div>
+    <div class="panel-body">
+      <div id="pred-meta" style="font-family:var(--mono);font-size:10px;color:var(--dim);margin-bottom:14px;">
+        No predictions yet — run daily pipeline first
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Signal</th>
+              <th>1D Pred</th>
+              <th>3D Pred</th>
+              <th>5D Pred</th>
+              <th>Target 5D</th>
+              <th>Confidence</th>
+              <th>Posts</th>
+              <th>News</th>
+              <th>ST</th>
+            </tr>
+          </thead>
+          <tbody id="predictions-tbody">
+            <tr><td colspan="10" class="empty">No predictions yet</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -470,13 +517,14 @@ async function apiFetch(path) {
 async function refreshAll() {
   document.getElementById('last-updated').textContent = 'Refreshing...';
 
-  const [status, portfolio, perf, signals, icData, modelMeta] = await Promise.all([
+  const [status, portfolio, perf, signals, icData, modelMeta, predictions] = await Promise.all([
     apiFetch('/status'),
     apiFetch('/portfolio'),
     apiFetch('/performance'),
     apiFetch('/signals/recent?n=100'),
     apiFetch('/ic-monitor'),
     apiFetch('/model-metadata'),
+    apiFetch('/predictions'),
   ]);
 
   updateStatusKPIs(status, portfolio, icData);
@@ -484,6 +532,7 @@ async function refreshAll() {
   updatePositions(portfolio);
   updateSignals(signals);
   updateModelPanel(icData, modelMeta, signals);
+  updatePredictions(predictions);
   loadSettings();
 
   document.getElementById('last-updated').textContent =
@@ -837,6 +886,63 @@ function buildPostsChart(signals) {
       : maxPosts > 0
         ? '<span class="neg">⚠ Low post count — API may be under-returning (max=' + maxPosts + ')</span>'
         : '<span class="dim-text">No data</span>';
+}
+
+// ── Predictions ────────────────────────────────────────────────────────────
+function updatePredictions(preds) {
+  const tbody = document.getElementById('predictions-tbody');
+  const meta  = document.getElementById('pred-meta');
+  const badges = document.getElementById('pred-summary-badges');
+
+  if (!preds || !preds.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty">No predictions yet — run daily pipeline first</td></tr>';
+    meta.textContent = 'No predictions yet — run daily pipeline first';
+    badges.innerHTML = '';
+    return;
+  }
+
+  const nBull = preds.filter(p => p.signal === 'BULLISH').length;
+  const nBear = preds.filter(p => p.signal === 'BEARISH').length;
+  const nNeu  = preds.filter(p => !p.signal || p.signal === 'NEUTRAL').length;
+  const date  = preds[0]?.date || '';
+
+  meta.textContent = `${preds.length} signals · ${date}`;
+  badges.innerHTML = [
+    nBull ? `<span class="sig BULLISH">${nBull} BULL</span>` : '',
+    nNeu  ? `<span class="sig NEUTRAL">${nNeu} NEU</span>`   : '',
+    nBear ? `<span class="sig BEARISH">${nBear} BEAR</span>` : '',
+  ].join('');
+
+  const fmt = v => {
+    const pct = (v * 100).toFixed(1);
+    return `<span class="${v >= 0 ? 'pos' : 'neg'}">${v >= 0 ? '+' : ''}${pct}%</span>`;
+  };
+
+  tbody.innerHTML = preds.map(p => {
+    const sig    = p.signal || 'NEUTRAL';
+    const conf   = (p.confidence || 0);
+    const confW  = Math.round(conf * 100);
+    const target = p.price_target_5d ? `$${p.price_target_5d.toFixed(2)}` : '—';
+    const posts  = p.feature_vector_11?.post_count_1d ?? p.news_count_1d ?? '—';
+
+    return `<tr>
+      <td><span class="ticker-badge">${p.ticker || '—'}</span></td>
+      <td><span class="sig ${sig}">${sig}</span></td>
+      <td>${fmt(p.predicted_1d || 0)}</td>
+      <td>${fmt(p.predicted_3d || 0)}</td>
+      <td>${fmt(p.predicted_return_5d || 0)}</td>
+      <td class="dim-text">${target}</td>
+      <td>
+        <div class="conf-bar-wrap">
+          <div class="conf-bar"><div class="conf-bar-fill" style="width:${confW}%"></div></div>
+          <span class="conf-pct">${confW}%</span>
+        </div>
+      </td>
+      <td class="dim-text">${p.feature_vector_11?.post_count_1d ?? '—'}</td>
+      <td class="dim-text">${p.news_count_1d ?? '—'}</td>
+      <td class="dim-text">${p.st_count_1d ?? '—'}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ── Backfill ───────────────────────────────────────────────────────────────

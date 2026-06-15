@@ -104,17 +104,79 @@ def main():
         logger.error(f'Reddit fetch failed: {e}')
         reddit_counts = {}
 
+    # ── Step 1b: Fetch yfinance news sentiment ────────────────────────────
+    logger.info('Fetching yfinance news...')
+    try:
+        from data.news_fetcher import fetch_yfinance_news
+        news_data = fetch_yfinance_news()
+        logger.info(f'yfinance news ready: {len(news_data)} tickers')
+    except Exception as e:
+        logger.warning(f'yfinance news fetch failed: {e} — continuing without news')
+        news_data = {}
+
+    # ── Step 1c: Fetch StockTwits sentiment ───────────────────────────────
+    logger.info('Fetching StockTwits...')
+    try:
+        from data.stocktwits_fetcher import fetch_stocktwits
+        st_data = fetch_stocktwits()
+        logger.info(f'StockTwits ready: {len(st_data)} tickers')
+    except Exception as e:
+        logger.warning(f'StockTwits fetch failed: {e} — continuing without StockTwits')
+        st_data = {}
+
+    # ── Step 1d: Merge all sources into unified reddit_counts ─────────────
+    # reddit_counts is the dict passed to daily_run.run()
+    # Add news and StockTwits fields to each ticker's entry
+    # Graceful: missing sources default to neutral values (0.0)
+    for ticker in list(reddit_counts.keys()):
+        news = news_data.get(ticker, {})
+        reddit_counts[ticker]['news_count_1d']     = news.get('news_count_1d', 0)
+        reddit_counts[ticker]['news_sentiment_1d'] = news.get('news_sentiment_1d', 0.0)
+
+        st = st_data.get(ticker, {})
+        reddit_counts[ticker]['st_count_1d']     = st.get('st_count_1d', 0)
+        reddit_counts[ticker]['st_sentiment_1d'] = st.get('st_sentiment_1d', 0.0)
+        reddit_counts[ticker]['st_bull_pct']     = st.get('st_bull_pct', 0.5)
+
+    # Also add tickers found ONLY in news or StockTwits (not in Reddit)
+    all_tickers = set(news_data.keys()) | set(st_data.keys())
+    for ticker in all_tickers:
+        if ticker not in reddit_counts:
+            news = news_data.get(ticker, {})
+            st   = st_data.get(ticker, {})
+            reddit_counts[ticker] = {
+                'post_count_1d':     0,
+                'mention_growth_1d': 1.0,
+                'mention_growth_7d': 1.0,
+                'news_count_1d':     news.get('news_count_1d', 0),
+                'news_sentiment_1d': news.get('news_sentiment_1d', 0.0),
+                'st_count_1d':       st.get('st_count_1d', 0),
+                'st_sentiment_1d':   st.get('st_sentiment_1d', 0.0),
+                'st_bull_pct':       st.get('st_bull_pct', 0.5),
+            }
+
+    logger.info(f'Combined data: {len(reddit_counts)} tickers across all sources')
+
     # ── Step 2a: Dry run — signals only ───────────────────────────────────
     if args.dry_run:
         logger.info('DRY RUN MODE — signals logged, no trades executed')
         try:
-            from portfolio.signal_generator import generate_signals, load_model
-            model   = load_model()
-            signals = generate_signals(reddit_counts, model, today)
+            from portfolio.signal_generator import generate_signals, load_models
+            models  = load_models()
+            signals = generate_signals(reddit_counts, models=models, today=today)
             logger.info(f'Dry run: {len(signals)} qualifying signals')
             for s in signals[:5]:
-                logger.info(f'  {s.ticker}: pred={s.predicted_return:.3f} '
-                            f'price={s.price:.2f} posts={s.post_count_1d}')
+                logger.info(
+                    f'  {s.signal:<8} {s.ticker:<6} '
+                    f'1D={s.predicted_1d:+.2%}  '
+                    f'3D={s.predicted_3d:+.2%}  '
+                    f'5D={s.predicted_5d:+.2%}  '
+                    f'target={s.price_target_5d:.2f}  '
+                    f'conf={s.confidence:.0%}  '
+                    f'posts={s.post_count_1d}  '
+                    f'news={s.news_count_1d}  '
+                    f'st={s.st_count_1d}'
+                )
         except Exception as e:
             logger.error(f'Dry run signal generation failed: {e}')
         return

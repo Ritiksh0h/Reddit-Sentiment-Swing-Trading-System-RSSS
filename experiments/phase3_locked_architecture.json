@@ -10,9 +10,18 @@
     "dist_from_50ma",
     "post_count_1d",
     "mention_growth_1d",
-    "mention_growth_7d"
+    "mention_growth_7d",
+    "news_sentiment_1d",
+    "st_sentiment_1d",
+    "st_bull_pct"
   ],
-  "feature_count": 11,
+  "feature_count": 14,
+  "feature_families": {
+    "market": 8,
+    "attention": 3,
+    "news": 1,
+    "stocktwits": 2
+  },
   "sentiment_in_model": false,
   "sentiment_dropped_reason": "L1 Granger test: sentiment family significant in 0/6 years. No consistent causal-predictive relationship found. Sentiment features removed from model inputs. Reddit retained as attention gate (density filter) only.",
   "density_gate": "post_count_1d >= 10",

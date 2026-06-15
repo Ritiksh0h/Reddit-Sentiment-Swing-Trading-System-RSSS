@@ -1,11 +1,11 @@
 """
 Daily signal generator.
-Loads trained XGBoost model, computes features for qualifying tickers,
-returns ranked predictions.
+Loads trained XGBoost models, computes features for qualifying tickers,
+returns ranked multi-horizon predictions.
 
 Run time: before market open (08:00-09:00 ET)
-Input:    live market data + Reddit post counts from prior 24h
-Output:   list of SignalRecord objects, ranked by predicted return
+Input:    live market data + Reddit/news/StockTwits data from prior 24h
+Output:   list of SignalRecord objects, sorted bullish-first then bearish
 """
 import json
 import logging
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 with open('experiments/phase3_locked_architecture.json') as f:
     ARCH = json.load(f)
 
-FEATURES     = ARCH['features']          # 11 features
+FEATURES     = ARCH['features']          # 14 features
 DROP_TICKERS = set(ARCH['drop_tickers'])
 DENSITY_GATE = 10
 MIN_PRED_RET = 0.01
@@ -34,19 +34,66 @@ MIN_PRED_RET = 0.01
 class SignalRecord:
     ticker:            str
     date:              str
-    predicted_return:  float
+    predicted_return:  float       # 5D prediction (primary, backward compat)
+    predicted_1d:      float       # 1D prediction
+    predicted_3d:      float       # 3D prediction
+    predicted_5d:      float       # 5D prediction (same as predicted_return)
+    confidence:        float       # 0.0-1.0 confidence score
+    signal:            str         # 'BULLISH' | 'BEARISH' | 'NEUTRAL'
+    price_target_1d:   float       # current_price * (1 + predicted_1d)
+    price_target_3d:   float       # current_price * (1 + predicted_3d)
+    price_target_5d:   float       # current_price * (1 + predicted_5d)
     feature_vector:    dict
     post_count_1d:     int
+    news_count_1d:     int         # from news_fetcher
+    st_count_1d:       int         # from stocktwits_fetcher
     atr_14:            float
     price:             float
     signal_timestamp:  str
 
 
-def load_model(model_path: str = 'models/registry/phase3_model.pkl') -> xgb.XGBRegressor:
+def load_models(model_dir: str = 'models/registry') -> dict:
+    """
+    Load all three horizon models.
+    Returns dict: {'1d': model, '3d': model, '5d': model}
+    Falls back to phase3_model.pkl for 5d if individual models missing.
+    """
+    import pickle
+    models   = {}
+    dir_path = Path(model_dir)
+
+    for horizon in ['1d', '3d', '5d']:
+        model_path = dir_path / f'model_{horizon}.pkl'
+        if model_path.exists():
+            with open(model_path, 'rb') as f:
+                models[horizon] = pickle.load(f)
+            logger.info(f'Loaded model_{horizon}')
+        else:
+            if horizon == '5d':
+                fallback = dir_path / 'phase3_model.pkl'
+                if fallback.exists():
+                    with open(fallback, 'rb') as f:
+                        models['5d'] = pickle.load(f)
+                    logger.warning('Using legacy phase3_model.pkl for 5d')
+                else:
+                    raise FileNotFoundError(
+                        f'No model found for horizon {horizon}. '
+                        'Run scripts/train_phase3_model.py first.'
+                    )
+            else:
+                logger.warning(f'model_{horizon}.pkl not found — '
+                               f'will use 5d model as proxy')
+                models[horizon] = models.get('5d')
+
+    return models
+
+
+def load_model(model_path: str = 'models/registry/phase3_model.pkl'):
+    """Backward-compatible single model loader for daily_run.py."""
     import pickle
     if not Path(model_path).exists():
         raise FileNotFoundError(
-            f'Phase 3 model not found at {model_path}. '
+            f'Model not found at {model_path}. '
             'Run scripts/train_phase3_model.py first.'
         )
     with open(model_path, 'rb') as f:
@@ -59,9 +106,12 @@ def compute_features_live(
     post_count_1d: int,
     mention_growth_1d: float,
     mention_growth_7d: float,
+    news_sentiment_1d: float = 0.0,
+    st_sentiment_1d:   float = 0.0,
+    st_bull_pct:       float = 0.5,
 ) -> Optional[dict]:
     """
-    Compute the 11-feature vector for a ticker using live data.
+    Compute the 14-feature vector for a ticker using live data.
     Returns None if insufficient market data.
     """
     if len(market_data) < 55:
@@ -111,29 +161,43 @@ def compute_features_live(
         'post_count_1d':     float(post_count_1d),
         'mention_growth_1d': float(mention_growth_1d),
         'mention_growth_7d': float(mention_growth_7d),
+        'news_sentiment_1d': float(news_sentiment_1d),
+        'st_sentiment_1d':   float(st_sentiment_1d),
+        'st_bull_pct':       float(st_bull_pct),
     }
 
 
 def generate_signals(
     reddit_counts: dict,
-    model: xgb.XGBRegressor,
+    model=None,           # backward compat — ignored if models provided
     today: str = None,
+    models: dict = None,  # {'1d': model, '3d': model, '5d': model}
 ) -> list:
     """
-    Generate ranked signals for all qualifying tickers.
+    Generate multi-horizon ranked signals for all qualifying tickers.
 
     Args:
-        reddit_counts: {ticker: {post_count_1d, mention_growth_1d, mention_growth_7d}}
-        model:         trained XGBoost regressor
-        today:         date string YYYY-MM-DD (defaults to today)
+        reddit_counts: {ticker: {post_count_1d, mention_growth_1d, ...}}
+        model:         single model (backward compat, used as 5d if models=None)
+        today:         date string YYYY-MM-DD
+        models:        dict of horizon → model (preferred)
 
     Returns:
-        list of SignalRecord, sorted by predicted_return descending
+        list of SignalRecord sorted bullish-first by pred_5d, then bearish
     """
     if today is None:
         today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
-    ts = datetime.now(timezone.utc).isoformat()
+    if models is None:
+        try:
+            models = load_models()
+        except Exception:
+            if model is not None:
+                models = {'5d': model, '3d': model, '1d': model}
+            else:
+                raise
+
+    ts      = datetime.now(timezone.utc).isoformat()
     signals = []
 
     for ticker, reddit_data in reddit_counts.items():
@@ -142,7 +206,7 @@ def generate_signals(
 
         post_count = reddit_data.get('post_count_1d', 0)
         if post_count < DENSITY_GATE:
-            logger.debug(f'density_gate_fail ticker={ticker} post_count={post_count}')
+            logger.debug(f'density_gate_fail ticker={ticker} posts={post_count}')
             continue
 
         try:
@@ -154,7 +218,7 @@ def generate_signals(
                 logger.warning(f'empty_market_data ticker={ticker}')
                 continue
         except Exception as e:
-            logger.warning(f'market_data_fail ticker={ticker} error={e}')
+            logger.warning(f'market_data_fail ticker={ticker}: {e}')
             continue
 
         features = compute_features_live(
@@ -163,34 +227,76 @@ def generate_signals(
             post_count_1d=post_count,
             mention_growth_1d=reddit_data.get('mention_growth_1d', 0.0),
             mention_growth_7d=reddit_data.get('mention_growth_7d', 0.0),
+            news_sentiment_1d=reddit_data.get('news_sentiment_1d', 0.0),
+            st_sentiment_1d=reddit_data.get('st_sentiment_1d', 0.0),
+            st_bull_pct=reddit_data.get('st_bull_pct', 0.5),
         )
         if features is None:
             continue
 
-        X = pd.DataFrame([features])[FEATURES].fillna(0)
-        try:
-            pred = float(model.predict(X)[0])
-        except Exception as e:
-            logger.error(f'model_predict_fail ticker={ticker} error={e}')
-            continue
-
-        if pred < MIN_PRED_RET:
-            continue
-
         price = float(mkt['Close'].iloc[-1])
         atr   = features['atr_14']
+        avail = [f for f in FEATURES if f in features]
+        X     = pd.DataFrame([features])[avail].fillna(0)
+
+        preds = {}
+        for horizon, m in models.items():
+            if m is None:
+                preds[horizon] = 0.0
+                continue
+            try:
+                preds[horizon] = float(m.predict(X)[0])
+            except Exception as e:
+                logger.error(f'predict_fail ticker={ticker} horizon={horizon}: {e}')
+                preds[horizon] = 0.0
+
+        pred_1d = preds.get('1d', 0.0)
+        pred_3d = preds.get('3d', 0.0)
+        pred_5d = preds.get('5d', 0.0)
+
+        if abs(pred_5d) < MIN_PRED_RET:
+            continue
+
+        # Confidence: 0.0 = at threshold, 1.0 = 3× threshold
+        confidence = min(abs(pred_5d) / (MIN_PRED_RET * 3), 1.0)
+
+        if pred_5d >= 0.03 and confidence >= 0.5:
+            signal = 'BULLISH'
+        elif pred_5d <= -0.03 and confidence >= 0.5:
+            signal = 'BEARISH'
+        else:
+            signal = 'NEUTRAL'
 
         signals.append(SignalRecord(
             ticker=ticker,
             date=today,
-            predicted_return=round(pred, 6),
+            predicted_return=round(pred_5d, 6),   # backward compat
+            predicted_1d=round(pred_1d, 6),
+            predicted_3d=round(pred_3d, 6),
+            predicted_5d=round(pred_5d, 6),
+            confidence=round(confidence, 4),
+            signal=signal,
+            price_target_1d=round(price * (1 + pred_1d), 2),
+            price_target_3d=round(price * (1 + pred_3d), 2),
+            price_target_5d=round(price * (1 + pred_5d), 2),
             feature_vector=features,
             post_count_1d=post_count,
+            news_count_1d=int(reddit_data.get('news_count_1d', 0)),
+            st_count_1d=int(reddit_data.get('st_count_1d', 0)),
             atr_14=round(atr, 6),
             price=round(price, 4),
             signal_timestamp=ts,
         ))
 
-    signals.sort(key=lambda s: s.predicted_return, reverse=True)
-    logger.info(f'signals_generated count={len(signals)} date={today}')
-    return signals
+    bullish = sorted([s for s in signals if s.signal == 'BULLISH'],
+                     key=lambda x: x.predicted_5d, reverse=True)
+    neutral = sorted([s for s in signals if s.signal == 'NEUTRAL'],
+                     key=lambda x: abs(x.predicted_5d), reverse=True)
+    bearish = sorted([s for s in signals if s.signal == 'BEARISH'],
+                     key=lambda x: x.predicted_5d)
+
+    result = bullish + neutral + bearish
+    logger.info(f'signals_generated count={len(result)} '
+                f'bullish={len(bullish)} neutral={len(neutral)} '
+                f'bearish={len(bearish)} date={today}')
+    return result
