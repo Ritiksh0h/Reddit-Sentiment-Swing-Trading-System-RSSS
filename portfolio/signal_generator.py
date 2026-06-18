@@ -183,10 +183,12 @@ def compute_features_live(
 
 
 def generate_signals(
-    reddit_counts: dict,
+    reddit_counts:   dict,
     model=None,           # backward compat — ignored if models provided
-    today: str = None,
-    models: dict = None,  # {'1d': model, '3d': model, '5d': model}
+    today:           str  = None,
+    models:          dict = None,  # {'1d': model, '3d': model, '5d': model}
+    news_data:       dict = None,  # {ticker: {news_sentiment_1d}}
+    stocktwits_data: dict = None,  # {ticker: {st_sentiment_1d, st_bull_pct}}
 ) -> list:
     """
     Generate multi-horizon ranked signals for all qualifying tickers.
@@ -236,15 +238,33 @@ def generate_signals(
             logger.warning(f'market_data_fail ticker={ticker}: {e}')
             continue
 
+        if news_data and ticker in news_data:
+            news_sent = float(news_data[ticker].get('news_sentiment_1d', 0.0))
+        else:
+            news_sent = float(reddit_data.get('news_sentiment_1d', 0.0))
+
+        if stocktwits_data and ticker in stocktwits_data:
+            st_sent = float(stocktwits_data[ticker].get('st_sentiment_1d', 0.0))
+            st_bull = float(stocktwits_data[ticker].get('st_bull_pct', 0.5))
+        else:
+            st_sent = float(reddit_data.get('st_sentiment_1d', 0.0))
+            st_bull = float(reddit_data.get('st_bull_pct', 0.5))
+
+        logger.debug(
+            f'features ticker={ticker} '
+            f'news={news_sent:.3f} st={st_sent:.3f} '
+            f'st_bull={st_bull:.3f}'
+        )
+
         features = compute_features_live(
             ticker=ticker,
             market_data=mkt,
             post_count_1d=post_count,
             mention_growth_1d=reddit_data.get('mention_growth_1d', 0.0),
             mention_growth_7d=reddit_data.get('mention_growth_7d', 0.0),
-            news_sentiment_1d=reddit_data.get('news_sentiment_1d', 0.0),
-            st_sentiment_1d=reddit_data.get('st_sentiment_1d', 0.0),
-            st_bull_pct=reddit_data.get('st_bull_pct', 0.5),
+            news_sentiment_1d=news_sent,
+            st_sentiment_1d=st_sent,
+            st_bull_pct=st_bull,
         )
         if features is None:
             continue

@@ -173,7 +173,13 @@ def main():
         try:
             from portfolio.signal_generator import generate_signals, load_models
             models  = load_models()
-            signals = generate_signals(reddit_counts, models=models, today=today)
+            signals = generate_signals(
+                reddit_counts=reddit_counts,
+                models=models,
+                today=today,
+                news_data=news_data,
+                stocktwits_data=st_data,
+            )
             logger.info(f'Dry run: {len(signals)} qualifying signals')
             for s in signals[:5]:
                 logger.info(
@@ -193,12 +199,48 @@ def main():
 
     # ── Step 2b: Full run ─────────────────────────────────────────────────
     from scripts.daily_run import run
-    summary = run(reddit_counts=reddit_counts, today=today)
+    summary = run(
+        reddit_counts=reddit_counts,
+        today=today,
+        news_data=news_data,
+        stocktwits_data=st_data,
+    )
 
     logger.info('=== Daily Run Complete ===')
     logger.info(f'Actions: {summary["actions"]}')
     if summary.get('skipped'):
         logger.warning(f'Run skipped — reason: {summary["reason"]}')
+
+    # ── Save live feature vectors for future retraining ───────────────────
+    if not summary.get('skipped') and summary.get('actions'):
+        try:
+            result = subprocess.run(
+                [sys.executable, 'scripts/append_live_features.py',
+                 '--date', today],
+                capture_output=True, text=True, cwd='.'
+            )
+            if result.returncode == 0:
+                logger.info('live_features_appended')
+            else:
+                logger.warning(
+                    f'live_features_append_failed: {result.stderr[:200]}'
+                )
+        except Exception as e:
+            logger.warning(f'live_features_append_error: {e}')
+
+    # ── Fill pending targets regardless of signal outcome ─────────────────
+    try:
+        result = subprocess.run(
+            [sys.executable, 'scripts/append_live_features.py',
+             '--fill-targets-only'],
+            capture_output=True, text=True, cwd='.'
+        )
+        if result.returncode != 0:
+            logger.warning(
+                f'target_fill_failed: {result.stderr[:200]}'
+            )
+    except Exception as e:
+        logger.warning(f'target_fill_error: {e}')
 
     print(json.dumps(summary, indent=2))
 

@@ -46,13 +46,20 @@ from portfolio.execution_logger  import log_signal
 from portfolio.drift_monitor     import check_drift
 
 
-def run(reddit_counts: dict, today: str = None) -> dict:
+def run(
+    reddit_counts:   dict,
+    today:           str  = None,
+    news_data:       dict = None,
+    stocktwits_data: dict = None,
+) -> dict:
     """
     Main daily run function.
 
     Args:
-        reddit_counts: {ticker: {post_count_1d, mention_growth_1d, mention_growth_7d}}
-        today:         date string YYYY-MM-DD
+        reddit_counts:   {ticker: {post_count_1d, mention_growth_1d, mention_growth_7d}}
+        today:           date string YYYY-MM-DD
+        news_data:       {ticker: {news_sentiment_1d, news_count_1d}} or None
+        stocktwits_data: {ticker: {st_sentiment_1d, st_bull_pct}} or None
 
     Returns:
         summary dict with actions taken
@@ -240,7 +247,13 @@ def run(reddit_counts: dict, today: str = None) -> dict:
 
     # ── 6. Generate signals ────────────────────────────────────────────────
     try:
-        signals = generate_signals(reddit_counts, model, today)
+        signals = generate_signals(
+            reddit_counts=reddit_counts,
+            model=model,
+            today=today,
+            news_data=news_data,
+            stocktwits_data=stocktwits_data,
+        )
     except Exception as e:
         logger.error(f'SIGNAL_GENERATION_FAILED error={e}')
         summary['skipped'] = True

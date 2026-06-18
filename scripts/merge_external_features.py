@@ -202,6 +202,41 @@ def verify_no_leakage(df):
     logger.info('Leakage check complete')
 
 
+def merge_live_features():
+    """
+    Merge live 2026 features into features_complete.parquet.
+    Run manually every 30 days or when retraining.
+    Only rows with target_return_5d filled are merged.
+    """
+    base_path = Path(OUTPUT_PATH)
+    live_path = Path('data/features/features_live_2026.parquet')
+
+    if not live_path.exists():
+        logger.info('No live features yet — run daily_run_live.py first')
+        return
+
+    live = pd.read_parquet(live_path)
+    live_complete = live[live['target_return_5d'].notna()].copy()
+
+    if len(live_complete) == 0:
+        logger.info('No completed live features yet — need 5+ trading days')
+        return
+
+    if not base_path.exists():
+        logger.error(f'Base feature store not found: {base_path}')
+        return
+
+    base     = pd.read_parquet(base_path)
+    combined = pd.concat([base, live_complete], ignore_index=True)
+    combined = combined.drop_duplicates(subset=['ticker', 'date'], keep='last')
+    combined = combined.sort_values(['ticker', 'date']).reset_index(drop=True)
+    combined.to_parquet(base_path, index=False)
+
+    years = sorted(pd.to_datetime(combined['date']).dt.year.unique().tolist())
+    logger.info(f'Merged {len(live_complete)} live rows into {base_path}')
+    logger.info(f'Total: {len(combined)} rows | Years: {years}')
+
+
 def main(verify_only=False):
     # Verify inputs exist
     check_inputs()
@@ -237,5 +272,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--verify-only', action='store_true',
                         help='Only check input files exist, do not merge')
+    parser.add_argument('--merge-live', action='store_true',
+                        help='Merge features_live_2026.parquet into features_complete.parquet')
     args = parser.parse_args()
-    main(verify_only=args.verify_only)
+    if args.merge_live:
+        merge_live_features()
+    else:
+        main(verify_only=args.verify_only)
