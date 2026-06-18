@@ -155,14 +155,16 @@ def test_position_below_take_profit_not_closed():
 
 def test_drift_monitor_skips_day_on_low_posts():
     """post_count_1d at 40% of historical mean (53.2) → skip_day=True."""
-    result = check_drift({'post_count_1d': 21.0, 'mention_growth_7d': 0.2})
+    result = check_drift({'post_count_1d': 21.0, 'mention_growth_7d': 0.2},
+                         _time_scale_override=1.0)
     assert result['skip_day'] is True
     assert not result['clean']
 
 
 def test_drift_monitor_clean_on_normal_values():
     """Normal values → no alerts."""
-    result = check_drift({'post_count_1d': 53.0, 'mention_growth_7d': 0.23})
+    result = check_drift({'post_count_1d': 53.0, 'mention_growth_7d': 0.23},
+                         _time_scale_override=1.0)
     assert result['clean'] is True
     assert result['skip_day'] is False
 

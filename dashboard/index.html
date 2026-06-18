@@ -232,11 +232,44 @@
                 <div class="flex gap-2 mb-4">
                     <select id="ticker-select" onchange="onTickerChange()" class="bg-panelBg border border-cardBorder text-white px-3 py-2 rounded-lg font-mono text-sm w-full focus:outline-none focus:border-accentBlue">
                         <option value="NVDA">NVDA — NVIDIA Corp.</option>
-                        <option value="TSLA">TSLA — Tesla, Inc.</option>
-                        <option value="AAPL">AAPL — Apple Inc.</option>
+                        <option value="TSLA">TSLA — Tesla Inc.</option>
                         <option value="AMD">AMD — Advanced Micro Devices</option>
+                        <option value="AAPL">AAPL — Apple Inc.</option>
                         <option value="MSFT">MSFT — Microsoft Corp.</option>
-                        <option value="SPY">SPY — S&P 500 ETF</option>
+                        <option value="META">META — Meta Platforms</option>
+                        <option value="AMZN">AMZN — Amazon</option>
+                        <option value="GOOG">GOOG — Alphabet</option>
+                        <option value="NFLX">NFLX — Netflix</option>
+                        <option value="COIN">COIN — Coinbase</option>
+                        <option value="PLTR">PLTR — Palantir</option>
+                        <option value="GME">GME — GameStop</option>
+                        <option value="AMC">AMC — AMC Entertainment</option>
+                        <option value="MARA">MARA — Marathon Digital</option>
+                        <option value="SOFI">SOFI — SoFi Technologies</option>
+                        <option value="HOOD">HOOD — Robinhood</option>
+                        <option value="ROKU">ROKU — Roku</option>
+                        <option value="SNAP">SNAP — Snap Inc.</option>
+                        <option value="UBER">UBER — Uber</option>
+                        <option value="NIO">NIO — NIO Inc.</option>
+                        <option value="BABA">BABA — Alibaba</option>
+                        <option value="SHOP">SHOP — Shopify</option>
+                        <option value="PYPL">PYPL — PayPal</option>
+                        <option value="DKNG">DKNG — DraftKings</option>
+                        <option value="DIS">DIS — Walt Disney</option>
+                        <option value="RKLB">RKLB — Rocket Lab</option>
+                        <option value="HIMS">HIMS — Hims &amp; Hers</option>
+                        <option value="RDDT">RDDT — Reddit Inc.</option>
+                        <option value="SOUN">SOUN — SoundHound AI</option>
+                        <option value="IONQ">IONQ — IonQ</option>
+                        <option value="F">F — Ford Motor</option>
+                        <option value="BA">BA — Boeing</option>
+                        <option value="BB">BB — BlackBerry</option>
+                        <option value="GS">GS — Goldman Sachs</option>
+                        <option value="JPM">JPM — JPMorgan</option>
+                        <option value="BAC">BAC — Bank of America</option>
+                        <option value="SQ">SQ — Block Inc.</option>
+                        <option value="NOK">NOK — Nokia</option>
+                        <option value="SPCE">SPCE — Virgin Galactic</option>
                     </select>
                 </div>
 
@@ -671,15 +704,19 @@
         // Ticker Selection Changed
         function onTickerChange() {
             selectedTicker = document.getElementById('ticker-select').value;
-            
+
             if (currentMode === 'sim') {
-                // Seed sliders from our base model preset
-                const preset = simulationData[selectedTicker];
+                // Seed sliders from preset, or use defaults for tickers not in simulationData
+                const preset = simulationData[selectedTicker] || {
+                    reddit_vol: 15, reddit_sent: 20, news_sent: 10, st_sent: 5,
+                    base_accuracy_1d: "51.0%", base_accuracy_3d: "52.0%",
+                    base_accuracy_5d: "53.5%"
+                };
                 document.getElementById('sim-reddit-vol').value = preset.reddit_vol;
                 document.getElementById('sim-reddit-sent').value = preset.reddit_sent;
                 document.getElementById('sim-news-sent').value = preset.news_sent;
                 document.getElementById('sim-st-sent').value = preset.st_sent;
-                
+
                 updateSimulation();
             } else {
                 fetchLiveAPIData();

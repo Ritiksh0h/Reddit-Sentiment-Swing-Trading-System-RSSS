@@ -50,8 +50,30 @@ def classify_regime(
                      AND (rolling_30d_ic is None OR rolling_30d_ic > 0.03)
         NEUTRAL:     everything else (including SPY up but IC <= 0.03)
     """
-    spy = yf.download(spy_ticker, period='300d',
-                      auto_adjust=True, progress=False)
+    spy = pd.DataFrame()
+    for period in ['1y', '6mo', '60d', '30d']:
+        try:
+            spy = yf.download(spy_ticker, period=period,
+                              auto_adjust=True, progress=False)
+        except Exception:
+            spy = pd.DataFrame()
+        if not spy.empty:
+            break
+
+    if spy.empty:
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            'SPY data unavailable — defaulting to NEUTRAL'
+        )
+        return RegimeState(
+            label='neutral',
+            multiplier=POSITION_SIZING['neutral'],
+            spy_above_200ma=False,
+            spy_ret_60d=0.0,
+            rolling_30d_ic=rolling_30d_ic,
+            reason='SPY data unavailable — defaulted to NEUTRAL',
+        )
+
     if isinstance(spy.columns, pd.MultiIndex):
         spy.columns = spy.columns.get_level_values(0)
 

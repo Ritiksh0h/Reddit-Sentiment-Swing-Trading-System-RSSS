@@ -1,6 +1,6 @@
 """
 Historical backfill test for Phase 4 pipeline.
-Uses real market data + synthetic Reddit counts to simulate past trading days.
+Uses real feature store data (features_complete.parquet) to simulate past trading days.
 
 Usage:
     python scripts/test_historical_run.py                    # last 30 days
@@ -11,7 +11,6 @@ Usage:
 import argparse
 import json
 import logging
-import random
 import shutil
 import sys
 from datetime import date, timedelta
@@ -31,14 +30,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger('backfill_test')
 
-# ── Tickers ────────────────────────────────────────────────────────────────
-HIGH_ACTIVITY = {'TSLA', 'NVDA', 'AMD', 'AAPL', 'GME', 'PLTR', 'COIN'}
-MED_ACTIVITY  = {'META', 'MSFT', 'AMZN', 'NFLX', 'UBER', 'SNAP', 'PYPL'}
-ALL_TICKERS   = list(HIGH_ACTIVITY | MED_ACTIVITY | {
-    'AMC', 'NIO', 'BA', 'BB', 'NOK', 'SPCE', 'BABA', 'DKNG',
-})
-
-
 # ── Trading day calendar ────────────────────────────────────────────────────
 def get_trading_days(start: date, end: date) -> list:
     """Return weekdays (Mon-Fri) between start and end inclusive."""
@@ -50,31 +41,46 @@ def get_trading_days(start: date, end: date) -> list:
     return days
 
 
-# ── Synthetic Reddit counts ────────────────────────────────────────────────
-def build_synthetic_reddit_counts(trading_date: date) -> dict:
+# ── Real Reddit counts from feature store ─────────────────────────────────
+def load_reddit_counts_from_feature_store(trading_date: date) -> dict:
     """
-    Build realistic synthetic reddit_counts for a historical date.
-    Uses a seeded RNG so results are deterministic per date.
+    Load real reddit_counts from features_complete.parquet for a historical date.
+    Falls back to features_full.parquet if complete store not available.
+    Returns empty dict if no data for that date — daily_run will skip the day.
+    """
+    import pandas as pd
 
-    High-activity tickers: 25-120 posts/day
-    Med-activity tickers:  8-45 posts/day
-    Low-activity tickers:  2-20 posts/day
-    """
-    rng = random.Random(int(trading_date.strftime('%Y%m%d')))
+    for store_name in ['features_complete.parquet', 'features_full.parquet']:
+        store_path = Path('data/features') / store_name
+        if store_path.exists():
+            break
+    else:
+        logger.warning('No feature store found in data/features/')
+        return {}
+
+    df       = pd.read_parquet(store_path)
+    date_str = trading_date.isoformat()
+    day_df   = df[df['date'] == date_str]
+
+    if day_df.empty:
+        logger.warning(f'No feature store data for {date_str} — skipping day')
+        return {}
+
     counts = {}
-    for ticker in ALL_TICKERS:
-        if ticker in HIGH_ACTIVITY:
-            post_count = rng.randint(25, 120)
-        elif ticker in MED_ACTIVITY:
-            post_count = rng.randint(8, 45)
-        else:
-            post_count = rng.randint(2, 20)
-
+    for _, row in day_df.iterrows():
+        ticker = row['ticker']
         counts[ticker] = {
-            'post_count_1d':     post_count,
-            'mention_growth_1d': round(rng.uniform(0.7, 1.8), 3),
-            'mention_growth_7d': round(rng.uniform(0.5, 2.2), 3),
+            'post_count_1d':     int(row.get('post_count_1d', 0)),
+            'mention_growth_1d': float(row.get('mention_growth_1d', 1.0)),
+            'mention_growth_7d': float(row.get('mention_growth_7d', 1.0)),
+            'news_count_1d':     int(row.get('news_count_1d', 0)),
+            'news_sentiment_1d': float(row.get('news_sentiment_1d', 0.0)),
+            'st_count_1d':       int(row.get('st_count_1d', 0)),
+            'st_sentiment_1d':   float(row.get('st_sentiment_1d', 0.0)),
+            'st_bull_pct':       float(row.get('st_bull_pct', 0.5)),
         }
+
+    logger.info(f'Loaded feature store data for {date_str}: {len(counts)} tickers')
     return counts
 
 
@@ -120,7 +126,7 @@ def run_backfill(start: date, end: date) -> list:
     results = []
     for trading_date in trading_days:
         date_str      = trading_date.isoformat()
-        reddit_counts = build_synthetic_reddit_counts(trading_date)
+        reddit_counts = load_reddit_counts_from_feature_store(trading_date)
 
         try:
             summary = run(reddit_counts=reddit_counts, today=date_str)

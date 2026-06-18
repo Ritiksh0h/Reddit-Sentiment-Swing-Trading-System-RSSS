@@ -56,7 +56,7 @@ def _mention_history_is_mature(
     return False
 
 
-def check_drift(live_values: dict) -> dict:
+def check_drift(live_values: dict, _time_scale_override: float = None) -> dict:
     """
     Check live feature values against historical training means.
 
@@ -94,9 +94,13 @@ def check_drift(live_values: dict) -> dict:
     # Historical mean 53.2 was calibrated at end-of-US-session peak density.
     # Runs fire at 09:00/11:30/14:00 ET — Reddit builds up during the session.
     # Scale: 09:00 ET = 30% of peak, 14:00 ET = 100% of peak.
-    _utc_hour   = _dt.datetime.utcnow().hour
-    _et_hour    = (_utc_hour - 4) % 24        # EDT = UTC−4
-    _time_scale = max(0.3, min(1.0, (_et_hour - 9) / 5.0))
+    # _time_scale_override=1.0 used in tests to decouple from wall clock.
+    if _time_scale_override is not None:
+        _time_scale = _time_scale_override
+    else:
+        _utc_hour   = _dt.datetime.utcnow().hour
+        _et_hour    = (_utc_hour - 4) % 24        # EDT = UTC−4
+        _time_scale = max(0.3, min(1.0, (_et_hour - 9) / 5.0))
 
     for feature, hist_mean in features_to_check.items():
         live = live_values.get(feature)

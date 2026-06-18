@@ -113,6 +113,14 @@ def run(reddit_counts: dict, today: str = None) -> dict:
             f'but will still close expiring positions. alerts={drift["alerts"]}'
         )
 
+    # Log per-ticker post counts so we can see who's near the density gate
+    for ticker, data in sorted(reddit_counts.items(),
+                                key=lambda x: x[1].get('post_count_1d', 0),
+                                reverse=True)[:10]:
+        count = data.get('post_count_1d', 0)
+        gate  = 'PASS' if count >= 10 else 'FAIL'
+        logger.info(f'  [{gate}] {ticker:<6} posts={count}')
+
     # ── 5. Close expiring positions (ALWAYS — regardless of drift) ─────────
     # Positions must be closed on schedule regardless of data quality issues.
     import yfinance as _yf
@@ -215,6 +223,20 @@ def run(reddit_counts: dict, today: str = None) -> dict:
         summary['reason']  = 'model_error'
         save_portfolio(state)
         return summary
+
+    # ── 6b. StockTwits density boost ──────────────────────────────────────
+    # Tickers with heavy StockTwits activity but low Reddit posts may still
+    # have real crowd attention. st_count_1d is merged into reddit_counts by
+    # daily_run_live.py. Boost effective post_count_1d by up to +5.
+    for ticker in list(reddit_counts.keys()):
+        st_count      = reddit_counts[ticker].get('st_count_1d', 0)
+        st_equivalent = min(st_count // 20, 5)
+        if st_equivalent > 0:
+            reddit_counts[ticker]['post_count_1d'] += st_equivalent
+            logger.debug(
+                f'density_boost ticker={ticker} '
+                f'st_count={st_count} boost=+{st_equivalent}'
+            )
 
     # ── 6. Generate signals ────────────────────────────────────────────────
     try:
@@ -347,10 +369,6 @@ def run(reddit_counts: dict, today: str = None) -> dict:
 
 
 if __name__ == '__main__':
-    test_reddit = {
-        'TSLA': {'post_count_1d': 45, 'mention_growth_1d': 0.3, 'mention_growth_7d': 0.4},
-        'PLTR': {'post_count_1d': 22, 'mention_growth_1d': 0.2, 'mention_growth_7d': 0.3},
-        'COIN': {'post_count_1d': 18, 'mention_growth_1d': 0.15, 'mention_growth_7d': 0.25},
-    }
-    result = run(test_reddit)
-    print(json.dumps(result, indent=2))
+    print('Run via: python scripts/daily_run_live.py')
+    print('         python scripts/daily_run_live.py --dry-run')
+    print('         python scripts/test_historical_run.py --days 30')

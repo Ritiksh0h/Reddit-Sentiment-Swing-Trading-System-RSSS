@@ -1,14 +1,8 @@
 # config/tickers.txt
-# Validated ticker universe — S&P 500 + Russell 1000 minimum (production).
-#
-# Phase 0 subset: 10 high-WSB-frequency tickers for signal validation.
-# Expand to full S&P 500 + Russell 1000 before Phase 1.
-# NEVER hard-code this list in Python. Always load from this file.
-#
-# Source for full list: https://en.wikipedia.org/wiki/List_of_S%26P_500_companies
-# Format: one ticker per line, uppercase, no whitespace.
+# Tracked ticker universe for RSSS Phase 3/4
+# Must match TRACKED_TICKERS in data/reddit_live_fetcher.py
+# Format: one ticker per line, uppercase, no whitespace
 
-# --- Phase 0 Tickers ---
 NVDA
 TSLA
 AMD
@@ -18,4 +12,33 @@ AMC
 PLTR
 MARA
 COIN
-SPY
+META
+MSFT
+AMZN
+GOOG
+NFLX
+SOFI
+HOOD
+ROKU
+SNAP
+UBER
+NIO
+BABA
+SHOP
+PYPL
+DKNG
+DIS
+RKLB
+HIMS
+RDDT
+SOUN
+IONQ
+F
+BA
+BB
+GS
+JPM
+BAC
+SQ
+NOK
+SPCE

@@ -65,6 +65,14 @@ def fetch_stocktwits(
     result   = {}
     failures = 0
 
+    # Fast-fail if DNS is completely down — avoids 10s × 39 timeouts.
+    import socket
+    try:
+        socket.getaddrinfo('api.stocktwits.com', 443)
+    except socket.gaierror as e:
+        logger.warning(f'stocktwits_dns_failed — returning zeros: {e}')
+        return {}
+
     for ticker in TRACKED_TICKERS:
         try:
             url  = f'{STOCKTWITS_BASE}/{ticker}.json'
