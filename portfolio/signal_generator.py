@@ -7,6 +7,13 @@ Run time: before market open (08:00-09:00 ET)
 Input:    live market data + Reddit/news/StockTwits data from prior 24h
 Output:   list of SignalRecord objects, sorted bullish-first then bearish
 """
+import os
+# Must be set before xgboost import — prevents OpenMP/OMP thread conflicts
+# between XGBoost workers and uvicorn on Python 3.13 + macOS (exit code 139).
+os.environ['OMP_NUM_THREADS']     = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS']     = '1'
+
 import json
 import logging
 from dataclasses import dataclass, asdict
@@ -67,6 +74,7 @@ def load_models(model_dir: str = 'models/registry') -> dict:
         if model_path.exists():
             with open(model_path, 'rb') as f:
                 models[horizon] = pickle.load(f)
+            models[horizon].set_params(n_jobs=1)
             logger.info(f'Loaded model_{horizon}')
         else:
             if horizon == '5d':
@@ -74,6 +82,7 @@ def load_models(model_dir: str = 'models/registry') -> dict:
                 if fallback.exists():
                     with open(fallback, 'rb') as f:
                         models['5d'] = pickle.load(f)
+                    models['5d'].set_params(n_jobs=1)
                     logger.warning('Using legacy phase3_model.pkl for 5d')
                 else:
                     raise FileNotFoundError(
@@ -97,7 +106,9 @@ def load_model(model_path: str = 'models/registry/phase3_model.pkl'):
             'Run scripts/train_phase3_model.py first.'
         )
     with open(model_path, 'rb') as f:
-        return pickle.load(f)
+        m = pickle.load(f)
+    m.set_params(n_jobs=1)
+    return m
 
 
 def compute_features_live(

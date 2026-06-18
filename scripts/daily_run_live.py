@@ -7,6 +7,16 @@ Usage:
     python scripts/daily_run_live.py --dry-run  (logs signals but no trades)
     python scripts/daily_run_live.py --date 2024-03-15  (override date for testing)
 """
+import os
+# Load .env first so HF_TOKEN is available before transformers import.
+from dotenv import load_dotenv
+load_dotenv()
+
+# Prevent OpenMP/OMP thread conflicts between XGBoost and uvicorn
+# on Python 3.13 + macOS — must be set before any xgboost import.
+os.environ['OMP_NUM_THREADS']      = '1'
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+
 import argparse
 import json
 import logging
