@@ -1,94 +1,6 @@
 {
-  "cash": 2763.76673393835,
-  "positions": [
-    {
-      "ticker": "UBER",
-      "entry_date": "2026-06-11",
-      "entry_price": 71.0359,
-      "n_shares": 35,
-      "position_dollars": 2481.85,
-      "stop_date": "2026-06-18",
-      "predicted_return": -0.024097,
-      "atr_14": 2.348928,
-      "slippage_applied": 0.001775,
-      "regime_state": "positive",
-      "regime_multiplier": 1.0,
-      "feature_vector": {
-        "returns_1d": -0.031945342496800366,
-        "returns_5d": 0.03352285426755697,
-        "returns_20d": -0.04292067529979027,
-        "rsi_14": 49.974040221407186,
-        "atr_14": 2.3489276341029575,
-        "relative_volume": 0.6146547002567316,
-        "dist_from_20ma": -0.005929885465497025,
-        "dist_from_50ma": -0.035526730889492084,
-        "post_count_1d": 34.0,
-        "mention_growth_1d": 1.023,
-        "mention_growth_7d": 1.551,
-        "news_sentiment_1d": 0.0,
-        "st_sentiment_1d": 0.0,
-        "st_bull_pct": 0.5
-      }
-    },
-    {
-      "ticker": "TSLA",
-      "entry_date": "2026-06-11",
-      "entry_price": 396.8854,
-      "n_shares": 6,
-      "position_dollars": 2378.28,
-      "stop_date": "2026-06-18",
-      "predicted_return": 0.022463,
-      "atr_14": 18.106432,
-      "slippage_applied": 0.001275,
-      "regime_state": "positive",
-      "regime_multiplier": 1.0,
-      "feature_vector": {
-        "returns_1d": -0.02046161890071707,
-        "returns_5d": 0.03875890009397831,
-        "returns_20d": -0.01912840748546507,
-        "rsi_14": 35.38923567759812,
-        "atr_14": 18.106432233537948,
-        "relative_volume": 0.8896717454436387,
-        "dist_from_20ma": -0.04379835921270362,
-        "dist_from_50ma": -0.0123649879660055,
-        "post_count_1d": 90.0,
-        "mention_growth_1d": 0.939,
-        "mention_growth_7d": 0.549,
-        "news_sentiment_1d": 0.0,
-        "st_sentiment_1d": 0.0,
-        "st_bull_pct": 0.5
-      }
-    },
-    {
-      "ticker": "NFLX",
-      "entry_date": "2026-06-11",
-      "entry_price": 77.1191,
-      "n_shares": 33,
-      "position_dollars": 2539.68,
-      "stop_date": "2026-06-18",
-      "predicted_return": -0.017157,
-      "atr_14": 2.072144,
-      "slippage_applied": 0.002067,
-      "regime_state": "positive",
-      "regime_multiplier": 1.0,
-      "feature_vector": {
-        "returns_1d": -0.02235775036761045,
-        "returns_5d": -0.0614634257991139,
-        "returns_20d": -0.13847534415119334,
-        "rsi_14": 19.63824454964157,
-        "atr_14": 2.0721435546875,
-        "relative_volume": 1.3887941312275762,
-        "dist_from_20ma": -0.0798935964771895,
-        "dist_from_50ma": -0.1417266352714244,
-        "post_count_1d": 36.0,
-        "mention_growth_1d": 1.498,
-        "mention_growth_7d": 2.134,
-        "news_sentiment_1d": 0.0,
-        "st_sentiment_1d": 0.0,
-        "st_bull_pct": 0.5
-      }
-    }
-  ],
+  "cash": 10163.57686119665,
+  "positions": [],
   "closed_trades": [
     {
       "ticker": "AAPL",
@@ -178,6 +90,36 @@
       "exit_price": 205.19000244140625,
       "n_shares": 12,
       "pnl_pct": 0.0009,
+      "exit_reason": "hold_period_expired"
+    },
+    {
+      "ticker": "UBER",
+      "entry_date": "2026-06-11",
+      "exit_date": "2026-06-18",
+      "entry_price": 71.0359,
+      "exit_price": 70.91000366210938,
+      "n_shares": 35,
+      "pnl_pct": -0.0018,
+      "exit_reason": "hold_period_expired"
+    },
+    {
+      "ticker": "TSLA",
+      "entry_date": "2026-06-11",
+      "exit_date": "2026-06-18",
+      "entry_price": 396.8854,
+      "exit_price": 396.3800048828125,
+      "n_shares": 6,
+      "pnl_pct": -0.0013,
+      "exit_reason": "hold_period_expired"
+    },
+    {
+      "ticker": "NFLX",
+      "entry_date": "2026-06-11",
+      "exit_date": "2026-06-18",
+      "entry_price": 77.1191,
+      "exit_price": 76.95999908447266,
+      "n_shares": 33,
+      "pnl_pct": -0.0021,
       "exit_reason": "hold_period_expired"
     }
   ],

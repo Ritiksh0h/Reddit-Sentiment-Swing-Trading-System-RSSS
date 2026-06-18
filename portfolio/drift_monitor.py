@@ -89,28 +89,39 @@ def check_drift(live_values: dict) -> dict:
         logger.info('drift_check_skip feature=mention_growth_7d '
                     'reason=history_immature_placeholder_active')
 
+    import datetime as _dt
+    # Scale post_count_1d historical mean by time of day.
+    # Historical mean 53.2 was calibrated at end-of-US-session peak density.
+    # Runs fire at 09:00/11:30/14:00 ET — Reddit builds up during the session.
+    # Scale: 09:00 ET = 30% of peak, 14:00 ET = 100% of peak.
+    _utc_hour   = _dt.datetime.utcnow().hour
+    _et_hour    = (_utc_hour - 4) % 24        # EDT = UTC−4
+    _time_scale = max(0.3, min(1.0, (_et_hour - 9) / 5.0))
+
     for feature, hist_mean in features_to_check.items():
         live = live_values.get(feature)
         if live is None:
             alerts.append(f'{feature}: missing from live data')
             continue
 
-        if hist_mean < 0:
-            low_thresh  = hist_mean * ALERT_HIGH_MULTIPLIER
-            high_thresh = hist_mean * ALERT_LOW_MULTIPLIER
+        adjusted_mean = hist_mean * _time_scale if feature == 'post_count_1d' else hist_mean
+
+        if adjusted_mean < 0:
+            low_thresh  = adjusted_mean * ALERT_HIGH_MULTIPLIER
+            high_thresh = adjusted_mean * ALERT_LOW_MULTIPLIER
         else:
-            low_thresh  = hist_mean * ALERT_LOW_MULTIPLIER
-            high_thresh = hist_mean * ALERT_HIGH_MULTIPLIER
+            low_thresh  = adjusted_mean * ALERT_LOW_MULTIPLIER
+            high_thresh = adjusted_mean * ALERT_HIGH_MULTIPLIER
 
         if live < low_thresh:
             alerts.append(
-                f'{feature}: live={live:.3f} is below 50% of historical '
-                f'mean ({hist_mean:.3f}). Possible API undercount.'
+                f'{feature}: live={live:.3f} is below 50% of time-adjusted '
+                f'mean ({adjusted_mean:.3f}, scale={_time_scale:.2f}). Possible API undercount.'
             )
         elif live > high_thresh:
             alerts.append(
-                f'{feature}: live={live:.3f} is above 200% of historical '
-                f'mean ({hist_mean:.3f}). Possible data spike or API issue.'
+                f'{feature}: live={live:.3f} is above 200% of time-adjusted '
+                f'mean ({adjusted_mean:.3f}, scale={_time_scale:.2f}). Possible data spike or API issue.'
             )
 
     # skip_day fires only when post_count_1d is BELOW threshold (API undercount).

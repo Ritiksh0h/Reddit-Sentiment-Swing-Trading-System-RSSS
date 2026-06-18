@@ -105,124 +105,67 @@ def run(reddit_counts: dict, today: str = None) -> dict:
         ),
     }
 
-    drift = check_drift(live_means)
-    if drift['skip_day']:
-        logger.warning(f'SKIP_DAY: Reddit API anomaly alerts={drift["alerts"]}')
-        summary['skipped'] = True
-        summary['reason']  = 'api_anomaly'
-        save_portfolio(state)
-        return summary
+    drift            = check_drift(live_means)
+    skip_new_signals = drift['skip_day']
+    if skip_new_signals:
+        logger.warning(
+            f'SKIP_DAY: Reddit API anomaly — skipping new signals, '
+            f'but will still close expiring positions. alerts={drift["alerts"]}'
+        )
 
-    # ── 5. Load model ──────────────────────────────────────────────────────
-    try:
-        model = load_model()
-    except FileNotFoundError as e:
-        logger.error(f'MODEL_NOT_FOUND error={e}')
-        summary['skipped'] = True
-        summary['reason']  = 'model_not_found'
-        return summary
-    except Exception as e:
-        logger.error(f'MODEL_LOAD_FAILED error={e}')
-        summary['skipped'] = True
-        summary['reason']  = 'model_error'
-        return summary
+    # ── 5. Close expiring positions (ALWAYS — regardless of drift) ─────────
+    # Positions must be closed on schedule regardless of data quality issues.
+    import yfinance as _yf
+    early_prices: dict = {}
+    actual_today = date.today().isoformat()
+    is_backfill  = today < actual_today
 
-    # ── 6. Generate signals ────────────────────────────────────────────────
-    try:
-        signals = generate_signals(reddit_counts, model, today)
-    except Exception as e:
-        logger.error(f'SIGNAL_GENERATION_FAILED error={e}')
-        summary['skipped'] = True
-        summary['reason']  = 'model_prediction_error'
-        return summary
-
-    if not signals:
-        logger.info('HOLD_CASH: no qualifying signals today')
-        summary['actions'].append('hold_cash')
-        summary['reason'] = 'zero_signals'
-        save_portfolio(state)
-        return summary
-
-    # ── 7. Close expired/capped positions ──────────────────────────────────
-    # Build current_prices from today's signals first
-    current_prices = {s.ticker: s.price for s in signals}
-
-    # For positions whose ticker is NOT in today's signal batch,
-    # fetch the actual current price from yfinance.
-    # Using entry_price as fallback records 0% PnL — that is wrong.
     for pos in state.positions:
-        if pos.ticker not in current_prices:
-            try:
-                import yfinance as _yf
-                from datetime import date as _date, timedelta as _td
-
-                # Use date-specific fetch when today is a historical simulation date.
-                # - Live trading:  today == actual date → period='5d' is correct
-                # - Backfill test: today == historical date → fetch that specific date
-                #
-                # Detection: if today < actual current date, we're in backfill mode.
-                actual_today = _date.today().isoformat()
-                is_backfill  = today < actual_today
-
-                if is_backfill:
-                    # Fetch a 3-day window around the exit date for reliability.
-                    # yfinance may not return data for weekends or holidays,
-                    # so we take the last available close in the window.
-                    exit_date  = _date.fromisoformat(today)
-                    fetch_end  = (exit_date + _td(days=3)).isoformat()
-                    mkt = _yf.download(
-                        pos.ticker,
-                        start=today,
-                        end=fetch_end,
-                        auto_adjust=True,
-                        progress=False,
-                    )
-                else:
-                    # Live trading — fetch recent prices, take latest close
-                    mkt = _yf.download(
-                        pos.ticker,
-                        period='5d',
-                        auto_adjust=True,
-                        progress=False,
-                    )
-
-                if isinstance(mkt.columns, pd.MultiIndex):
-                    mkt.columns = mkt.columns.get_level_values(0)
-
-                if len(mkt) > 0:
-                    live_price = float(mkt['Close'].iloc[-1])
-                    current_prices[pos.ticker] = live_price
-                    fetch_mode = 'historical' if is_backfill else 'live'
-                    logger.info(
-                        f'exit_price_fetched ticker={pos.ticker} '
-                        f'price={live_price:.4f} mode={fetch_mode} '
-                        f'(not in today signals)'
-                    )
-                else:
-                    current_prices[pos.ticker] = pos.entry_price
-                    logger.warning(
-                        f'exit_price_fallback ticker={pos.ticker} '
-                        f'using entry_price={pos.entry_price:.4f} '
-                        f'(yfinance returned empty for date={today})'
-                    )
-
-            except Exception as e:
-                current_prices[pos.ticker] = pos.entry_price
-                logger.warning(
-                    f'exit_price_error ticker={pos.ticker} '
-                    f'error={e} using entry_price={pos.entry_price:.4f}'
+        try:
+            if is_backfill:
+                exit_date = date.fromisoformat(today)
+                fetch_end = (exit_date + timedelta(days=3)).isoformat()
+                mkt = _yf.download(
+                    pos.ticker, start=today, end=fetch_end,
+                    auto_adjust=True, progress=False,
                 )
+            else:
+                mkt = _yf.download(
+                    pos.ticker, period='5d',
+                    auto_adjust=True, progress=False,
+                )
+            if isinstance(mkt.columns, pd.MultiIndex):
+                mkt.columns = mkt.columns.get_level_values(0)
+            if len(mkt) > 0:
+                early_prices[pos.ticker] = float(mkt['Close'].dropna().iloc[-1])
+                logger.info(
+                    f'exit_price_fetched ticker={pos.ticker} '
+                    f'price={early_prices[pos.ticker]:.4f}'
+                )
+            else:
+                early_prices[pos.ticker] = pos.entry_price
+                logger.warning(
+                    f'exit_price_fallback ticker={pos.ticker} '
+                    f'using entry_price={pos.entry_price:.4f}'
+                )
+        except Exception as e:
+            early_prices[pos.ticker] = pos.entry_price
+            logger.warning(
+                f'exit_price_error ticker={pos.ticker} '
+                f'error={e} using entry_price={pos.entry_price:.4f}'
+            )
 
-    to_close = check_exits(state, current_prices, today)
+    to_close = check_exits(state, early_prices, today)
     for exit_info in to_close:
-        pos = exit_info['position']
-        logger.info(f'closing_position ticker={pos.ticker} '
-                    f'reason={exit_info["exit_reason"]} pnl={exit_info["pnl_pct"]}')
-
+        pos     = exit_info['position']
+        logger.info(
+            f'closing_position ticker={pos.ticker} '
+            f'reason={exit_info["exit_reason"]} '
+            f'pnl={exit_info["pnl_pct"]:+.4f}'
+        )
         proceeds = pos.n_shares * exit_info['exit_price']
         state.cash += proceeds
         state.positions = [p for p in state.positions if p.ticker != pos.ticker]
-
         closed = {
             'ticker':      pos.ticker,
             'entry_date':  pos.entry_date,
@@ -234,7 +177,6 @@ def run(reddit_counts: dict, today: str = None) -> dict:
             'exit_reason': exit_info['exit_reason'],
         }
         state.closed_trades.append(closed)
-
         log_signal(
             ticker=pos.ticker, date=today,
             feature_vector=pos.feature_vector,
@@ -251,7 +193,51 @@ def run(reddit_counts: dict, today: str = None) -> dict:
         )
         summary['actions'].append(f'CLOSE {pos.ticker} ({exit_info["exit_reason"]})')
 
+    # ── 6. Skip new signals if drift anomaly detected ──────────────────────
+    if skip_new_signals:
+        summary['skipped'] = True
+        summary['reason']  = 'api_anomaly_new_signals_only'
+        save_portfolio(state)
+        return summary
+
+    # ── 7. Load model ──────────────────────────────────────────────────────
+    try:
+        model = load_model()
+    except FileNotFoundError as e:
+        logger.error(f'MODEL_NOT_FOUND error={e}')
+        summary['skipped'] = True
+        summary['reason']  = 'model_not_found'
+        save_portfolio(state)
+        return summary
+    except Exception as e:
+        logger.error(f'MODEL_LOAD_FAILED error={e}')
+        summary['skipped'] = True
+        summary['reason']  = 'model_error'
+        save_portfolio(state)
+        return summary
+
+    # ── 6. Generate signals ────────────────────────────────────────────────
+    try:
+        signals = generate_signals(reddit_counts, model, today)
+    except Exception as e:
+        logger.error(f'SIGNAL_GENERATION_FAILED error={e}')
+        summary['skipped'] = True
+        summary['reason']  = 'model_prediction_error'
+        save_portfolio(state)
+        return summary
+
+    if not signals:
+        logger.info('HOLD_CASH: no qualifying signals today')
+        summary['actions'].append('hold_cash')
+        summary['reason'] = 'zero_signals'
+        save_portfolio(state)
+        return summary
+
     # ── 8. Open new positions ──────────────────────────────────────────────
+    # current_prices: seed from step-5 early prices, overlay with signal prices
+    current_prices = dict(early_prices)
+    current_prices.update({s.ticker: s.price for s in signals})
+
     if limits['can_open_new_trades'] and not limits['daily_loss_triggered']:
         regime_mult     = regime.multiplier if regime else 0.75
         portfolio_value = state.total_value(current_prices)
