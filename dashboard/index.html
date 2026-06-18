@@ -526,37 +526,32 @@
         <div>
             <h2 class="text-sm font-bold uppercase tracking-wider text-zinc-300 font-mono flex items-center gap-2">
                 <i data-lucide="bar-chart-2" class="w-4 h-4 text-accentBlue"></i>
-                Backtest Results — Experiment C (Historical Simulation)
+                Walk-Forward Backtest — 2024-2025 Out-of-Sample
             </h2>
-            <p class="text-xs text-zinc-500 font-mono mt-0.5">61 trades · 2024 out-of-sample · Sharpe 2.83 · NOT live trading</p>
+            <p id="bt-subtitle" class="text-xs text-zinc-500 font-mono mt-0.5">Run scripts/run_backtest.py to generate results · NOT live trading</p>
         </div>
         <div class="flex gap-2 items-center flex-wrap">
-            <select id="bt-ticker-filter" onchange="updateBacktest()"
-                    class="bg-panelBg border border-cardBorder text-white px-2 py-1.5 rounded font-mono text-xs focus:outline-none focus:border-accentBlue">
-                <option value="">All Tickers</option>
-                <option value="AMC">AMC</option>
-                <option value="ASTS">ASTS</option>
-                <option value="BA">BA</option>
-                <option value="BABA">BABA</option>
-                <option value="COIN">COIN</option>
-                <option value="F">F</option>
-                <option value="META">META</option>
-                <option value="MSTR">MSTR</option>
-                <option value="NFLX">NFLX</option>
-                <option value="NIO">NIO</option>
-                <option value="PLTR">PLTR</option>
-                <option value="PYPL">PYPL</option>
-                <option value="RIOT">RIOT</option>
-                <option value="RIVN">RIVN</option>
-                <option value="SMCI">SMCI</option>
-                <option value="SNAP">SNAP</option>
-                <option value="SPCE">SPCE</option>
-                <option value="TSLA">TSLA</option>
-            </select>
             <select id="bt-year-filter" onchange="updateBacktest()"
                     class="bg-panelBg border border-cardBorder text-white px-2 py-1.5 rounded font-mono text-xs focus:outline-none focus:border-accentBlue">
                 <option value="">All Years</option>
                 <option value="2024">2024</option>
+                <option value="2025">2025</option>
+            </select>
+            <select id="bt-month-filter" onchange="updateBacktest()"
+                    class="bg-panelBg border border-cardBorder text-white px-2 py-1.5 rounded font-mono text-xs focus:outline-none focus:border-accentBlue">
+                <option value="">All Months</option>
+                <option value="1">Jan</option>
+                <option value="2">Feb</option>
+                <option value="3">Mar</option>
+                <option value="4">Apr</option>
+                <option value="5">May</option>
+                <option value="6">Jun</option>
+                <option value="7">Jul</option>
+                <option value="8">Aug</option>
+                <option value="9">Sep</option>
+                <option value="10">Oct</option>
+                <option value="11">Nov</option>
+                <option value="12">Dec</option>
             </select>
         </div>
     </div>
@@ -574,8 +569,8 @@
             <div id="bt-pnl" class="font-mono font-bold text-lg">—</div>
         </div>
         <div class="bg-panelBg p-3 rounded-lg border border-cardBorder text-center">
-            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Max Drawdown</div>
-            <div id="bt-dd" class="text-bearish font-mono font-bold text-lg">—</div>
+            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Period Return</div>
+            <div id="bt-pr" class="font-mono font-bold text-lg">—</div>
         </div>
         <div class="bg-panelBg p-3 rounded-lg border border-cardBorder text-center">
             <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Profit Factor</div>
@@ -583,10 +578,10 @@
         </div>
     </div>
     <div id="bt-trades" class="space-y-1.5 max-h-[260px] overflow-y-auto custom-scrollbar">
-        <div class="text-xs text-zinc-500 font-mono text-center py-4">Loading backtest results...</div>
+        <div class="text-xs text-zinc-500 font-mono text-center py-4">Run scripts/run_backtest.py to populate this panel</div>
     </div>
     <div class="mt-4 p-2 bg-zinc-950 rounded border border-zinc-800 text-3xs text-zinc-600 font-mono text-center">
-        ⚠ Historical simulation only. Results used training-adjacent data and may overstate real performance. Live paper trading started Jun 15, 2026.
+        ⚠ Historical simulation only. Walk-forward on 2024-2025 out-of-sample test period. NOT live trading results.
     </div>
 </section>
 
@@ -852,48 +847,73 @@
     }
 
     async function updateBacktest() {
-        const ticker = (document.getElementById('bt-ticker-filter') || {}).value || '';
-        const year   = (document.getElementById('bt-year-filter')   || {}).value || '';
-        let url = '/backtest';
+        const year  = (document.getElementById('bt-year-filter')  || {}).value || '';
+        const month = (document.getElementById('bt-month-filter') || {}).value || '';
+        let url = '/backtest-full';
         const params = [];
-        if (ticker) params.push(`ticker=${ticker}`);
-        if (year)   params.push(`year=${year}`);
+        if (year)  params.push(`year=${year}`);
+        if (month) params.push(`month=${month}`);
         if (params.length) url += '?' + params.join('&');
         const data = await apiFetch(url);
-        if (!data || data.error) return;
-        const n  = data.n_trades;
-        const wr = data.win_rate;
+        if (!data || data.error) {
+            const sub = document.getElementById('bt-subtitle');
+            if (sub) sub.textContent = data && data.message ? data.message : 'Run scripts/run_backtest.py to generate results';
+            return;
+        }
+
+        const n   = data.n_trades;
+        const wr  = data.win_rate;
         const pnl = data.total_pnl;
-        const dd  = data.max_drawdown;
+        const pr  = data.period_return;
         const pf  = data.profit_factor;
-        document.getElementById('bt-n').textContent = n;
+
+        // Update subtitle with full-period stats when unfiltered
+        const sub = document.getElementById('bt-subtitle');
+        if (sub && data.full_stats) {
+            const fs = data.full_stats;
+            sub.textContent = `${fs.n_trades_total} trades · Sharpe ${(fs.sharpe_ratio||0).toFixed(2)} · `
+                + `Total ${fs.total_return_pct >= 0 ? '+' : ''}${(fs.total_return_pct||0).toFixed(1)}% `
+                + `vs SPY ${fs.spy_return_pct >= 0 ? '+' : ''}${(fs.spy_return_pct||0).toFixed(1)}% · NOT live trading`;
+        }
+
+        document.getElementById('bt-n').textContent = n || '—';
+
         const wrEl = document.getElementById('bt-wr');
         wrEl.textContent = n ? `${(wr * 100).toFixed(1)}%` : '—';
         wrEl.className = `font-mono font-bold text-lg ${wr >= 0.5 ? 'text-bullish' : 'text-bearish'}`;
+
         const pnlEl = document.getElementById('bt-pnl');
         pnlEl.textContent = pnl != null ? `${pnl >= 0 ? '+' : ''}$${parseFloat(pnl).toFixed(0)}` : '—';
-        pnlEl.className = `font-mono font-bold text-lg ${pnl >= 0 ? 'text-bullish' : 'text-bearish'}`;
-        document.getElementById('bt-dd').textContent = dd != null ? `${parseFloat(dd).toFixed(1)}%` : '—';
+        pnlEl.className = `font-mono font-bold text-lg ${(pnl||0) >= 0 ? 'text-bullish' : 'text-bearish'}`;
+
+        const prEl = document.getElementById('bt-pr');
+        prEl.textContent = pr != null ? `${pr >= 0 ? '+' : ''}${parseFloat(pr).toFixed(1)}%` : '—';
+        prEl.className = `font-mono font-bold text-lg ${(pr||0) >= 0 ? 'text-bullish' : 'text-bearish'}`;
+
         const pfEl = document.getElementById('bt-pf');
         pfEl.textContent = pf != null ? parseFloat(pf).toFixed(2) : '—';
-        pfEl.className = `font-mono font-bold text-lg ${(pf || 0) >= 1 ? 'text-bullish' : 'text-bearish'}`;
+        pfEl.className = `font-mono font-bold text-lg ${(pf||0) >= 1 ? 'text-bullish' : 'text-bearish'}`;
+
         const tradesDiv = document.getElementById('bt-trades');
         if (!data.trades || !data.trades.length) {
             tradesDiv.innerHTML = '<div class="text-xs text-zinc-500 font-mono text-center py-4">No trades match filter</div>';
             return;
         }
-        tradesDiv.innerHTML = data.trades.map(t => {
-            const win = t.result === 'WIN';
-            const pC  = win ? 'text-bullish' : 'text-bearish';
-            const bdr = win ? 'border-l-2 border-bullish/40' : 'border-l-2 border-bearish/40';
-            const p   = parseFloat(t.pnl);
+        const sorted = [...data.trades].sort((a, b) => (b.entry_date || '').localeCompare(a.entry_date || ''));
+        tradesDiv.innerHTML = sorted.map(t => {
+            const pnlD = parseFloat(t.pnl_dollars);
+            const win  = pnlD > 0;
+            const pC   = win ? 'text-bullish' : 'text-bearish';
+            const bdr  = win ? 'border-l-2 border-bullish/40' : 'border-l-2 border-bearish/40';
+            const pred = parseFloat(t.predicted_return);
+            const reason = (t.exit_reason || '').replace('_', ' ');
             return `<div class="p-2 bg-panelBg rounded ${bdr} flex justify-between items-center">
               <div class="flex items-center gap-3 font-mono">
                 <span class="text-white font-bold text-sm w-12">${t.ticker}</span>
                 <span class="text-zinc-500" style="font-size:10px;">${t.entry_date} → ${t.exit_date}</span>
-                <span class="text-zinc-600" style="font-size:9px;">pred=${t.pred_return >= 0 ? '+' : ''}${t.pred_return}%</span>
+                <span class="text-zinc-600" style="font-size:9px;">pred=${pred >= 0 ? '+' : ''}${pred.toFixed(1)}% · ${reason}</span>
               </div>
-              <span class="font-mono font-bold ${pC} text-sm">${p >= 0 ? '+' : ''}$${p.toFixed(2)}</span>
+              <span class="font-mono font-bold ${pC} text-sm">${pnlD >= 0 ? '+' : ''}$${pnlD.toFixed(2)}</span>
             </div>`;
         }).join('');
     }

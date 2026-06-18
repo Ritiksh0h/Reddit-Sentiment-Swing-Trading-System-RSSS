@@ -264,6 +264,80 @@ def get_backtest(ticker: str = None, year: int = None):
     })
 
 
+@app.get('/backtest-full')
+def get_backtest_full(year: int = None, month: int = None):
+    """
+    Walk-forward backtest results for 2024-2025 out-of-sample period.
+    Run scripts/run_backtest.py first to generate backtest_results.json.
+    Optionally filter by year (2024/2025) and/or month (1-12).
+    """
+    path = Path('experiments/backtest_results.json')
+    if not path.exists():
+        return {
+            'error':   'Backtest results not found',
+            'message': 'Run: python scripts/run_backtest.py',
+        }
+
+    with open(path) as f:
+        data = json.load(f)
+
+    trades = list(data.get('trades', []))
+
+    if year:
+        trades = [t for t in trades if t.get('entry_date', '').startswith(str(year))]
+    if month and year:
+        prefix = f'{year}-{month:02d}'
+        trades = [t for t in trades if t.get('entry_date', '').startswith(prefix)]
+
+    if not trades:
+        return {
+            'n_trades': 0,
+            'filter':   {'year': year, 'month': month},
+            'message':  'No trades match the filter',
+            'trades':   [],
+        }
+
+    pnls   = [t.get('pnl_dollars', 0) for t in trades]
+    wins   = [p for p in pnls if p > 0]
+    losses = [p for p in pnls if p < 0]
+    total  = sum(pnls)
+    wr     = round(len(wins) / len(pnls), 3) if pnls else 0
+
+    month_key = (f'{year}-{month:02d}' if (year and month) else
+                 str(year) if year else None)
+    monthly_return = None
+    if month_key and len(month_key) == 7:
+        monthly_return = data.get('monthly_returns', {}).get(month_key)
+    elif year:
+        yr_data = data.get('annual_breakdown', {}).get(str(year), {})
+        monthly_return = yr_data.get('return_pct')
+
+    pf = round(sum(wins) / abs(sum(losses)), 3) if losses else None
+
+    return _sanitize({
+        'source':         'Walk-Forward Backtest 2024-2025 (SIMULATION)',
+        'filter':         {'year': year, 'month': month},
+        'n_trades':       len(trades),
+        'win_rate':       wr,
+        'total_pnl':      round(total, 2),
+        'mean_pnl':       round(total / len(pnls), 2) if pnls else 0,
+        'period_return':  monthly_return,
+        'profit_factor':  pf,
+        'trades':         trades,
+        'full_stats': {
+            'total_return_pct':   data.get('total_return_pct'),
+            'spy_return_pct':     data.get('spy_return_pct'),
+            'alpha':              data.get('alpha'),
+            'sharpe_ratio':       data.get('sharpe_ratio'),
+            'sortino_ratio':      data.get('sortino_ratio'),
+            'max_drawdown_pct':   data.get('max_drawdown_pct'),
+            'n_trades_total':     data.get('n_trades'),
+            'annual_2024':        data.get('annual_breakdown', {}).get('2024'),
+            'annual_2025':        data.get('annual_breakdown', {}).get('2025'),
+        } if not year and not month else None,
+    })
+
+
 @app.get('/log/recent')
 def get_recent_log(n: int = 50):
     return _load_trade_log(n)
