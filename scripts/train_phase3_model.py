@@ -6,8 +6,22 @@ Each model predicts forward return for its horizon.
 All three use the same 14-feature set.
 Saves to models/registry/model_{1d,3d,5d}.pkl
 
-Run: python scripts/train_phase3_model.py
+Run (default — new split on full feature store):
+    python scripts/train_phase3_model.py
+
+Run (override feature path and split years):
+    python scripts/train_phase3_model.py \\
+      --feature-path data/features/features_full.parquet \\
+      --train-years 2022,2023 \\
+      --test-years 2024,2025
+
+Fallback (original split):
+    python scripts/train_phase3_model.py \\
+      --feature-path data/features/features_full.parquet \\
+      --train-years 2019,2020,2021,2022,2023 \\
+      --test-years 2024,2025
 """
+import argparse
 import json
 import pickle
 import logging
@@ -45,10 +59,17 @@ HORIZONS = {
 
 
 def train(
-    feature_path: str = 'data/features/features_expanded.parquet',
+    feature_path: str = 'data/features/features_full.parquet',
     output_dir:   str = 'models/registry',
+    train_years:  list = None,
+    test_years:   list = None,
 ) -> dict:
     """Train all three horizon models. Returns metrics dict."""
+    if train_years is None:
+        train_years = [2022, 2023]
+    if test_years is None:
+        test_years = [2024, 2025]
+
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     df = pd.read_parquet(feature_path)
@@ -61,8 +82,29 @@ def train(
         if feat not in df.columns:
             df[feat] = 0.0
 
-    train_df = df[df['split'] == 'train']
-    test_df  = df[df['split'] == 'test']
+    # Override split with explicit year ranges
+    # 2026 excluded: 5-day forward returns incomplete for recent dates
+    df['year'] = pd.to_datetime(df['date']).dt.year
+
+    train_df = df[df['year'].isin(train_years)].copy()
+    test_df  = df[df['year'].isin(test_years)].copy()
+
+    logger.info(f'Split override: train={len(train_df)} rows '
+                f'({train_df["year"].value_counts().sort_index().to_dict()})')
+    logger.info(f'Split override: test={len(test_df)} rows '
+                f'({test_df["year"].value_counts().sort_index().to_dict()})')
+
+    if len(train_df) < 500:
+        raise ValueError(
+            f'Too few training rows: {len(train_df)}. '
+            f'train_years={train_years} may be too sparse. '
+            'Try --train-years 2019,2020,2021,2022,2023 as fallback.'
+        )
+    if len(test_df) < 200:
+        raise ValueError(
+            f'Too few test rows: {len(test_df)}. '
+            f'test_years={test_years} may be missing from feature store.'
+        )
 
     avail = [f for f in FEATURES if f in train_df.columns]
     logger.info(f'Training on {len(train_df)} rows, testing on {len(test_df)} rows')
@@ -107,6 +149,8 @@ def train(
             'model_path': str(model_path),
             'n_train':    len(train_df),
             'n_test':     len(test_df),
+            'train_years': sorted(train_years),
+            'test_years':  sorted(test_years),
         }
 
     # Save backward-compatible model_5d as phase3_model.pkl
@@ -117,8 +161,11 @@ def train(
         logger.info(f'Saved backward-compatible: {compat_path}')
 
     metadata = {
-        'model_version': 'phase3_v3_multihorizon',
+        'model_version': 'phase3_v4_multihorizon_fullstore',
         'trained_at':    datetime.now(timezone.utc).isoformat(),
+        'feature_path':  feature_path,
+        'train_years':   sorted(train_years),
+        'test_years':    sorted(test_years),
         'features':      avail,
         'feature_count': len(avail),
         'horizons':      metrics,
@@ -137,6 +184,31 @@ def train(
 
 
 if __name__ == '__main__':
-    results = train()
-    import json as _json
-    print(_json.dumps(results, indent=2))
+    parser = argparse.ArgumentParser(description='Train Phase 3 multi-horizon models')
+    parser.add_argument(
+        '--feature-path', type=str,
+        default='data/features/features_full.parquet',
+        help='Path to feature store parquet',
+    )
+    parser.add_argument(
+        '--train-years', type=str, default='2022,2023',
+        help='Comma-separated training years (e.g. 2022,2023)',
+    )
+    parser.add_argument(
+        '--test-years', type=str, default='2024,2025',
+        help='Comma-separated test years (e.g. 2024,2025)',
+    )
+    args = parser.parse_args()
+
+    _train_years = [int(y) for y in args.train_years.split(',')]
+    _test_years  = [int(y) for y in args.test_years.split(',')]
+
+    logger.info(f'feature_path={args.feature_path}')
+    logger.info(f'train_years={_train_years}  test_years={_test_years}')
+
+    results = train(
+        feature_path=args.feature_path,
+        train_years=_train_years,
+        test_years=_test_years,
+    )
+    print(json.dumps(results, indent=2))

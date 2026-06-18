@@ -515,26 +515,34 @@ def validate_no_leakage(df: pd.DataFrame) -> None:
 def build_features(
     debug: bool = False,
     force_recompute: bool = False,
+    input_path: Optional[Path] = None,
+    output_path: Optional[Path] = None,
 ) -> pd.DataFrame:
     """
     Build and return the complete feature matrix.
 
-    Caches to FEATURES_PARQUET. Loads from cache unless force_recompute=True.
+    Caches to output_path (defaults to FEATURES_PARQUET).
+    Loads from cache unless force_recompute=True.
 
     Args:
         debug: If True, use only first 1000 rows of Reddit data (fast sanity check)
         force_recompute: Bypass cache and recompute everything
+        input_path: Override SENTIMENT_PARQUET input path
+        output_path: Override FEATURES_PARQUET output path
 
     Returns:
         Feature DataFrame ready for downstream scripts.
     """
-    if FEATURES_PARQUET.exists() and not force_recompute and not debug:
-        log.info("feature_cache_hit", path=str(FEATURES_PARQUET))
-        return pd.read_parquet(FEATURES_PARQUET)
+    _input  = input_path  or SENTIMENT_PARQUET
+    _output = output_path or FEATURES_PARQUET
+
+    if _output.exists() and not force_recompute and not debug:
+        log.info("feature_cache_hit", path=str(_output))
+        return pd.read_parquet(_output)
 
     # --- 1. Load Reddit data ---
-    log.info("loading_reddit_parquet", path=str(SENTIMENT_PARQUET))
-    reddit_raw = pd.read_parquet(SENTIMENT_PARQUET)
+    log.info("loading_reddit_parquet", path=str(_input))
+    reddit_raw = pd.read_parquet(_input)
     log.info("reddit_loaded", rows=len(reddit_raw), columns=list(reddit_raw.columns))
 
     if debug:
@@ -620,11 +628,11 @@ def build_features(
 
     # --- 12. Save (unless debug mode) ---
     if not debug:
-        FEATURES_PARQUET.parent.mkdir(parents=True, exist_ok=True)
-        combined.to_parquet(FEATURES_PARQUET, index=False)
+        _output.parent.mkdir(parents=True, exist_ok=True)
+        combined.to_parquet(_output, index=False)
         log.info(
             "features_saved",
-            path=str(FEATURES_PARQUET),
+            path=str(_output),
             rows=len(combined),
             tickers=combined["ticker"].nunique(),
             date_range=f"{combined['date'].min()} → {combined['date'].max()}",
@@ -644,11 +652,25 @@ def main() -> None:
                         help="Run on first 1000 rows only (fast sanity check)")
     parser.add_argument("--force-recompute", action="store_true",
                         help="Ignore cache and recompute all features")
+    parser.add_argument("--input-file", type=str, default=None,
+                        help="Override input parquet path (default: SENTIMENT_PARQUET from settings)")
+    parser.add_argument("--output-file", type=str, default=None,
+                        help="Override output parquet path (default: FEATURES_PARQUET from settings)")
     args = parser.parse_args()
 
-    log.info("feature_builder_start", debug=args.debug, force_recompute=args.force_recompute)
+    input_path  = Path(args.input_file)  if args.input_file  else None
+    output_path = Path(args.output_file) if args.output_file else None
 
-    df = build_features(debug=args.debug, force_recompute=args.force_recompute)
+    log.info("feature_builder_start", debug=args.debug, force_recompute=args.force_recompute,
+             input_path=str(input_path or SENTIMENT_PARQUET),
+             output_path=str(output_path or FEATURES_PARQUET))
+
+    df = build_features(
+        debug=args.debug,
+        force_recompute=args.force_recompute,
+        input_path=input_path,
+        output_path=output_path,
+    )
 
     # Summary output
     print("\n=== FEATURE BUILD SUMMARY ===")
@@ -662,7 +684,7 @@ def main() -> None:
     print(f"  Target mean (train):    {df[df['split']=='train']['target_return_5d'].mean():.4f}")
     print(f"  Target std  (train):    {df[df['split']=='train']['target_return_5d'].std():.4f}")
     if not args.debug:
-        print(f"  Saved to: {FEATURES_PARQUET}")
+        print(f"  Saved to: {output_path or FEATURES_PARQUET}")
     print("=" * 30)
 
 
