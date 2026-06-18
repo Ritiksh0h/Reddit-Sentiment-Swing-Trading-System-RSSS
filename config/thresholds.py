@@ -43,7 +43,8 @@ DROP_TICKERS: list = ['ASTS', 'LCID', 'MSTR', 'RIOT', 'RIVN', 'SMCI', 'WMT']
 MAX_POSITIONS: int        = 3      # never open more than 3 simultaneously
 HOLD_DAYS: int            = 5      # standard hold period (trading days)
 TAKE_PROFIT_CAP: float    = 0.15   # close early if unrealized gain >= 15%
-MIN_PRED_RETURN: float    = 0.01   # minimum |predicted_5d| to enter position
+STOP_LOSS_PCT: float      = -0.08  # exit if unrealized loss >= 8%
+MIN_PRED_RETURN: float    = 0.005  # minimum |predicted_5d| to even consider (noise filter)
 TICKER_COOLDOWN_DAYS: int = 7      # days before re-entering same ticker
 
 # ── Position Sizing ─────────────────────────────────────────────────────────
@@ -58,8 +59,8 @@ REGIME_SIZING: dict = {
 }
 
 # ── Signal Classification ───────────────────────────────────────────────────
-BULLISH_THRESHOLD: float  =  0.03   # predicted_5d >= 3% → BULLISH
-BEARISH_THRESHOLD: float  = -0.03   # predicted_5d <= -3% → BEARISH
+BULLISH_THRESHOLD: float  =  0.015  # predicted_5d >= 1.5% → BULLISH (calibrated to model distribution)
+BEARISH_THRESHOLD: float  = -0.015  # predicted_5d <= -1.5% → BEARISH
 
 # ── Live Monitoring Gates ───────────────────────────────────────────────────
 IC_GREEN_GATE: float = 0.03    # 30-day live IC above this → model working

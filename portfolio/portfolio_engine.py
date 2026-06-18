@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 STATE_FILE         = 'data/paper_portfolio.json'
 MAX_POSITIONS      = 3
 TAKE_PROFIT_CAP    = 0.15
+STOP_LOSS_PCT      = -0.08
 TICKER_COOLDOWN    = 7
 DAILY_LOSS_LIMIT   = -0.03
 WEEKLY_LOSS_LIMIT  = -0.07
@@ -132,9 +133,10 @@ def check_exits(
     Check all open positions for exit conditions.
     Returns list of exit dicts with position + exit metadata.
 
-    Exit conditions:
-        1. Hold period expired (stop_date reached)
+    Exit conditions (checked in priority order):
+        1. Stop-loss hit (unrealized loss >= 8%) — cut losses immediately
         2. Take-profit cap hit (unrealized gain >= 15%)
+        3. Hold period expired (stop_date reached)
     """
     to_close = []
 
@@ -144,6 +146,20 @@ def check_exits(
             continue
 
         unrealized_return = (price - pos.entry_price) / pos.entry_price
+
+        if unrealized_return <= STOP_LOSS_PCT:
+            to_close.append({
+                'position':    pos,
+                'exit_price':  price,
+                'exit_date':   today,
+                'exit_reason': 'stop_loss',
+                'pnl_pct':     round(unrealized_return, 4),
+            })
+            logger.info(
+                f'stop_loss_triggered ticker={pos.ticker} '
+                f'unrealized={unrealized_return:.2%} threshold={STOP_LOSS_PCT:.0%}'
+            )
+            continue
 
         if unrealized_return >= TAKE_PROFIT_CAP:
             to_close.append({

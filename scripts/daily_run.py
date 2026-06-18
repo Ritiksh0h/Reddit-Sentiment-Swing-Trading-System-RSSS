@@ -320,12 +320,18 @@ def run(reddit_counts: dict, today: str = None) -> dict:
                 regime_state=pos.regime_state,
                 regime_multiplier=regime_mult,
                 predicted_return_5d=signal.predicted_return,
+                predicted_1d=signal.predicted_1d,
+                predicted_3d=signal.predicted_3d,
                 atr_14=signal.atr_14,
                 position_size_dollars=sizing['position_dollars'],
                 slippage_applied=slippage,
                 fill_price=fill_price,
                 signal_timestamp=signal.signal_timestamp,
                 action='OPEN',
+                signal=signal.signal,
+                confidence=signal.confidence,
+                news_count_1d=signal.news_count_1d,
+                st_count_1d=signal.st_count_1d,
             )
 
             logger.info(f'opened_position ticker={signal.ticker} '

@@ -12,12 +12,14 @@ Production uses rule-based thresholds derived from known yearly regimes:
   2023 (IC=-0.103): SPY uptrend but IC negative → use rolling_30d_IC
   → Use rolling_30d_IC as the primary live signal to disambiguate 2021/2023
 """
+import logging
 from dataclasses import dataclass
 from typing import Literal, Optional
 import pandas as pd
 import numpy as np
 import yfinance as yf
 
+logger = logging.getLogger(__name__)
 RegimeLabel = Literal['positive', 'neutral', 'negative']
 
 POSITION_SIZING = {
@@ -31,8 +33,8 @@ POSITION_SIZING = {
 class RegimeState:
     label:           RegimeLabel
     multiplier:      float
-    spy_above_200ma: bool
-    spy_ret_60d:     float
+    spy_above_200ma: Optional[bool]
+    spy_ret_60d:     Optional[float]
     rolling_30d_ic:  Optional[float]
     reason:          str
 
@@ -51,31 +53,29 @@ def classify_regime(
         NEUTRAL:     everything else (including SPY up but IC <= 0.03)
     """
     spy = pd.DataFrame()
-    for period in ['1y', '6mo', '60d', '30d']:
+    for period in ['1y', '6mo', '3mo']:
         try:
             spy = yf.download(spy_ticker, period=period,
                               auto_adjust=True, progress=False)
-        except Exception:
-            spy = pd.DataFrame()
-        if not spy.empty:
-            break
+            if isinstance(spy.columns, pd.MultiIndex):
+                spy.columns = spy.columns.get_level_values(0)
+            if not spy.empty and len(spy) >= 60:
+                logger.debug(f'SPY data loaded period={period} rows={len(spy)}')
+                break
+        except Exception as e:
+            logger.warning(f'SPY download failed period={period}: {e}')
+        spy = pd.DataFrame()
 
-    if spy.empty:
-        import logging as _logging
-        _logging.getLogger(__name__).warning(
-            'SPY data unavailable — defaulting to NEUTRAL'
-        )
+    if spy.empty or len(spy) < 60:
+        logger.warning('SPY data unavailable after all retries — defaulting to NEUTRAL')
         return RegimeState(
             label='neutral',
             multiplier=POSITION_SIZING['neutral'],
-            spy_above_200ma=False,
-            spy_ret_60d=0.0,
+            spy_above_200ma=None,
+            spy_ret_60d=None,
             rolling_30d_ic=rolling_30d_ic,
-            reason='SPY data unavailable — defaulted to NEUTRAL',
+            reason='SPY data unavailable — default neutral',
         )
-
-    if isinstance(spy.columns, pd.MultiIndex):
-        spy.columns = spy.columns.get_level_values(0)
 
     close     = spy['Close']
     ma_200    = close.rolling(200).mean().iloc[-1]

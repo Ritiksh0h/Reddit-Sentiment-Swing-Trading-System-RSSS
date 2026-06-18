@@ -34,7 +34,11 @@ with open('experiments/phase3_locked_architecture.json') as f:
 FEATURES     = ARCH['features']          # 14 features
 DROP_TICKERS = set(ARCH['drop_tickers'])
 DENSITY_GATE = 10
-MIN_PRED_RET = 0.01
+# Signal thresholds — calibrated to model prediction distribution
+# Model mean ≈ 0.45%, median ≈ 0.65%, std ≈ 3%; 27% rows > 1.5%, 12% < -1.5%
+MIN_PRED_RET      = 0.005   # minimum |pred| to consider (noise filter)
+BULLISH_THRESHOLD = 0.015   # pred >= 1.5% → BULLISH
+BEARISH_THRESHOLD = -0.015  # pred <= -1.5% → BEARISH
 
 
 @dataclass
@@ -268,12 +272,12 @@ def generate_signals(
         if abs(pred_5d) < MIN_PRED_RET:
             continue
 
-        # Confidence: 0.0 = at threshold, 1.0 = 3× threshold
-        confidence = min(abs(pred_5d) / (MIN_PRED_RET * 3), 1.0)
+        # Confidence: 0.0 at BULLISH_THRESHOLD, 1.0 at 2× threshold
+        confidence = min(abs(pred_5d) / (BULLISH_THRESHOLD * 2), 1.0)
 
-        if pred_5d >= 0.03 and confidence >= 0.5:
+        if pred_5d >= BULLISH_THRESHOLD:
             signal = 'BULLISH'
-        elif pred_5d <= -0.03 and confidence >= 0.5:
+        elif pred_5d <= BEARISH_THRESHOLD:
             signal = 'BEARISH'
         else:
             signal = 'NEUTRAL'

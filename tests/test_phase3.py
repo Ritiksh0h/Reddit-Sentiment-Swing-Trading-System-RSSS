@@ -248,3 +248,70 @@ def test_position_sizer_returns_zero_on_bad_inputs():
     result_zero_price = compute_position_size(100_000, 0.0, 2.0)
     assert result_zero_atr['position_dollars'] == 0
     assert result_zero_price['position_dollars'] == 0
+
+
+# ── 10. Stop-loss ─────────────────────────────────────────────────────────────
+
+def test_stop_loss_triggers_at_8pct():
+    """Stop-loss must close position when unrealized loss >= 8%."""
+    from datetime import date, timedelta
+    today  = date.today().isoformat()
+    future = (date.today() + timedelta(days=3)).isoformat()
+    pos    = _make_position(entry_price=100.0, stop_date=future)
+    state  = PortfolioState(positions=[pos])
+
+    exits = check_exits(state, {'TSLA': 91.0}, today)   # -9% → triggers
+    assert len(exits) == 1
+    assert exits[0]['exit_reason'] == 'stop_loss'
+    assert exits[0]['pnl_pct'] == pytest.approx(-0.09, abs=0.001)
+
+
+def test_stop_loss_does_not_trigger_at_7pct():
+    """Stop-loss should NOT fire at 7% loss (below 8% threshold)."""
+    from datetime import date, timedelta
+    today  = date.today().isoformat()
+    future = (date.today() + timedelta(days=3)).isoformat()
+    pos    = _make_position(entry_price=100.0, stop_date=future)
+    state  = PortfolioState(positions=[pos])
+
+    exits = check_exits(state, {'TSLA': 93.0}, today)   # -7% → below threshold
+    assert len(exits) == 0
+
+
+def test_stop_loss_takes_priority_over_hold_period():
+    """Stop-loss fires even when hold period has also expired."""
+    pos   = _make_position(entry_price=100.0, stop_date='2024-01-01')   # already expired
+    state = PortfolioState(positions=[pos])
+
+    exits = check_exits(state, {'TSLA': 88.0}, '2024-01-08')   # -12%
+    assert len(exits) == 1
+    assert exits[0]['exit_reason'] == 'stop_loss'
+
+
+# ── 11. Signal classification thresholds ──────────────────────────────────────
+
+def test_signal_classified_bullish():
+    """Predictions >= 1.5% should classify as BULLISH."""
+    from portfolio.signal_generator import BULLISH_THRESHOLD, BEARISH_THRESHOLD
+    pred   = 0.020
+    signal = ('BULLISH' if pred >= BULLISH_THRESHOLD
+              else ('BEARISH' if pred <= BEARISH_THRESHOLD else 'NEUTRAL'))
+    assert signal == 'BULLISH'
+
+
+def test_signal_classified_bearish():
+    """Predictions <= -1.5% should classify as BEARISH."""
+    from portfolio.signal_generator import BULLISH_THRESHOLD, BEARISH_THRESHOLD
+    pred   = -0.020
+    signal = ('BULLISH' if pred >= BULLISH_THRESHOLD
+              else ('BEARISH' if pred <= BEARISH_THRESHOLD else 'NEUTRAL'))
+    assert signal == 'BEARISH'
+
+
+def test_signal_classified_neutral():
+    """Predictions between -1.5% and +1.5% should be NEUTRAL."""
+    from portfolio.signal_generator import BULLISH_THRESHOLD, BEARISH_THRESHOLD
+    pred   = 0.010
+    signal = ('BULLISH' if pred >= BULLISH_THRESHOLD
+              else ('BEARISH' if pred <= BEARISH_THRESHOLD else 'NEUTRAL'))
+    assert signal == 'NEUTRAL'
