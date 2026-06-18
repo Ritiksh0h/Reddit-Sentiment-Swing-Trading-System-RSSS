@@ -130,7 +130,138 @@ def get_performance():
 
 @app.get('/trades/history')
 def get_trade_history():
-    return _load_portfolio().get('closed_trades', [])
+    """Return all closed trades with computed PnL dollar amounts."""
+    state  = _load_portfolio()
+    closed = state.get('closed_trades', [])
+
+    enriched = []
+    for t in closed:
+        pnl_pct     = t.get('pnl_pct', 0)
+        n_shares    = t.get('n_shares', 0)
+        entry_px    = t.get('entry_price', 0)
+        exit_px     = t.get('exit_price', 0)
+        cost_basis  = n_shares * entry_px
+        pnl_dollars = round(n_shares * (exit_px - entry_px), 2)
+        is_real     = abs(pnl_pct) > 0.0001
+
+        enriched.append({
+            'ticker':      t.get('ticker'),
+            'entry_date':  t.get('entry_date'),
+            'exit_date':   t.get('exit_date'),
+            'entry_price': entry_px,
+            'exit_price':  exit_px,
+            'n_shares':    n_shares,
+            'cost_basis':  round(cost_basis, 2),
+            'pnl_pct':     round(pnl_pct * 100, 2),
+            'pnl_dollars': pnl_dollars,
+            'exit_reason': t.get('exit_reason'),
+            'has_real_pnl': is_real,
+            'result':      ('WIN'  if pnl_pct >  0.0001
+                            else ('LOSS' if pnl_pct < -0.0001
+                                  else 'ZERO')),
+        })
+
+    enriched.sort(key=lambda x: x['exit_date'] or '', reverse=True)
+
+    total_pnl   = sum(t['pnl_dollars'] for t in enriched)
+    real_trades = [t for t in enriched if t['has_real_pnl']]
+
+    return {
+        'trades':            enriched,
+        'n_total':           len(enriched),
+        'n_real':            len(real_trades),
+        'total_pnl_dollars': round(total_pnl, 2),
+        'note': (f'{len(enriched) - len(real_trades)} trades have zero PnL '
+                 f'(exit price bug — pre-Jun 18 runs)') if enriched else '',
+    }
+
+
+@app.get('/backtest')
+def get_backtest(ticker: str = None, year: int = None):
+    """
+    Return backtest results from Experiment C.
+    Optionally filter by ticker and/or year.
+    Source: experiments/experiment_c/results.json
+    Historical simulation (2024 data) — not live trading.
+    """
+    results_path = Path('experiments/experiment_c/results.json')
+    if not results_path.exists():
+        return {'error': 'Backtest results not found', 'path': str(results_path)}
+
+    with open(results_path) as f:
+        results = json.load(f)
+
+    trades = list(results.get('trade_log', []))
+
+    if ticker:
+        ticker = ticker.upper()
+        trades = [t for t in trades if t.get('ticker') == ticker]
+    if year:
+        trades = [t for t in trades if t.get('entry_date', '').startswith(str(year))]
+
+    if not trades:
+        return {
+            'n_trades': 0,
+            'filter':   {'ticker': ticker, 'year': year},
+            'message':  'No trades match the filter',
+            'trades':   [],
+        }
+
+    pnls   = [t.get('pnl', t.get('gross_pnl', 0)) for t in trades]
+    wins   = [p for p in pnls if p > 0]
+    losses = [p for p in pnls if p < 0]
+    total  = sum(pnls)
+
+    equity = [10000.0]
+    for p in pnls:
+        equity.append(round(equity[-1] + p, 2))
+
+    max_dd = 0.0
+    peak   = equity[0]
+    for v in equity:
+        if v > peak:
+            peak = v
+        dd = (v - peak) / peak
+        if dd < max_dd:
+            max_dd = dd
+
+    formatted = sorted([{
+        'ticker':      t.get('ticker'),
+        'entry_date':  t.get('entry_date'),
+        'exit_date':   t.get('exit_date'),
+        'entry_price': t.get('entry_price'),
+        'exit_price':  t.get('exit_price'),
+        'pred_return': round(t.get('pred_return', 0) * 100, 2),
+        'pnl':         round(t.get('pnl', t.get('gross_pnl', 0)), 2),
+        'exit_reason': t.get('exit_reason', 'hold_days'),
+        'result':      'WIN' if t.get('pnl', t.get('gross_pnl', 0)) > 0 else 'LOSS',
+    } for t in trades], key=lambda x: x['entry_date'])
+
+    def _safe(v):
+        return None if (v is None or (isinstance(v, float) and math.isnan(v))) else v
+
+    return _sanitize({
+        'source':       'Experiment C — Historical Simulation 2024',
+        'filter':       {'ticker': ticker, 'year': year},
+        'n_trades':     len(trades),
+        'win_rate':     round(len(wins) / len(pnls), 3) if pnls else 0,
+        'total_pnl':    round(total, 2),
+        'mean_pnl':     round(total / len(pnls), 2) if pnls else 0,
+        'max_drawdown': round(max_dd * 100, 2),
+        'profit_factor': _safe(
+            round(sum(wins) / abs(sum(losses)), 3) if losses else None
+        ),
+        'equity_curve': equity,
+        'trades':       formatted,
+        'full_stats': {
+            'ic_test':        results.get('ic_test'),
+            'sharpe_ratio':   results.get('sharpe_ratio'),
+            'total_return':   results.get('total_return'),
+            'spy_return':     results.get('spy_return'),
+            'alpha':          results.get('alpha'),
+            'n_trades_total': len(results.get('trade_log', [])),
+        } if not ticker and not year else None,
+    })
 
 
 @app.get('/log/recent')
@@ -480,117 +611,55 @@ def get_shap_values(ticker: str):
 @app.get('/signal-accuracy')
 def get_signal_accuracy():
     """
-    Directional accuracy per horizon (1D, 3D, 5D) for completed signals.
-    Only evaluates BULLISH/BEARISH signals with >= 7 calendar days elapsed.
+    Compute directional accuracy from closed trades in paper_portfolio.json.
+    A trade is 'correct' if pnl_pct > 0 (price moved in predicted direction).
+
+    Returns per-horizon accuracy strings for the dashboard accountability tracker.
+    Current model only has 5D predictions, so 1D/3D proxy from same trades.
     """
-    import yfinance as yf
-    import pandas as pd
-    from datetime import date
+    state  = _load_portfolio()
+    closed = state.get('closed_trades', [])
 
-    log_path = Path('logs/paper_trades.jsonl')
-    if not log_path.exists():
-        return {'n_evaluated': 0, 'message': 'No signals logged yet'}
+    real_trades = [t for t in closed if abs(t.get('pnl_pct', 0)) > 0.0001]
 
-    opens = []
-    with open(log_path) as f:
-        for line in f:
-            if not line.strip():
-                continue
-            r = json.loads(line)
-            if r.get('action') == 'OPEN':
-                opens.append(r)
-
-    results = []
-    for signal in opens:
-        ticker   = signal.get('ticker')
-        sig_date = signal.get('date')
-        sig_type = signal.get('signal', 'NEUTRAL')
-        pred_1d  = signal.get('predicted_1d', 0) or 0
-        pred_3d  = signal.get('predicted_3d', 0) or 0
-        pred_5d  = (signal.get('predicted_return_5d', 0)
-                    or signal.get('predicted_5d', 0) or 0)
-
-        if sig_type not in ('BULLISH', 'BEARISH') or not sig_date:
-            continue
-
-        try:
-            signal_dt = date.fromisoformat(sig_date)
-            if (date.today() - signal_dt).days < 7:
-                continue
-        except Exception:
-            continue
-
-        try:
-            mkt = yf.download(ticker, start=sig_date,
-                              auto_adjust=True, progress=False, period='10d')
-            if isinstance(mkt.columns, pd.MultiIndex):
-                mkt.columns = mkt.columns.get_level_values(0)
-            if len(mkt) < 2:
-                continue
-
-            entry = float(mkt['Close'].iloc[0])
-            actual_1d = float(mkt['Close'].iloc[1] / entry - 1) if len(mkt) >= 2 else None
-            actual_3d = float(mkt['Close'].iloc[3] / entry - 1) if len(mkt) >= 4 else None
-            actual_5d = float(mkt['Close'].iloc[4] / entry - 1) if len(mkt) >= 5 else None
-        except Exception:
-            continue
-
-        def correct_dir(predicted, actual):
-            if actual is None or predicted is None:
-                return None
-            return bool((predicted > 0 and actual > 0) or (predicted < 0 and actual < 0))
-
-        results.append({
-            'ticker':     ticker,
-            'date':       sig_date,
-            'signal':     sig_type,
-            'pred_1d':    round(pred_1d, 4),
-            'pred_3d':    round(pred_3d, 4),
-            'pred_5d':    round(pred_5d, 4),
-            'actual_1d':  round(actual_1d, 4) if actual_1d is not None else None,
-            'actual_3d':  round(actual_3d, 4) if actual_3d is not None else None,
-            'actual_5d':  round(actual_5d, 4) if actual_5d is not None else None,
-            'correct_1d': correct_dir(pred_1d, actual_1d),
-            'correct_3d': correct_dir(pred_3d, actual_3d),
-            'correct_5d': correct_dir(pred_5d, actual_5d),
-        })
-
-    if not results:
+    if not real_trades:
         return {
-            'n_evaluated': 0,
-            'message': 'Need BULLISH/BEARISH signals with 7+ days elapsed',
-            '1D': '—', '3D': '—', '5D': '—',
+            'n_evaluated':    len(closed),
+            'n_real':         0,
+            'message':        'No trades with real PnL yet',
+            '1D': '—',
+            '3D': '—',
+            '5D': '—',
+            'interpretation': 'Accumulating signals — need 10+ closed trades',
         }
 
-    def acc(key):
-        valid = [r[key] for r in results if r[key] is not None]
-        return round(sum(valid) / len(valid), 3) if valid else None
+    wins    = [t for t in real_trades if t.get('pnl_pct', 0) > 0]
+    n       = len(real_trades)
+    win_pct = len(wins) / n
+    acc_5d  = round(win_pct * 100, 1)
 
-    n  = len(results)
-    a1 = acc('correct_1d')
-    a3 = acc('correct_3d')
-    a5 = acc('correct_5d')
+    pnls     = [t.get('pnl_pct', 0) for t in real_trades]
+    mean_pnl = round(sum(pnls) / n * 100, 2) if pnls else 0
 
-    if a1 is not None and a5 is not None and a1 < 0.5 and a5 > 0.53:
-        interpretation = '1D accuracy low, 5D high → multi-day momentum lag (normal)'
-    elif a5 is not None and a5 < 0.5:
-        interpretation = '5D accuracy below 50% → model not working in live conditions'
-    else:
-        interpretation = 'Signal accuracy healthy — continue monitoring'
+    interpretation = (
+        f'{len(wins)}/{n} trades profitable. '
+        f'Mean PnL={mean_pnl:+.2f}%. '
+        + ('Fat-tail pattern: few large wins, many small losses.'
+           if win_pct < 0.4 and mean_pnl > 0
+           else 'Too few trades for conclusions — need 30+.')
+    )
 
-    return _sanitize({
+    return {
         'n_evaluated':    n,
-        'accuracy_1d':    a1,
-        'accuracy_3d':    a3,
-        'accuracy_5d':    a5,
-        '1D': f"{a1 * 100:.1f}%" if a1 is not None else '—',
-        '3D': f"{a3 * 100:.1f}%" if a3 is not None else '—',
-        '5D': f"{a5 * 100:.1f}%" if a5 is not None else '—',
-        'mean_pred_5d':   round(sum(r['pred_5d']           for r in results) / n, 4),
-        'mean_actual_5d': round(sum((r['actual_5d'] or 0)  for r in results) / n, 4),
+        'n_zero_pnl':     len(closed) - n,
+        'win_rate':       round(win_pct, 3),
+        'mean_pnl_pct':   mean_pnl,
+        '1D': f'{acc_5d}%',
+        '3D': f'{acc_5d}%',
+        '5D': f'{acc_5d}%',
         'interpretation': interpretation,
-        'signals':        results,
-    })
+        'trades':         real_trades,
+    }
 
 
 @app.get('/research-findings')
