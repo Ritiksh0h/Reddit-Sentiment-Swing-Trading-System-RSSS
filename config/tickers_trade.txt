@@ -1,0 +1,23 @@
+# RSSS Trade Universe — tickers eligible for signal generation
+# Evidence-based: proven signal generators + high WSB attention
+# Model is ticker-agnostic: no retraining needed when adding tickers
+# Requirements: 90+ days Reddit history, clears density gate regularly
+# Format: one ticker per line, uppercase
+AAPL
+AMZN
+AMD
+COIN
+GME
+GOOG
+META
+MARA
+MSFT
+NFLX
+NVDA
+PLTR
+QQQ
+SOFI
+HOOD
+SPY
+TSLA
+UBER

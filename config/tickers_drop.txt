@@ -1,0 +1,12 @@
+# RSSS Drop List — excluded: delisted, no signal history, thin options
+# Format: one ticker per line, uppercase
+LCID
+RIVN
+SMCI
+ASTS
+NOK
+AMC
+LYFT
+ABNB
+NIO
+BABA

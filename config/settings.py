@@ -98,6 +98,32 @@ FEATURES_PARQUET: Path       = FEATURES_FULL_PATH  # pipeline/ alias → feature
 
 EXPERIMENT_RESULTS_DIR: Path = PROJECT_ROOT / "experiments"
 
+# ---------------------------------------------------------------------------
+# Ticker Universe Paths
+# ---------------------------------------------------------------------------
+TICKERS_TRADE_PATH: Path = PROJECT_ROOT / 'config' / 'tickers_trade.txt'
+TICKERS_WATCH_PATH: Path = PROJECT_ROOT / 'config' / 'tickers_watch.txt'
+TICKERS_DROP_PATH:  Path = PROJECT_ROOT / 'config' / 'tickers_drop.txt'
+
+
+def load_tickers(path) -> list[str]:
+    """
+    Load ticker list from a text file.
+    Skips blank lines and comment lines starting with #.
+    Returns uppercase deduplicated list in file order.
+    """
+    p = Path(path)
+    if not p.exists():
+        return []
+    tickers = []
+    seen: set = set()
+    for line in p.read_text().splitlines():
+        t = line.strip().upper()
+        if t and not t.startswith('#') and t not in seen:
+            tickers.append(t)
+            seen.add(t)
+    return tickers
+
 # Phase 1 train/test split (same dates, shorter alias names for pipeline scripts)
 TRAIN_END: str = TRAIN_END_DATE    # "2023-12-31"
 TEST_START: str = TEST_START_DATE  # "2024-01-01"

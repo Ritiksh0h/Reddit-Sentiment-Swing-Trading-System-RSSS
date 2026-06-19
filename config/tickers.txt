@@ -1,44 +1,20 @@
-# config/tickers.txt
-# Tracked ticker universe for RSSS Phase 3/4
-# Must match TRACKED_TICKERS in data/reddit_live_fetcher.py
-# Format: one ticker per line, uppercase, no whitespace
-
-NVDA
-TSLA
-AMD
+# config/tickers.txt — legacy alias for tickers_trade.txt
+# New code should use config/tickers_trade.txt directly.
 AAPL
-GME
-AMC
-PLTR
-MARA
-COIN
-META
-MSFT
 AMZN
+AMD
+COIN
+GME
 GOOG
+META
+MARA
+MSFT
 NFLX
+NVDA
+PLTR
+QQQ
 SOFI
 HOOD
-ROKU
-SNAP
+SPY
+TSLA
 UBER
-NIO
-BABA
-SHOP
-PYPL
-DKNG
-DIS
-RKLB
-HIMS
-RDDT
-SOUN
-IONQ
-F
-BA
-BB
-GS
-JPM
-BAC
-SQ
-NOK
-SPCE

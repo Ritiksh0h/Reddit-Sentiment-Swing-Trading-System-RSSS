@@ -1,0 +1,23 @@
+# RSSS Watch Universe — monitored but not yet trading
+# Move to tickers_trade.txt after 90+ days of Reddit history
+# Format: one ticker per line, uppercase
+SHOP
+ROKU
+SNAP
+HIMS
+RKLB
+RDDT
+BAC
+JPM
+GS
+SCHW
+WMT
+COST
+PYPL
+SQ
+INTC
+MU
+ARM
+ABBV
+LLY
+PFE

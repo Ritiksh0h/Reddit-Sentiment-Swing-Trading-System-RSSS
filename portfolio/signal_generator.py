@@ -32,8 +32,12 @@ with open('experiments/phase3_locked_architecture.json') as f:
     ARCH = json.load(f)
 
 FEATURES     = ARCH['features']          # 14 features
-DROP_TICKERS = set(ARCH['drop_tickers'])
 DENSITY_GATE = 10
+
+from config.settings import load_tickers, TICKERS_TRADE_PATH, TICKERS_DROP_PATH
+
+TRADE_UNIVERSE = set(load_tickers(TICKERS_TRADE_PATH)) or None  # None = unrestricted fallback
+DROP_TICKERS   = set(load_tickers(TICKERS_DROP_PATH)) or set(ARCH['drop_tickers'])
 # Signal thresholds — calibrated to model prediction distribution
 # Model mean ≈ 0.45%, median ≈ 0.65%, std ≈ 3%; 27% rows > 1.5%, 12% < -1.5%
 MIN_PRED_RET      = 0.005   # minimum |pred| to consider (noise filter)
@@ -231,10 +235,18 @@ def generate_signals(
             else:
                 raise
 
+    logger.info(
+        f'Trade universe: {len(TRADE_UNIVERSE) if TRADE_UNIVERSE else "all"} tickers  '
+        f'drop_list: {len(DROP_TICKERS)}'
+    )
+
     ts      = datetime.now(timezone.utc).isoformat()
     signals = []
 
     for ticker, reddit_data in reddit_counts.items():
+        if TRADE_UNIVERSE is not None and ticker not in TRADE_UNIVERSE:
+            logger.debug(f'trade_universe_skip ticker={ticker}')
+            continue
         if ticker in DROP_TICKERS:
             continue
 

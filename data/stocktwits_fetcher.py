@@ -23,13 +23,11 @@ logger = logging.getLogger(__name__)
 
 STOCKTWITS_BASE = 'https://api.stocktwits.com/api/2/streams/symbol'
 
-TRACKED_TICKERS = [
-    'NVDA', 'TSLA', 'AMD', 'AAPL', 'GME', 'AMC', 'PLTR', 'MARA', 'COIN',
-    'META', 'MSFT', 'AMZN', 'GOOG', 'NFLX', 'SOFI', 'HOOD',
-    'ROKU', 'SNAP', 'UBER', 'NIO', 'BABA', 'SHOP', 'PYPL',
-    'DKNG', 'DIS', 'RKLB', 'HIMS', 'RDDT', 'SOUN', 'IONQ', 'F',
-    'BA', 'BB', 'GS', 'JPM', 'BAC', 'SQ', 'NOK', 'SPCE',
-]
+from config.settings import load_tickers, TICKERS_TRADE_PATH, TICKERS_WATCH_PATH
+
+TRACKED_TICKERS = sorted(
+    set(load_tickers(TICKERS_TRADE_PATH)) | set(load_tickers(TICKERS_WATCH_PATH))
+)
 
 
 def fetch_stocktwits(

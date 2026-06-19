@@ -24,13 +24,13 @@ logger = logging.getLogger(__name__)
 ARCTIC_SHIFT_BASE  = 'https://arctic-shift.photon-reddit.com/api/posts/search'
 TRACKED_SUBREDDITS = ['wallstreetbets', 'stocks', 'investing', 'options']
 
-TRACKED_TICKERS = [
-    'NVDA', 'TSLA', 'AMD', 'AAPL', 'GME', 'AMC', 'PLTR', 'MARA', 'COIN',
-    'META', 'MSFT', 'AMZN', 'GOOG', 'NFLX', 'SOFI', 'HOOD',
-    'ROKU', 'SNAP', 'UBER', 'NIO', 'BABA', 'SHOP', 'PYPL',
-    'DKNG', 'DIS', 'RKLB', 'HIMS', 'RDDT', 'SOUN', 'IONQ', 'F',
-    'BA', 'BB', 'GS', 'JPM', 'BAC', 'SQ', 'NOK', 'SPCE',
-]
+from config.settings import load_tickers, TICKERS_TRADE_PATH, TICKERS_WATCH_PATH
+
+# Fetch Reddit data for all tickers: proven signal generators (trade) +
+# new additions building history (watch). Signal generation uses trade only.
+TRACKED_TICKERS = sorted(
+    set(load_tickers(TICKERS_TRADE_PATH)) | set(load_tickers(TICKERS_WATCH_PATH))
+)
 
 DOLLAR_PATTERN = re.compile(r'\$([A-Z]{1,5})\b')
 TICKER_SET     = set(TRACKED_TICKERS)
