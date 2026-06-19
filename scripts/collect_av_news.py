@@ -323,42 +323,58 @@ def backfill_mode(start: str, end: str, dry_run: bool = False) -> None:
         log.info(f'Processing {month_key} ({time_from} → {time_to})')
 
         month_records = []
+        hit_limit = False
         for batch in _batches(tickers):
             if call_count >= MAX_DAILY_CALLS:
                 log.info(
                     f'Daily call limit reached ({call_count}/{MAX_DAILY_CALLS}). '
                     f'Save progress and stop — resume tomorrow.'
                 )
-                if all_records:
-                    partial = _aggregate(all_records)
-                    _append_parquet(partial, BACKFILL_OUT)
-                PROGRESS_FILE.parent.mkdir(parents=True, exist_ok=True)
-                with open(PROGRESS_FILE, 'w') as f:
-                    json.dump(progress, f, indent=2)
-                return
+                hit_limit = True
+                break
             articles = _fetch_av(batch, time_from, time_to, sort='EARLIEST')
             month_records.extend(_parse_articles(articles, tracked))
             call_count += 1
             log.info(f'  Calls so far this run: {call_count}')
             time.sleep(BACKFILL_SLEEP_SEC)
 
+        if hit_limit:
+            # Flush whatever was fetched for the partial month (not marked complete)
+            if month_records:
+                all_records.extend(month_records)
+            if all_records:
+                partial = _aggregate(all_records)
+                _append_parquet(partial, BACKFILL_OUT)
+                all_records = []
+            total_rows = len(pd.read_parquet(BACKFILL_OUT)) if BACKFILL_OUT.exists() else 0
+            progress['total_records_so_far'] = total_rows
+            PROGRESS_FILE.parent.mkdir(parents=True, exist_ok=True)
+            with open(PROGRESS_FILE, 'w') as f:
+                json.dump(progress, f, indent=2)
+            return
+
         all_records.extend(month_records)
-        completed_keys.add(month_key)
 
-        # Save progress after every month
-        progress['completed']         = sorted(completed_keys)
-        progress['last_completed']    = month_key
-        progress['total_records_so_far'] = len(all_records)
-        PROGRESS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(PROGRESS_FILE, 'w') as f:
-            json.dump(progress, f, indent=2)
-        log.info(f'Progress saved: {month_key} done, {len(all_records)} records total')
-
-        # Flush to parquet after every month to protect against interruption
+        # Flush to parquet and mark complete ONLY when rows were actually fetched
         if all_records:
             partial = _aggregate(all_records)
             _append_parquet(partial, BACKFILL_OUT)
             all_records = []  # reset after flush
+
+            completed_keys.add(month_key)
+            total_rows = len(pd.read_parquet(BACKFILL_OUT))
+            progress['completed']            = sorted(completed_keys)
+            progress['last_completed']       = month_key
+            progress['total_records_so_far'] = total_rows
+            PROGRESS_FILE.parent.mkdir(parents=True, exist_ok=True)
+            with open(PROGRESS_FILE, 'w') as f:
+                json.dump(progress, f, indent=2)
+            log.info(f'Progress saved: {month_key} done, {total_rows} rows in parquet')
+        else:
+            log.warning(
+                f'{month_key}: 0 articles fetched — NOT marking complete, will retry. '
+                f'Check ALPHAVANTAGE_API_KEY and AV response logs above.'
+            )
 
     log.info(f'Backfill complete. Output: {BACKFILL_OUT}')
 
