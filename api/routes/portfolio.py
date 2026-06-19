@@ -10,15 +10,52 @@ router = APIRouter()
 
 @router.get('/portfolio')
 def get_portfolio():
+    import yfinance as yf
+    import pandas as pd
+    from datetime import date
+
     INITIAL_CAPITAL = 10000.0
 
     portfolio = _load_portfolio()
     cash      = float(portfolio.get('cash', INITIAL_CAPITAL))
     positions = portfolio.get('positions', [])
 
-    position_value = sum(float(p.get('position_dollars', 0)) for p in positions)
-    equity         = cash + position_value
-    total_return   = round((equity - INITIAL_CAPITAL) / INITIAL_CAPITAL * 100, 2)
+    today = date.today()
+    for p in positions:
+        entry_price = float(p.get('entry_price', 0))
+        n_shares    = int(p.get('n_shares', 0))
+        ticker      = p.get('ticker', '')
+
+        try:
+            mkt = yf.download(ticker, period='2d', auto_adjust=True, progress=False)
+            if isinstance(mkt.columns, pd.MultiIndex):
+                mkt.columns = mkt.columns.get_level_values(0)
+            current_price = float(mkt['Close'].dropna().iloc[-1])
+        except Exception:
+            current_price = entry_price
+
+        unrealized_pct     = (current_price - entry_price) / entry_price if entry_price else 0
+        unrealized_dollars = (current_price - entry_price) * n_shares
+
+        p['current_price']       = round(current_price, 4)
+        p['unrealized_pct']      = round(unrealized_pct, 4)
+        p['unrealized_dollars']  = round(unrealized_dollars, 2)
+
+        try:
+            entry_dt = date.fromisoformat(p['entry_date'])
+            stop_dt  = date.fromisoformat(p['stop_date'])
+            p['days_held']      = (today - entry_dt).days
+            p['days_remaining'] = max(0, (stop_dt - today).days)
+        except Exception:
+            p['days_held']      = 0
+            p['days_remaining'] = 0
+
+    position_value = sum(
+        float(p.get('current_price', p.get('entry_price', 0))) * int(p.get('n_shares', 0))
+        for p in positions
+    )
+    equity       = cash + position_value
+    total_return = round((equity - INITIAL_CAPITAL) / INITIAL_CAPITAL * 100, 2)
 
     try:
         from portfolio.regime_detector import RegimeDetector

@@ -761,21 +761,55 @@
             return;
         }
         container.innerHTML = positions.map(p => {
-            const pnlPct = p.pnl_pct != null ? p.pnl_pct * 100 : 0;
-            const pnlColor = pnlPct >= 0 ? 'text-bullish' : 'text-bearish';
-            const pnlStr   = (pnlPct >= 0 ? '+' : '') + pnlPct.toFixed(2) + '%';
-            return `<div class="p-3 bg-panelBg border border-cardBorder rounded-lg flex justify-between items-center hover:border-zinc-700 transition">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold font-mono text-white">${p.ticker}</span>
-                        <span class="text-xs bg-accentBlue/10 text-accentBlue px-1.5 rounded font-mono">5D Hold</span>
+            const unrlPct  = p.unrealized_pct != null ? p.unrealized_pct * 100 : 0;
+            const unrlDlr  = p.unrealized_dollars != null ? p.unrealized_dollars : 0;
+            const pnlColor = unrlPct > 0 ? 'text-bullish' : (unrlPct < 0 ? 'text-bearish' : 'text-zinc-500');
+            const pnlStr   = (unrlPct >= 0 ? '+' : '') + unrlPct.toFixed(2) + '%';
+            const dlrStr   = (unrlDlr >= 0 ? '+' : '') + '$' + Math.abs(unrlDlr).toFixed(2);
+            const dlrSign  = unrlDlr >= 0 ? '+' : '-';
+
+            const signalBadge = p.predicted_return != null
+                ? (p.predicted_return >= 0.015 ? 'BULLISH' : (p.predicted_return <= -0.015 ? 'BEARISH' : 'NEUTRAL'))
+                : '';
+            const badgeColor = signalBadge === 'BULLISH' ? 'bg-bullish/10 text-bullish border-bullish/20'
+                             : signalBadge === 'BEARISH' ? 'bg-bearish/10 text-bearish border-bearish/20'
+                             : 'bg-zinc-700/30 text-zinc-400 border-zinc-600';
+
+            const entryFmt = p.entry_date ? p.entry_date.slice(5).replace('-', '/') : '—';
+            const stopFmt  = p.stop_date  ? p.stop_date.slice(5).replace('-', '/')  : '—';
+
+            const currentPx = p.current_price != null
+                ? '$' + parseFloat(p.current_price).toFixed(2)
+                : '—';
+
+            const daysHeld = p.days_held != null ? p.days_held : '—';
+            const daysRem  = p.days_remaining != null ? p.days_remaining : '—';
+
+            const predPct  = p.predicted_return != null
+                ? (p.predicted_return >= 0 ? '+' : '') + (p.predicted_return * 100).toFixed(2) + '%'
+                : '—';
+
+            const stopWarn = unrlPct < -5
+                ? '<div class="mt-1.5 text-xs text-orange-400 font-mono">&#9888; Approaching stop-loss (-8%)</div>'
+                : '';
+
+            return `<div class="p-3 bg-panelBg border border-cardBorder rounded-lg hover:border-zinc-700 transition">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold font-mono text-white text-sm">${p.ticker}</span>
+                            ${signalBadge ? `<span class="text-2xs border px-1.5 py-0.5 rounded font-mono font-semibold ${badgeColor}">${signalBadge}</span>` : ''}
+                        </div>
+                        <p class="text-zinc-500 text-xs mt-0.5 font-mono">Entry $${parseFloat(p.entry_price).toFixed(2)} · ${entryFmt} &rarr; ${stopFmt}</p>
+                        <p class="text-zinc-400 text-xs mt-0.5 font-mono">Current ${currentPx}</p>
                     </div>
-                    <p class="text-zinc-500 text-xs mt-0.5 font-mono">Entry $${parseFloat(p.entry_price).toFixed(2)} · ${p.stop_date || '—'}</p>
+                    <div class="text-right">
+                        <span class="font-mono font-bold ${pnlColor} text-sm block">${pnlStr} (${dlrSign}$${Math.abs(unrlDlr).toFixed(2)})</span>
+                        <span class="text-zinc-500 text-2xs font-mono block mt-0.5">Days: ${daysHeld}/5 held · ${daysRem} rem</span>
+                        <span class="text-zinc-600 text-2xs font-mono block">Pred: ${predPct}</span>
+                    </div>
                 </div>
-                <div class="text-right">
-                    <span class="font-mono font-bold ${pnlColor} text-sm block">${pnlStr}</span>
-                    <span class="text-zinc-500 text-xs">${p.n_shares} shares</span>
-                </div>
+                ${stopWarn}
             </div>`;
         }).join('');
     }
