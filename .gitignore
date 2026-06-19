@@ -24,6 +24,7 @@ secrets/
 # --- Data (too large for git) ---
 data/raw/
 data/feature_store/
+data/mention_history.json
 *.csv
 *.parquet
 *.json.gz

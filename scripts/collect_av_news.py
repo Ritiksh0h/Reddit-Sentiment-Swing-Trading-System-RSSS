@@ -55,6 +55,7 @@ BATCH_SIZE          = 5      # tickers per API call
 RELEVANCE_THRESHOLD = 0.3    # minimum relevance_score to include
 DAILY_SLEEP_SEC     = 1.0    # pause between calls in daily mode
 BACKFILL_SLEEP_SEC  = 12.0   # pause between calls in backfill mode
+MAX_DAILY_CALLS     = 24     # stop before hitting AV 25/day hard limit
 
 
 def _load_tickers() -> list[str]:
@@ -323,6 +324,18 @@ def backfill_mode(start: str, end: str, dry_run: bool = False) -> None:
 
         month_records = []
         for batch in _batches(tickers):
+            if call_count >= MAX_DAILY_CALLS:
+                log.info(
+                    f'Daily call limit reached ({call_count}/{MAX_DAILY_CALLS}). '
+                    f'Save progress and stop — resume tomorrow.'
+                )
+                if all_records:
+                    partial = _aggregate(all_records)
+                    _append_parquet(partial, BACKFILL_OUT)
+                PROGRESS_FILE.parent.mkdir(parents=True, exist_ok=True)
+                with open(PROGRESS_FILE, 'w') as f:
+                    json.dump(progress, f, indent=2)
+                return
             articles = _fetch_av(batch, time_from, time_to, sort='EARLIEST')
             month_records.extend(_parse_articles(articles, tracked))
             call_count += 1

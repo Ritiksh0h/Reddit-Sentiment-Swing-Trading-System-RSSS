@@ -110,16 +110,22 @@ def check_drift(live_values: dict, _time_scale_override: float = None) -> dict:
 
         adjusted_mean = hist_mean * _time_scale if feature == 'post_count_1d' else hist_mean
 
+        # post_count_1d uses a wider (30%) lower threshold than other features (50%).
+        # A single wallstreetbets API timeout drops counts from ~530 to ~218 without
+        # being a genuine failure — 50% triggered false SKIP_DAY on those runs.
+        low_mult = 0.3 if feature == 'post_count_1d' else ALERT_LOW_MULTIPLIER
+
         if adjusted_mean < 0:
             low_thresh  = adjusted_mean * ALERT_HIGH_MULTIPLIER
-            high_thresh = adjusted_mean * ALERT_LOW_MULTIPLIER
+            high_thresh = adjusted_mean * low_mult
         else:
-            low_thresh  = adjusted_mean * ALERT_LOW_MULTIPLIER
+            low_thresh  = adjusted_mean * low_mult
             high_thresh = adjusted_mean * ALERT_HIGH_MULTIPLIER
 
+        low_pct = int(low_mult * 100)
         if live < low_thresh:
             alerts.append(
-                f'{feature}: live={live:.3f} is below 50% of time-adjusted '
+                f'{feature}: live={live:.3f} is below {low_pct}% of time-adjusted '
                 f'mean ({adjusted_mean:.3f}, scale={_time_scale:.2f}). Possible API undercount.'
             )
         elif live > high_thresh:

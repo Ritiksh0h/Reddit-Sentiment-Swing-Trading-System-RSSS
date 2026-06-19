@@ -26,7 +26,7 @@ sentiment still untested formally — that is the next sprint.
 
 ## Current Phase: Phase 4 — Paper Trading (LIVE)
 
-System runs automatically three times per weekday via launchd (system in IST, UTC+5:30).
+System runs automatically three times per weekday via launchd (system in EDT, UTC-4).
 Paper trading started: June 15, 2026.
 
 ```bash
@@ -245,14 +245,14 @@ Manual check: `python scripts/monitor_live_ic.py`
 
 ## Automation (macOS launchd)
 
-System clock is IST (UTC+5:30). All times below are IST = ET equivalent.
+System clock is EDT (UTC-4). All times below are EDT = ET.
 
 ```
-com.rsss.api              → always on, RunAtLoad=true, KeepAlive=true → uvicorn port 8000
-com.rsss.dailyrun         → 18:30 IST Mon-Fri (09:00 ET) → daily_run_live.py
-com.rsss.dailyrun.1130    → 21:00 IST Mon-Fri (11:30 ET) → daily_run_live.py
-com.rsss.dailyrun.1400    → 23:30 IST Mon-Fri (14:00 ET) → daily_run_live.py
-com.rsss.icmonitor        → 14:30 IST Monday  (09:00 ET) → monitor_live_ic.py
+com.rsss.api              → always on, RunAtLoad=true, KeepAlive=true → venv uvicorn port 8000
+com.rsss.dailyrun         → 09:00 EDT Mon-Fri → daily_run_live.py
+com.rsss.dailyrun.1130    → 11:30 EDT Mon-Fri → daily_run_live.py
+com.rsss.dailyrun.1400    → 14:00 EDT Mon-Fri → daily_run_live.py
+com.rsss.icmonitor        → 09:00 EDT Monday  → monitor_live_ic.py
 
 Plist files: ~/Library/LaunchAgents/com.rsss.*.plist
 ```
