@@ -154,17 +154,22 @@ def test_position_below_take_profit_not_closed():
 # ── 7. Drift monitor skips day on low post count ─────────────────────────────
 
 def test_drift_monitor_skips_day_on_low_posts():
-    """post_count_1d at 28% of historical mean (53.2) → skip_day=True (threshold=30%)."""
-    result = check_drift({'post_count_1d': 15.0, 'mention_growth_7d': 0.2},
-                         _time_scale_override=1.0)
+    """max post count < 3 across all tickers → skip_day=True (Reddit API down)."""
+    result = check_drift({
+        'NVDA': {'post_count_1d': 1, 'mention_growth_7d': 1.0},
+        'TSLA': {'post_count_1d': 2, 'mention_growth_7d': 1.0},
+    })
     assert result['skip_day'] is True
     assert not result['clean']
 
 
 def test_drift_monitor_clean_on_normal_values():
-    """Normal values → no alerts."""
-    result = check_drift({'post_count_1d': 53.0, 'mention_growth_7d': 0.23},
-                         _time_scale_override=1.0)
+    """max post count >= 3 → no skip, clean result."""
+    result = check_drift({
+        'NVDA': {'post_count_1d': 11, 'mention_growth_7d': 1.0},
+        'TSLA': {'post_count_1d': 7,  'mention_growth_7d': 1.0},
+        'MU':   {'post_count_1d': 3,  'mention_growth_7d': 1.0},
+    })
     assert result['clean'] is True
     assert result['skip_day'] is False
 

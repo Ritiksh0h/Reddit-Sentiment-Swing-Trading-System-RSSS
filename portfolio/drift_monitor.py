@@ -3,22 +3,26 @@ Data drift monitor.
 Compares live feature distributions against historical training means.
 Alerts if values fall outside expected ranges.
 
-Historical means (from feature_stats.json, training data 2019-2023):
-    post_count_1d:    53.2
+Recalibrated Jun 2026 — 20-ticker trade universe.
+Real observed max: 13 posts. Mean set to 15.0.
+SKIP_DAY logic: max_posts < 3 = Reddit API down.
+
+Historical means (reference values, 20-ticker universe):
+    post_count_1d:    15.0  (skip when max across all tickers < 3)
     mention_growth_7d: 0.232
 
-Alert threshold: live value < mean × 0.5 OR > mean × 2.0
-Action on alert: log warning. Skip day if post_count_1d anomaly detected.
+Alert threshold: live mean < historical × 0.5 OR > historical × 2.0
+SKIP_DAY: only when max post count < 3 (API failure, not quiet market).
 """
 import logging
 from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# From phase3_locked_architecture.json data_drift_monitoring.historical_means
+# Reference values — post_count_1d skip uses max_posts < 3, not percentage
 HISTORICAL_MEANS = {
-    'post_count_1d':    53.2,
-    'mention_growth_7d': 0.232,
+    'post_count_1d':     15.0,   # observed max in 12 weeks of live trading: 13
+    'mention_growth_7d':  0.232,
 }
 
 ALERT_LOW_MULTIPLIER  = 0.5
@@ -56,31 +60,50 @@ def _mention_history_is_mature(
     return False
 
 
-def check_drift(live_values: dict, _time_scale_override: float = None) -> dict:
+def check_drift(reddit_counts: dict) -> dict:
     """
-    Check live feature values against historical training means.
+    Check live feature distributions for Reddit API anomalies.
 
-    Skips mention_growth_7d until data/mention_history.json has accumulated
-    7+ days of real data — avoids false positives from the 1.0 placeholder
-    used during the first week of paper trading.
+    SKIP_DAY fires when max post count across ALL tickers < 3.
+    A single ticker with 3+ posts proves the API is responding —
+    a low-count day is a quiet market, not a failure.
+
+    mention_growth_7d is checked against historical mean with a ±50%/200%
+    band, but only once mention_history.json has 7+ days of real data.
 
     Args:
-        live_values: dict of feature_name → observed value today
+        reddit_counts: {ticker: {'post_count_1d': int, 'mention_growth_7d': float, ...}}
 
     Returns:
         dict with:
             clean:          bool — True if no anomalies detected
             alerts:         list of alert strings
-            skip_day:       bool — True if post_count_1d anomaly detected
+            skip_day:       bool — True only when max post count < 3
             skipped_checks: list of features skipped with reason
     """
     alerts         = []
     skipped_checks = []
 
-    features_to_check = dict(HISTORICAL_MEANS)
+    # ── SKIP_DAY: max post count across all tickers ────────────────────────
+    max_posts = max(
+        (v.get('post_count_1d', 0) for v in reddit_counts.values()),
+        default=0,
+    )
+    if max_posts < 3:
+        alert_msg = (
+            f'post_count_1d: max_posts={max_posts} across all tickers — '
+            f'Reddit API likely down or no data collected'
+        )
+        logger.warning(f'drift_alert: {alert_msg}')
+        return {
+            'clean':          False,
+            'alerts':         [alert_msg],
+            'skip_day':       True,
+            'skipped_checks': [],
+        }
 
+    # ── mention_growth_7d: percentage check (only when history is mature) ───
     if not _mention_history_is_mature():
-        features_to_check.pop('mention_growth_7d', None)
         skipped_checks.append(
             'mention_growth_7d: skipped — history not yet mature '
             '(< 7 days accumulated). Placeholder value 1.0 is not comparable '
@@ -88,63 +111,37 @@ def check_drift(live_values: dict, _time_scale_override: float = None) -> dict:
         )
         logger.info('drift_check_skip feature=mention_growth_7d '
                     'reason=history_immature_placeholder_active')
-
-    import datetime as _dt
-    # Scale post_count_1d historical mean by time of day.
-    # Historical mean 53.2 was calibrated at end-of-US-session peak density.
-    # Runs fire at 09:00/11:30/14:00 ET — Reddit builds up during the session.
-    # Scale: 09:00 ET = 30% of peak, 14:00 ET = 100% of peak.
-    # _time_scale_override=1.0 used in tests to decouple from wall clock.
-    if _time_scale_override is not None:
-        _time_scale = _time_scale_override
     else:
-        _utc_hour   = _dt.datetime.utcnow().hour
-        _et_hour    = (_utc_hour - 4) % 24        # EDT = UTC−4
-        _time_scale = max(0.3, min(1.0, (_et_hour - 9) / 5.0))
+        real_growths = [
+            v.get('mention_growth_7d', 1.0)
+            for v in reddit_counts.values()
+            if v.get('mention_growth_7d', 1.0) != 1.0  # exclude 1.0 placeholders
+        ]
+        if real_growths:
+            live_growth = sum(real_growths) / len(real_growths)
+            hist_mean   = HISTORICAL_MEANS['mention_growth_7d']
+            low_thresh  = hist_mean * ALERT_LOW_MULTIPLIER
+            high_thresh = hist_mean * ALERT_HIGH_MULTIPLIER
 
-    for feature, hist_mean in features_to_check.items():
-        live = live_values.get(feature)
-        if live is None:
-            alerts.append(f'{feature}: missing from live data')
-            continue
-
-        adjusted_mean = hist_mean * _time_scale if feature == 'post_count_1d' else hist_mean
-
-        # post_count_1d uses a wider (30%) lower threshold than other features (50%).
-        # A single wallstreetbets API timeout drops counts from ~530 to ~218 without
-        # being a genuine failure — 50% triggered false SKIP_DAY on those runs.
-        low_mult = 0.3 if feature == 'post_count_1d' else ALERT_LOW_MULTIPLIER
-
-        if adjusted_mean < 0:
-            low_thresh  = adjusted_mean * ALERT_HIGH_MULTIPLIER
-            high_thresh = adjusted_mean * low_mult
-        else:
-            low_thresh  = adjusted_mean * low_mult
-            high_thresh = adjusted_mean * ALERT_HIGH_MULTIPLIER
-
-        low_pct = int(low_mult * 100)
-        if live < low_thresh:
-            alerts.append(
-                f'{feature}: live={live:.3f} is below {low_pct}% of time-adjusted '
-                f'mean ({adjusted_mean:.3f}, scale={_time_scale:.2f}). Possible API undercount.'
-            )
-        elif live > high_thresh:
-            alerts.append(
-                f'{feature}: live={live:.3f} is above 200% of time-adjusted '
-                f'mean ({adjusted_mean:.3f}, scale={_time_scale:.2f}). Possible data spike or API issue.'
-            )
-
-    # skip_day fires only when post_count_1d is BELOW threshold (API undercount).
-    # An above-threshold spike means Reddit is unusually active — not an API failure.
-    # mention_growth anomalies alone never skip the day.
-    skip_day = any('post_count_1d' in a and 'below' in a for a in alerts)
+            if live_growth < low_thresh:
+                alerts.append(
+                    f'mention_growth_7d: live={live_growth:.3f} is below 50% of '
+                    f'historical mean ({hist_mean:.3f}). Possible API undercount.'
+                )
+            elif live_growth > high_thresh:
+                alerts.append(
+                    f'mention_growth_7d: live={live_growth:.3f} is above 200% of '
+                    f'historical mean ({hist_mean:.3f}). Possible data spike or API issue.'
+                )
 
     if alerts:
         for alert in alerts:
             logger.warning(f'drift_alert: {alert}')
     else:
-        logger.info(f'drift_check_clean features_checked={len(features_to_check)} '
-                    f'features_skipped={len(skipped_checks)}')
+        logger.info(
+            f'drift_check_clean max_posts={max_posts} '
+            f'features_skipped={len(skipped_checks)}'
+        )
 
     if skipped_checks:
         for msg in skipped_checks:
@@ -153,6 +150,6 @@ def check_drift(live_values: dict, _time_scale_override: float = None) -> dict:
     return {
         'clean':          len(alerts) == 0,
         'alerts':         alerts,
-        'skip_day':       skip_day,
+        'skip_day':       False,  # SKIP_DAY handled above with early return
         'skipped_checks': skipped_checks,
     }

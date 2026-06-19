@@ -1,6 +1,36 @@
 {
-  "cash": 10163.57686119665,
-  "positions": [],
+  "cash": 7892.19489119665,
+  "positions": [
+    {
+      "ticker": "MU",
+      "entry_date": "2026-06-19",
+      "entry_price": 1135.691,
+      "n_shares": 2,
+      "position_dollars": 2267.98,
+      "stop_date": "2026-06-26",
+      "predicted_return": -0.073638,
+      "atr_14": 91.665728,
+      "slippage_applied": 0.0015,
+      "regime_state": "positive",
+      "regime_multiplier": 1.0,
+      "feature_vector": {
+        "returns_1d": 0.08704076335870714,
+        "returns_5d": 0.1386927970461993,
+        "returns_20d": 0.5491878377616668,
+        "rsi_14": 59.346936558263316,
+        "atr_14": 91.66572788783482,
+        "relative_volume": 1.1788167858097431,
+        "dist_from_20ma": 0.17441634474627912,
+        "dist_from_50ma": 0.5474771131011558,
+        "post_count_1d": 12.0,
+        "mention_growth_1d": 1.0,
+        "mention_growth_7d": 1.0,
+        "news_sentiment_1d": 0.0309,
+        "st_sentiment_1d": 1.0,
+        "st_bull_pct": 1.0
+      }
+    }
+  ],
   "closed_trades": [
     {
       "ticker": "AAPL",
@@ -132,7 +162,8 @@
     "NVDA": "2026-06-03",
     "UBER": "2026-06-11",
     "TSLA": "2026-06-11",
-    "NFLX": "2026-06-11"
+    "NFLX": "2026-06-11",
+    "MU": "2026-06-19"
   },
   "daily_pnl": {},
   "created_at": "2026-06-17T22:59:36.781199"
