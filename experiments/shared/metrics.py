@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+from scipy.stats import spearmanr
 
 
 def compute_metrics(
@@ -72,6 +73,14 @@ def compute_metrics(
         "alpha": round(float(total_return - spy_return), 6),
         "beats_spy": beats_spy,
     }
+
+
+def compute_ic(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """Spearman IC between predicted and actual returns. Canonical — import from here."""
+    if len(y_true) < 5:
+        return 0.0
+    corr, _ = spearmanr(y_true, y_pred)
+    return float(corr) if np.isfinite(corr) else 0.0
 
 
 def _empty_metrics(spy_return: float) -> dict:

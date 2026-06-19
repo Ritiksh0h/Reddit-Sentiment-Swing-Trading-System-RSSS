@@ -21,15 +21,11 @@ PROJECT_ROOT: Path = Path(__file__).parent.parent.resolve()
 MODEL_REGISTRY_PATH: Path = Path(
     os.getenv("MODEL_REGISTRY_PATH", str(PROJECT_ROOT / "models" / "registry"))
 )
-FEATURE_STORE_PATH: Path = Path(
-    os.getenv("FEATURE_STORE_PATH", str(PROJECT_ROOT / "data" / "feature_store"))
-)
 RAW_DATA_PATH: Path = PROJECT_ROOT / "data" / "raw"
 LOG_PATH: Path = PROJECT_ROOT / "logs"
-PHASE0_RESULTS_PATH: Path = PROJECT_ROOT / "phase0_results"
 
 # Ensure critical directories exist at import time
-for _path in [MODEL_REGISTRY_PATH, FEATURE_STORE_PATH, RAW_DATA_PATH, LOG_PATH, PHASE0_RESULTS_PATH]:
+for _path in [MODEL_REGISTRY_PATH, RAW_DATA_PATH, LOG_PATH]:
     _path.mkdir(parents=True, exist_ok=True)
 
 # ---------------------------------------------------------------------------
@@ -95,8 +91,10 @@ DATA_FEAT: Path = PROJECT_ROOT / "data" / "features"
 MODELS_DIR: Path = MODEL_REGISTRY_PATH
 REPORTS_DIR: Path = PROJECT_ROOT / "reports"
 
-SENTIMENT_PARQUET: Path = DATA_RAW / "merged_with_sentiment.parquet"
-FEATURES_PARQUET: Path = DATA_FEAT / "features.parquet"
+SENTIMENT_PARQUET: Path      = DATA_RAW / "merged_with_sentiment.parquet"
+FEATURES_FULL_PATH: Path     = DATA_FEAT / "features_full.parquet"
+FEATURES_COMPLETE_PATH: Path = DATA_FEAT / "features_complete.parquet"
+FEATURES_PARQUET: Path       = FEATURES_FULL_PATH  # pipeline/ alias → features_full
 
 EXPERIMENT_RESULTS_DIR: Path = PROJECT_ROOT / "experiments"
 

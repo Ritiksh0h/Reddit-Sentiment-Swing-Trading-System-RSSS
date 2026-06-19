@@ -12,8 +12,8 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-PERF_FILE      = 'data/paper_performance.json'
-PERF_JSONL     = 'data/paper_performance.jsonl'
+PERF_FILE      = 'data/live/paper_performance.json'
+PERF_JSONL     = 'data/live/paper_performance.jsonl'
 
 
 def record_daily_snapshot(

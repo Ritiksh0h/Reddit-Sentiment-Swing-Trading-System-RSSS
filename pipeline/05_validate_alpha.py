@@ -27,7 +27,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.stats import spearmanr
+from experiments.shared.metrics import compute_ic
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -49,18 +49,6 @@ try:
 except ImportError:
     print("ERROR: joblib not installed.")
     sys.exit(1)
-
-# ---------------------------------------------------------------------------
-# IC computation
-# ---------------------------------------------------------------------------
-
-def spearman_ic(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """Spearman rank correlation (IC)."""
-    if len(y_true) < 5:
-        return 0.0
-    corr, _ = spearmanr(y_true, y_pred)
-    return float(corr) if np.isfinite(corr) else 0.0
-
 
 # ---------------------------------------------------------------------------
 # Permutation test
@@ -102,7 +90,7 @@ def run_permutation_test(
     null_ics = []
     for _ in range(n_permutations):
         shuffled_y = rng.permutation(y)
-        ic = spearman_ic(shuffled_y, preds)
+        ic = compute_ic(shuffled_y, preds)
         null_ics.append(ic)
 
     null_ics = np.array(null_ics)
@@ -162,7 +150,7 @@ def run_bootstrap_stability(
     boot_ics = []
     for _ in range(n_bootstrap):
         idx = rng.integers(0, n, size=n)
-        ic = spearman_ic(y[idx], preds[idx])
+        ic = compute_ic(y[idx], preds[idx])
         boot_ics.append(ic)
 
     boot_ics = np.array(boot_ics)
@@ -261,7 +249,7 @@ def main() -> None:
 
     # Observed IC
     preds = model.predict(X_np)
-    observed_ic = spearman_ic(y_np, preds)
+    observed_ic = compute_ic(y_np, preds)
     log.info("observed_ic", ic=round(observed_ic, 4))
 
     # Run permutation test

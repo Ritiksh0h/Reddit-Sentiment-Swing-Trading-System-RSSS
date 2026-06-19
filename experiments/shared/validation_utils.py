@@ -30,7 +30,8 @@ try:
     import sys
     import os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-    from config.thresholds import CLEAN_FEATURES, DROP_TICKERS
+    from config.thresholds import PHASE3_FEATURES, DROP_TICKERS
+    CLEAN_FEATURES = PHASE3_FEATURES
 except Exception:
     CLEAN_FEATURES = [
         'returns_1d', 'returns_5d', 'relative_volume', 'dist_from_20ma', 'dist_from_50ma',

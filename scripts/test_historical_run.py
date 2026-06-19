@@ -88,10 +88,10 @@ def load_reddit_counts_from_feature_store(trading_date: date) -> dict:
 BACKUP_DIR = Path('data/backfill_backup')
 
 STATE_FILES = [
-    ('data/paper_portfolio.json',    BACKUP_DIR / 'paper_portfolio.json'),
-    ('logs/paper_trades.jsonl',      BACKUP_DIR / 'paper_trades.jsonl'),
-    ('data/paper_performance.jsonl', BACKUP_DIR / 'paper_performance.jsonl'),
-    ('data/mention_history.json',    BACKUP_DIR / 'mention_history.json'),
+    ('data/live/paper_portfolio.json',    BACKUP_DIR / 'paper_portfolio.json'),
+    ('logs/paper_trades.jsonl',           BACKUP_DIR / 'paper_trades.jsonl'),
+    ('data/live/paper_performance.jsonl', BACKUP_DIR / 'paper_performance.jsonl'),
+    ('data/mention_history.json',         BACKUP_DIR / 'mention_history.json'),
 ]
 
 
@@ -167,7 +167,7 @@ def analyze_results(results: list) -> None:
     print()
 
     # Portfolio state
-    port_path = Path('data/paper_portfolio.json')
+    port_path = Path('data/live/paper_portfolio.json')
     if port_path.exists():
         with open(port_path) as f:
             state = json.load(f)

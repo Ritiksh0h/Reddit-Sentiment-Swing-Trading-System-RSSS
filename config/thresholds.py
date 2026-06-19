@@ -24,8 +24,6 @@ PHASE3_FEATURES: list = [
     'st_sentiment_1d', 'st_bull_pct',
 ]
 
-CLEAN_FEATURES = PHASE3_FEATURES  # backward-compat alias (used by experiments/)
-
 # Sentiment features dropped per L1 Granger (0/6 years significant)
 SENTIMENT_FEATURES_DROPPED: list = [
     'avg_sentiment_1d', 'avg_sentiment_3d', 'weighted_sentiment',

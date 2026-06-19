@@ -1,0 +1,86 @@
+{
+  "AAPL_2026-05-18": {
+    "ticker": "AAPL",
+    "entry_date": "2026-05-18",
+    "signal": "NEUTRAL",
+    "r1d": 0.003794,
+    "r3d": 0.024006
+  },
+  "COIN_2026-05-18": {
+    "ticker": "COIN",
+    "entry_date": "2026-05-18",
+    "signal": "NEUTRAL",
+    "r1d": 0.021168,
+    "r3d": 0.021748
+  },
+  "MSFT_2026-05-18": {
+    "ticker": "MSFT",
+    "entry_date": "2026-05-18",
+    "signal": "NEUTRAL",
+    "r1d": -0.01445,
+    "r3d": -0.008364
+  },
+  "AAPL_2026-05-26": {
+    "ticker": "AAPL",
+    "entry_date": "2026-05-26",
+    "signal": "NEUTRAL",
+    "r1d": 0.008173,
+    "r3d": 0.012097
+  },
+  "GME_2026-05-26": {
+    "ticker": "GME",
+    "entry_date": "2026-05-26",
+    "signal": "NEUTRAL",
+    "r1d": -0.010497,
+    "r3d": -0.033318
+  },
+  "AMZN_2026-05-26": {
+    "ticker": "AMZN",
+    "entry_date": "2026-05-26",
+    "signal": "NEUTRAL",
+    "r1d": 0.024728,
+    "r3d": 0.020167
+  },
+  "COIN_2026-06-03": {
+    "ticker": "COIN",
+    "entry_date": "2026-06-03",
+    "signal": "NEUTRAL",
+    "r1d": 0.005575,
+    "r3d": -0.006801
+  },
+  "GME_2026-06-03": {
+    "ticker": "GME",
+    "entry_date": "2026-06-03",
+    "signal": "NEUTRAL",
+    "r1d": 0.004058,
+    "r3d": 0.003607
+  },
+  "NVDA_2026-06-03": {
+    "ticker": "NVDA",
+    "entry_date": "2026-06-03",
+    "signal": "NEUTRAL",
+    "r1d": 0.019394,
+    "r3d": -0.027319
+  },
+  "UBER_2026-06-11": {
+    "ticker": "UBER",
+    "entry_date": "2026-06-11",
+    "signal": "NEUTRAL",
+    "r1d": -0.010065,
+    "r3d": 0.053199
+  },
+  "TSLA_2026-06-11": {
+    "ticker": "TSLA",
+    "entry_date": "2026-06-11",
+    "signal": "NEUTRAL",
+    "r1d": 0.018239,
+    "r3d": 0.013804
+  },
+  "NFLX_2026-06-11": {
+    "ticker": "NFLX",
+    "entry_date": "2026-06-11",
+    "signal": "NEUTRAL",
+    "r1d": -0.011443,
+    "r3d": -0.031377
+  }
+}

@@ -126,8 +126,20 @@ def compute_features_live(
     st_bull_pct:       float = 0.5,
 ) -> Optional[dict]:
     """
-    Compute the 14-feature vector for a ticker using live data.
-    Returns None if insufficient market data.
+    Compute the 14-feature vector for a single ticker using live OHLCV + sentiment data.
+
+    Args:
+        ticker:            ticker symbol (used for log messages only)
+        market_data:       90-day OHLCV DataFrame from yfinance (needs >= 55 rows)
+        post_count_1d:     Reddit post count in last 24h (attention gate feature)
+        mention_growth_1d: today's count / yesterday's count ratio
+        mention_growth_7d: today's count / 7-day average ratio
+        news_sentiment_1d: FinBERT news sentiment [-1, +1]; 0.0 if unavailable
+        st_sentiment_1d:   StockTwits sentiment [-1, +1]; 0.0 if unavailable
+        st_bull_pct:       fraction of StockTwits messages tagged bullish; 0.5 if unavailable
+
+    Returns:
+        dict of 14 feature values matching ARCH['features'], or None if < 55 rows of market data
     """
     if len(market_data) < 55:
         logger.warning(f'insufficient_market_data ticker={ticker} n_rows={len(market_data)}')
@@ -191,16 +203,21 @@ def generate_signals(
     stocktwits_data: dict = None,  # {ticker: {st_sentiment_1d, st_bull_pct}}
 ) -> list:
     """
-    Generate multi-horizon ranked signals for all qualifying tickers.
+    Generate multi-horizon ranked signals for all tickers that pass the density gate.
+
+    Density gate: post_count_1d >= 10 — tickers below are skipped silently.
+    Tickers in ARCH['drop_tickers'] are always excluded regardless of post count.
 
     Args:
-        reddit_counts: {ticker: {post_count_1d, mention_growth_1d, ...}}
-        model:         single model (backward compat, used as 5d if models=None)
-        today:         date string YYYY-MM-DD
-        models:        dict of horizon → model (preferred)
+        reddit_counts:   {ticker: {post_count_1d, mention_growth_1d, mention_growth_7d, ...}}
+        model:           single model (backward compat, ignored if models is provided)
+        today:           date string YYYY-MM-DD; defaults to UTC today
+        models:          preferred — {'1d': model, '3d': model, '5d': model}
+        news_data:       {ticker: {news_sentiment_1d, news_count_1d}} from news_fetcher
+        stocktwits_data: {ticker: {st_sentiment_1d, st_bull_pct, st_count_1d}} from stocktwits_fetcher
 
     Returns:
-        list of SignalRecord sorted bullish-first by pred_5d, then bearish
+        list of SignalRecord ordered: BULLISH (desc pred_5d), NEUTRAL, BEARISH (asc pred_5d)
     """
     if today is None:
         today = datetime.now(timezone.utc).strftime('%Y-%m-%d')

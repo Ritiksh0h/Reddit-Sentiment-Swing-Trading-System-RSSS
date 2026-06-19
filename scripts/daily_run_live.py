@@ -73,6 +73,20 @@ def ensure_api_running(port: int = 8000) -> None:
 
 
 def main():
+    """
+    Run one full cycle of the RSSS live pipeline.
+
+    Flow:
+        1. Fetch Reddit post counts + mention growth (Arctic Shift API)
+        2. Fetch yfinance news + FinBERT sentiment scores
+        3. Fetch StockTwits bullish/bearish tags
+        4. Merge all three sources into a unified ticker dict
+        5. Run scripts/daily_run.py → density gate → XGBoost → trades
+        6. Append today's feature vectors to the live feature store
+        7. Fill any pending t+5 price targets from prior days
+
+    --dry-run logs signals only; no trades are written to paper_trades.jsonl.
+    """
     ensure_api_running()
 
     parser = argparse.ArgumentParser(description='RSSS live daily run')

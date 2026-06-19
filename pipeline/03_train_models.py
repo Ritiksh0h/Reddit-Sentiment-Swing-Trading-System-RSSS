@@ -23,7 +23,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from scipy.stats import spearmanr
+from experiments.shared.metrics import compute_ic
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -61,14 +61,6 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # IC utilities
 # ---------------------------------------------------------------------------
-
-def compute_ic(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """Spearman IC between predicted and actual returns."""
-    if len(y_true) < 10:
-        return 0.0
-    corr, _ = spearmanr(y_true, y_pred)
-    return float(corr) if np.isfinite(corr) else 0.0
-
 
 def compute_ic_series(df: pd.DataFrame, preds: np.ndarray) -> dict:
     """Compute IC on full test set and optionally by year/quarter."""

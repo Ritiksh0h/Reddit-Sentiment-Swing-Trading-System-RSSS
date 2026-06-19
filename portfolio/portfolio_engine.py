@@ -19,7 +19,7 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-STATE_FILE         = 'data/paper_portfolio.json'
+STATE_FILE         = 'data/live/paper_portfolio.json'
 MAX_POSITIONS      = 3
 TAKE_PROFIT_CAP    = 0.15
 STOP_LOSS_PCT      = -0.08
@@ -72,7 +72,10 @@ class PortfolioState:
 
 
 def load_portfolio() -> PortfolioState:
-    """Load portfolio state from disk. Creates fresh state if not found."""
+    """
+    Load portfolio state from data/live/paper_portfolio.json.
+    Returns a fresh $10,000 PortfolioState if the file does not exist.
+    """
     if Path(STATE_FILE).exists():
         with open(STATE_FILE) as f:
             data = json.load(f)
@@ -84,7 +87,12 @@ def load_portfolio() -> PortfolioState:
 
 
 def save_portfolio(state: PortfolioState) -> None:
-    """Persist portfolio state to disk."""
+    """
+    Persist portfolio state to data/live/paper_portfolio.json.
+
+    Args:
+        state: current PortfolioState including positions, cash, and trade history
+    """
     Path('data').mkdir(exist_ok=True)
     data = asdict(state)
     with open(STATE_FILE, 'w') as f:
@@ -131,12 +139,20 @@ def check_exits(
 ) -> list:
     """
     Check all open positions for exit conditions.
-    Returns list of exit dicts with position + exit metadata.
 
-    Exit conditions (checked in priority order):
-        1. Stop-loss hit (unrealized loss >= 8%) — cut losses immediately
-        2. Take-profit cap hit (unrealized gain >= 15%)
-        3. Hold period expired (stop_date reached)
+    Args:
+        state:          current portfolio with open positions list
+        current_prices: {ticker: latest_close_price} fetched from yfinance
+        today:          date string YYYY-MM-DD
+
+    Returns:
+        list of exit dicts — each has: position, exit_price, exit_date,
+        exit_reason, pnl_pct. Only positions meeting a condition are included.
+
+    Exit conditions (priority order):
+        1. Stop-loss:   unrealized loss <= -8%
+        2. Take-profit: unrealized gain >= 15%
+        3. Hold expiry: today >= stop_date (5-day hold)
     """
     to_close = []
 

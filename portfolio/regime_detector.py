@@ -44,13 +44,23 @@ def classify_regime(
     spy_ticker: str = 'SPY',
 ) -> RegimeState:
     """
-    Classify current market regime using SPY + rolling IC.
+    Classify current market regime using SPY price trend and rolling IC signal.
+
+    Args:
+        rolling_30d_ic: 30-day rolling Spearman IC from monitor_live_ic.py;
+                        pass None during the first month before enough live trades exist
+        spy_ticker:     ticker symbol for the market benchmark (override in tests)
+
+    Returns:
+        RegimeState with label ('positive'|'neutral'|'negative'), position-size
+        multiplier (1.0|0.75|0.50), and diagnostic fields (spy_above_200ma,
+        spy_ret_60d, rolling_30d_ic, reason)
 
     Decision logic:
         NEGATIVE if: SPY below 200MA OR spy_ret_60d < -0.10
         POSITIVE if: SPY above 200MA AND spy_ret_60d > 0
                      AND (rolling_30d_ic is None OR rolling_30d_ic > 0.03)
-        NEUTRAL:     everything else (including SPY up but IC <= 0.03)
+        NEUTRAL:     everything else (including SPY uptrend but live IC <= 0.03)
     """
     spy = pd.DataFrame()
     for period in ['1y', '6mo', '3mo']:

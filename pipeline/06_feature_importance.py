@@ -24,7 +24,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.stats import spearmanr
+from experiments.shared.metrics import compute_ic
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -83,14 +83,6 @@ def train_ablation_model(
     )
     model.fit(X_train, y_train, verbose=False)
     return model
-
-
-def compute_ic(y_true: np.ndarray, y_pred: np.ndarray) -> float:
-    """Spearman IC."""
-    if len(y_true) < 5:
-        return 0.0
-    corr, _ = spearmanr(y_true, y_pred)
-    return float(corr) if np.isfinite(corr) else 0.0
 
 
 # ---------------------------------------------------------------------------

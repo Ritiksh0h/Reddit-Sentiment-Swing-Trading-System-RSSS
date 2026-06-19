@@ -43,7 +43,15 @@ FEATURE_COLS = [
 
 def load_today_feature_vectors(today: str) -> list[dict]:
     """
-    Load today's feature vectors from paper_trades.jsonl (OPEN records).
+    Load today's feature vectors from logs/paper_trades.jsonl (OPEN records only).
+
+    Args:
+        today: date string YYYY-MM-DD — only records matching this date are returned
+
+    Returns:
+        list of dicts with ticker, date, close, 14 feature values,
+        predicted_return_5d, signal, and confidence. Empty list if no OPEN
+        signals were logged for today.
     """
     rows = []
     log_path = Path('logs/paper_trades.jsonl')
@@ -102,10 +110,16 @@ def load_today_feature_vectors(today: str) -> list[dict]:
 
 def fill_pending_targets() -> int:
     """
-    For each pending feature row, check if t+5 price is now available.
-    If yes: compute target_return_5d and move to live features parquet.
+    Fill target_return_5d for pending rows where t+5 price is now available.
 
-    Returns number of targets filled.
+    Reads data/processed/features_target_pending.json. A row becomes eligible
+    after 7+ calendar days (ensures 5 trading days have passed). Fetches the
+    t+5 close price via yfinance and computes (close_t5 - close_t0) / close_t0.
+    Filled rows are appended to data/features/features_live_2026.parquet; rows
+    still awaiting prices are written back to the pending file.
+
+    Returns:
+        number of rows filled in this run
     """
     if not PENDING_TARGETS_PATH.exists():
         return 0

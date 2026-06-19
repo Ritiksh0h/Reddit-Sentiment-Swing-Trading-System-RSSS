@@ -24,7 +24,8 @@ from experiments.shared.validation_utils import (
 
 # Config/thresholds override (same values, but allows Phase 3 to import cleanly)
 try:
-    from config.thresholds import CLEAN_FEATURES, DROP_TICKERS
+    from config.thresholds import PHASE3_FEATURES, DROP_TICKERS
+    CLEAN_FEATURES = PHASE3_FEATURES
 except ImportError:
     pass
 

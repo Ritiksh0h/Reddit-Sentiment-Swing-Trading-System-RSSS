@@ -19,8 +19,9 @@ It is a time-aligned numerical compression of crowd attention + market response.
 **Core finding so far:** Reddit post density (post_count_1d >= 10) is the
 primary value driver — not sentiment. Market IC on all rows = 0.008 (noise).
 Market IC on high-attention rows = 0.092 (real signal). Sentiment Granger
-test showed 0/6 significant years for Reddit sentiment. News and StockTwits
-sentiment still untested formally — that is the next sprint.
+test showed 0/6 significant years for Reddit sentiment. News + StockTwits
+historical data has been merged (features_complete.parquet) but did not
+improve IC (0.0686 vs 0.0796 baseline). Formal source validation is next.
 
 ---
 
@@ -37,7 +38,7 @@ tail -5 logs/paper_trades.jsonl | python3 -m json.tool
 
 ---
 
-## Project Structure (post-cleanup target)
+## Project Structure
 
 ```
 config/
@@ -54,15 +55,18 @@ data/
     features_expanded.parquet             ← 2019-2024 backup (keep)
     features_full.parquet                 ← 2019-2026, 14,889 rows ✓ PRIMARY
     features_complete.parquet             ← with news+ST merged ✓
+    features_live_2026.parquet            ← live rows (grows daily, t+5 filled)
+  live/
+    paper_portfolio.json                  ← current portfolio state
+    paper_performance.jsonl               ← daily PnL snapshots
   processed/
     news_features_2019_2023.parquet       ← FNSPID output ✓
     stocktwits_features_2019_2022.parquet ← ST archive output ✓
+    features_target_pending.json          ← rows awaiting t+5 price fill
   reddit_live_fetcher.py        ← Arctic Shift API, paginated
   stocktwits_fetcher.py         ← StockTwits free API
   news_fetcher.py               ← yfinance news + FinBERT
   mention_history.json          ← rolling 14-day post count history
-  paper_portfolio.json          ← current portfolio state
-  paper_performance.jsonl       ← daily PnL snapshots
 
 experiments/
   phase3_locked_architecture.json  ← LOCKED — read-only contract
@@ -70,11 +74,10 @@ experiments/
   layer1_signal_existence/         ← Reddit Granger results (0/6 years)
   layer2_regime/                   ← Regime classifier results
   layer3_model/                    ← Family validation results
-  source_validation/               ← NEW: multi-source validation sprint
-    validate_sources.py            ← Layer 1/2/3 across Reddit+news+ST
-    results.json                   ← output (after running)
+  source_validation/               ← multi-source validation (Part B — TODO)
   shared/
-  signal_validation_summary.py
+    metrics.py                     ← canonical compute_ic (Spearman, import from here)
+    backtest.py, trainer.py, validation_utils.py
   winner.md
 
 models/registry/
@@ -87,46 +90,48 @@ models/registry/
 portfolio/
   signal_generator.py           ← density gate → features → XGBoost → signals
   position_sizer.py             ← ATR-based sizing + dynamic slippage
-  regime_detector.py            ← SPY rule-based regime
+  regime_detector.py            ← SPY 200MA + 60d return → POSITIVE/NEUTRAL/NEGATIVE
   portfolio_engine.py           ← position tracking, risk rules, exits
   execution_logger.py           ← append-only JSONL audit trail
-  drift_monitor.py              ← API anomaly detection
+  drift_monitor.py              ← API anomaly detection (skip day on undercount)
   paper_trader.py               ← PnL tracking vs SPY
 
 scripts/
-  daily_run.py                  ← portfolio orchestrator
+  daily_run.py                  ← portfolio orchestrator (called by daily_run_live)
   daily_run_live.py             ← live orchestrator: Reddit+news+ST → trades
   train_phase3_model.py         ← multi-horizon training (1D/3D/5D)
   monitor_live_ic.py            ← weekly IC gate check
+  append_live_features.py       ← saves feature vectors + fills t+5 price targets
   fix3_switch_to_17_features.py ← Fix 3 protocol
-  test_historical_run.py        ← backfill test
+  test_historical_run.py        ← backfill test against historical feature store
   merge_external_features.py    ← merges news+ST into feature store
 
 api/
-  main.py                       ← FastAPI: /status /portfolio /signals
-                                   /predictions /shap/{ticker}
-                                   /signal-accuracy /research-findings
+  main.py                       ← FastAPI thin entry point + /dashboard route
+  _helpers.py                   ← shared helpers (_sanitize, _load_portfolio)
+  routes/
+    health.py                   ← /health /status /settings
+    portfolio.py                ← /portfolio /positions /signals/recent /trades/history
+    predictions.py              ← /predictions /top-predictions /shap/{ticker}
+    performance.py              ← /signal-accuracy /ic-monitor /model-metadata /backfill
+    research.py                 ← /research-findings /backtest /backtest-full
 
 dashboard/
   index.html                    ← single-file dark dashboard
 
 logs/
   paper_trades.jsonl            ← NEVER DELETE — source of live IC
-  paper_performance.jsonl       ← daily PnL snapshots
   ic_monitor.jsonl              ← weekly IC readings
   daily_runs.log
   launchd.log / launchd_error.log
 
-tests/
-  test_phase3.py                ← 15 tests, all must pass
+archive/
+  notebooks/                    ← Colab notebooks (phase0, experiment_c, news/ST processing)
 
-NOTE: backtest/, features/, signals/, analytics/, reports/,
-      run_pipeline.py, session_notes.md, portfolio/risk.py,
-      portfolio/sizing.py, portfolio/engine.py,
-      data/feature_store.py, data/reddit_loader.py,
-      data/market_loader.py, scripts/phase0_validate.py,
-      scripts/seed_historical.py, scripts/run_backtest.py,
-      scripts/scheduler.py are ALL DELETED in the cleanup sprint.
+tests/
+  test_phase3.py                ← 21 tests
+  test_backtest.py              ← 5 tests
+  (26 total — all must pass)
 ```
 
 ---
@@ -293,14 +298,38 @@ Drift 2: mention_growth_7d skipped while history immature.
 ## API Endpoints
 
 ```
-GET /status                 → system health check
-GET /portfolio              → current positions + PnL
-GET /signals                → today's signals
-GET /predictions            → 1D/3D/5D predictions bullish/bearish
-GET /shap/{ticker}          → SHAP attribution per source family
-GET /signal-accuracy        → 1D/3D/5D accuracy from paper trading
-GET /research-findings      → source validation results.json
-POST /retrain-model         → trigger retraining
+Health / settings
+  GET  /health              → {"status":"ok","version":"3.0"}
+  GET  /status              → ran_today, n_positions, cash, system_ok
+  GET  /settings            → dashboard settings (data/dashboard_settings.json)
+  POST /settings            → save dashboard settings
+
+Portfolio
+  GET  /portfolio           → cash, positions, closed_trades, pnl summary
+  GET  /positions           → open positions with unrealized PnL
+  GET  /signals/recent      → last N signals from paper_trades.jsonl
+  GET  /trades/history      → closed trades with realized PnL
+  GET  /log/recent          → last N raw lines from paper_trades.jsonl
+
+Predictions
+  GET  /predictions         → 1D/3D/5D predictions for tracked tickers
+  GET  /top-predictions     → top bullish + top bearish signals
+  GET  /shap/{ticker}       → SHAP attribution by source family (market/attention/news/ST)
+
+Performance
+  GET  /signal-accuracy     → 1D/3D/5D directional accuracy from live trades
+  GET  /ic-monitor          → IC readings from ic_monitor.jsonl
+  GET  /model-metadata      → model training metrics from phase3_model_baseline.json
+  GET  /backfill-log        → last N backfill results
+  POST /backfill            → trigger test_historical_run.py
+
+Research
+  GET  /research-findings   → source validation results.json
+  GET  /backtest            → experiment_c backtest results
+  GET  /backtest-full       → full 2024-2025 simulation results
+
+Dashboard
+  GET  /dashboard           → serves dashboard/index.html
 ```
 
 ---
@@ -308,20 +337,17 @@ POST /retrain-model         → trigger retraining
 ## Pending Work (priority order)
 
 ```
+DONE — Cleanup Sprint (all 9 phases complete, June 2026):
+  ✓ Part A: Dead code removed, config consolidated, API split into routes/
+  ✓ Canonical compute_ic in experiments/shared/metrics.py
+  ✓ API refactored into api/routes/ (5 route files)
+  ✓ experiments/ __init__.py files added
+  ✓ Live data moved to data/live/
+  ✓ Docstrings added to all key portfolio + scripts functions
+  ✓ README.md rewritten
+  ✓ CLAUDE.md updated
+
 Priority 1 — NEXT (Claude Code):
-  PROJECT_COMPLETION_SPRINT.md
-
-  Part A: Cleanup
-    Delete dead folders: backtest/ features/ signals/ analytics/ reports/
-    Delete dead files: run_pipeline.py, session_notes.md,
-                       portfolio/risk.py, portfolio/sizing.py,
-                       portfolio/engine.py, data/feature_store.py,
-                       data/reddit_loader.py, data/market_loader.py,
-                       scripts/phase0_validate.py, scripts/seed_historical.py,
-                       scripts/run_backtest.py, scripts/scheduler.py
-    Update config/thresholds.py — remove stale constants
-    Rewrite README.md
-
   Part B: Signal Validation Sprint
     Create experiments/source_validation/validate_sources.py
     Layer 1: Annual IC per feature with REGIME LABELS per year
@@ -332,21 +358,15 @@ Priority 1 — NEXT (Claude Code):
     Output: experiments/source_validation/results.json
     Answers: which source (Reddit/news/ST) has causal-predictive signal?
 
-  Part C: Dashboard Completion
-    C1: SHAP attribution via /shap/{ticker} endpoint
-        Shows Reddit/News/StockTwits/Market contribution per prediction
-        Uses shap.TreeExplainer (shap already in requirements.txt)
-    C2: Per-horizon accuracy tracker (1D, 3D, 5D separately)
-        /signal-accuracy endpoint
+  Part C: Dashboard wiring (API endpoints already exist)
+    C1: /shap/{ticker} — verify SHAP attribution renders in dashboard
+    C2: /signal-accuracy — verify 1D/3D/5D accuracy panel renders
         Color: green>=55%, amber>=50%, red<50%
-        Interpretation: "1D low + 5D high = multi-day lag (normal)"
-    C3: Research findings panel reads results.json
-        /research-findings endpoint
-        Shows IC table + regime labels + source verdicts on dashboard
+    C3: /research-findings — wire results.json to research panel once Part B done
 
 Priority 2 — after signal validation:
-  Retrain with winning feature combination from Layer 3
-  Only if mean_ic improvement > 0.005 over current 0.0796
+  Retrain with winning feature combination from Part B Layer 3
+  ONLY if mean_ic improvement > 0.005 over current 0.0796
 
 Priority 3 — after 30+ days live IC:
   Upgrade density gate to Reddit OR news OR StockTwits combined
@@ -444,5 +464,5 @@ bash push.sh "[scope] what you built"
 ---
 
 *CLAUDE.md — June 2026*
-*Updated: multi-horizon models, feature store rebuilt, external data collected,*
-*retrain attempted (no IC improvement), project completion sprint pending*
+*Updated: cleanup sprint complete (all 9 phases), API split into routes/,*
+*canonical compute_ic, live data in data/live/, docstrings added, README rewritten*
