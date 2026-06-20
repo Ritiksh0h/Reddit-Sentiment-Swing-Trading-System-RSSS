@@ -30,18 +30,23 @@ WEEKLY_LOSS_LIMIT  = -0.07
 
 @dataclass
 class Position:
-    ticker:            str
-    entry_date:        str
-    entry_price:       float
-    n_shares:          int
-    position_dollars:  float
-    stop_date:         str
-    predicted_return:  float
-    atr_14:            float
-    slippage_applied:  float
-    regime_state:      str
-    regime_multiplier: float
-    feature_vector:    dict
+    ticker:              str
+    entry_date:          str
+    entry_price:         float
+    n_shares:            int
+    position_dollars:    float
+    stop_date:           str
+    predicted_return:    float
+    atr_14:              float
+    slippage_applied:    float
+    regime_state:        str
+    regime_multiplier:   float
+    feature_vector:      dict
+    hold_days:           int   = 5    # 1, 3, or 5 — set at entry from winning horizon
+    horizon:             str   = '5D' # '1D', '3D', or '5D'
+    predicted_return_1d: float = 0.0
+    predicted_return_3d: float = 0.0
+    predicted_return_5d: float = 0.0
 
 
 @dataclass

@@ -1,36 +1,6 @@
 {
-  "cash": 7892.19489119665,
-  "positions": [
-    {
-      "ticker": "MU",
-      "entry_date": "2026-06-19",
-      "entry_price": 1135.691,
-      "n_shares": 2,
-      "position_dollars": 2267.98,
-      "stop_date": "2026-06-26",
-      "predicted_return": -0.073638,
-      "atr_14": 91.665728,
-      "slippage_applied": 0.0015,
-      "regime_state": "positive",
-      "regime_multiplier": 1.0,
-      "feature_vector": {
-        "returns_1d": 0.08704076335870714,
-        "returns_5d": 0.1386927970461993,
-        "returns_20d": 0.5491878377616668,
-        "rsi_14": 59.346936558263316,
-        "atr_14": 91.66572788783482,
-        "relative_volume": 1.1788167858097431,
-        "dist_from_20ma": 0.17441634474627912,
-        "dist_from_50ma": 0.5474771131011558,
-        "post_count_1d": 12.0,
-        "mention_growth_1d": 1.0,
-        "mention_growth_7d": 1.0,
-        "news_sentiment_1d": 0.0309,
-        "st_sentiment_1d": 1.0,
-        "st_bull_pct": 1.0
-      }
-    }
-  ],
+  "cash": 10160.1748716654,
+  "positions": [],
   "closed_trades": [
     {
       "ticker": "AAPL",
@@ -151,6 +121,16 @@
       "n_shares": 33,
       "pnl_pct": -0.0021,
       "exit_reason": "hold_period_expired"
+    },
+    {
+      "ticker": "MU",
+      "entry_date": "2026-06-19",
+      "exit_date": "2026-06-19",
+      "entry_price": 1135.691,
+      "exit_price": 1133.99,
+      "n_shares": 2,
+      "pnl_pct": -0.0015,
+      "exit_reason": "signal_error_bearish_long_correction"
     }
   ],
   "ticker_last_trade": {

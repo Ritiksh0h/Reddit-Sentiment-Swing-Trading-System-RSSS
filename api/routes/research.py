@@ -101,75 +101,91 @@ def get_backtest(ticker: str = None, year: int = None):
 
 
 @router.get('/backtest-full')
-def get_backtest_full(year: int = None, month: int = None):
+def get_backtest_full(system: str = 'A'):
     """
-    Walk-forward backtest results for 2024-2025 out-of-sample period.
-    Optionally filter by year (2024/2025) and/or month (1-12).
+    Backtest v2 results for 2024-2025 out-of-sample period (HISTORICAL SIMULATION).
+    system: A | B | C
+        A = Long-only, dynamic hold (1D/3D/5D)   [default — best Sharpe]
+        B = Long+Short, dynamic hold
+        C = Long+Short, fixed 5D only             [control]
+    Returns selected system's trades + metrics, plus comparison summary for all three.
+    Source: experiments/backtest_v2_results.json
     """
-    path = Path('experiments/backtest_results.json')
+    path = Path('experiments/backtest_v2_results.json')
     if not path.exists():
         return {
-            'error':   'Backtest results not found',
-            'message': 'Run: python scripts/run_backtest.py',
+            'error':   'Backtest v2 results not found',
+            'message': 'Run: python scripts/run_backtest_v2.py',
         }
 
     with open(path) as f:
         data = json.load(f)
 
-    trades = list(data.get('trades', []))
+    sys_map = {
+        'A': 'A_long_dynamic',
+        'B': 'B_long_short_dynamic',
+        'C': 'C_long_short_fixed5d',
+    }
+    sys_key = sys_map.get((system or 'A').upper(), 'A_long_dynamic')
 
-    if year:
-        trades = [t for t in trades if t.get('entry_date', '').startswith(str(year))]
-    if month and year:
-        prefix = f'{year}-{month:02d}'
-        trades = [t for t in trades if t.get('entry_date', '').startswith(prefix)]
-
-    if not trades:
+    if sys_key not in data.get('systems', {}):
         return {
-            'n_trades': 0,
-            'filter':   {'year': year, 'month': month},
-            'message':  'No trades match the filter',
-            'trades':   [],
+            'error':     f'System {system!r} not found',
+            'available': list(data.get('systems', {}).keys()),
         }
 
-    pnls   = [t.get('pnl_dollars', 0) for t in trades]
-    wins   = [p for p in pnls if p > 0]
-    losses = [p for p in pnls if p < 0]
-    total  = sum(pnls)
-    wr     = round(len(wins) / len(pnls), 3) if pnls else 0
+    selected = data['systems'][sys_key]
 
-    month_key = (f'{year}-{month:02d}' if (year and month) else
-                 str(year) if year else None)
-    monthly_return = None
-    if month_key and len(month_key) == 7:
-        monthly_return = data.get('monthly_returns', {}).get(month_key)
-    elif year:
-        yr_data = data.get('annual_breakdown', {}).get(str(year), {})
-        monthly_return = yr_data.get('return_pct')
-
-    pf = round(sum(wins) / abs(sum(losses)), 3) if losses else None
+    # Compact comparison summary for all three systems
+    comparison = {}
+    labels = {
+        'A_long_dynamic':       'A',
+        'B_long_short_dynamic': 'B',
+        'C_long_short_fixed5d': 'C',
+    }
+    descriptions = {
+        'A': 'Long+Dynamic',
+        'B': 'Long+Short+Dynamic',
+        'C': 'Long+Short+Fixed5D',
+    }
+    for k, v in data['systems'].items():
+        lbl = labels.get(k, k)
+        comparison[lbl] = {
+            'description':      descriptions.get(lbl, lbl),
+            'total_return_pct': v['total_return_pct'],
+            'alpha_pct':        v['alpha_pct'],
+            'sharpe_ratio':     v['sharpe_ratio'],
+            'sortino_ratio':    v['sortino_ratio'],
+            'max_drawdown_pct': v['max_drawdown_pct'],
+            'win_rate':         v['win_rate'],
+            'n_trades':         v['n_trades'],
+            'profit_factor':    v['profit_factor'],
+        }
 
     return _sanitize({
-        'source':        'Walk-Forward Backtest 2024-2025 (SIMULATION)',
-        'filter':        {'year': year, 'month': month},
-        'n_trades':      len(trades),
-        'win_rate':      wr,
-        'total_pnl':     round(total, 2),
-        'mean_pnl':      round(total / len(pnls), 2) if pnls else 0,
-        'period_return': monthly_return,
-        'profit_factor': pf,
-        'trades':        trades,
-        'full_stats': {
-            'total_return_pct': data.get('total_return_pct'),
-            'spy_return_pct':   data.get('spy_return_pct'),
-            'alpha':            data.get('alpha'),
-            'sharpe_ratio':     data.get('sharpe_ratio'),
-            'sortino_ratio':    data.get('sortino_ratio'),
-            'max_drawdown_pct': data.get('max_drawdown_pct'),
-            'n_trades_total':   data.get('n_trades'),
-            'annual_2024':      data.get('annual_breakdown', {}).get('2024'),
-            'annual_2025':      data.get('annual_breakdown', {}).get('2025'),
-        } if not year and not month else None,
+        'simulation':        True,
+        'note':              data.get('note', ''),
+        'period':            data['period'],
+        'system':            (system or 'A').upper(),
+        'spy_return_pct':    data['spy_return_pct'],
+        'n_trades':          selected['n_trades'],
+        'n_long':            selected['n_long'],
+        'n_short':           selected['n_short'],
+        'win_rate':          selected['win_rate'],
+        'win_rate_1d':       selected['win_rate_1d'],
+        'win_rate_3d':       selected['win_rate_3d'],
+        'win_rate_5d':       selected['win_rate_5d'],
+        'long_win_rate':     selected['long_win_rate'],
+        'short_win_rate':    selected['short_win_rate'],
+        'total_return_pct':  selected['total_return_pct'],
+        'alpha_pct':         selected['alpha_pct'],
+        'sharpe_ratio':      selected['sharpe_ratio'],
+        'sortino_ratio':     selected['sortino_ratio'],
+        'max_drawdown_pct':  selected['max_drawdown_pct'],
+        'profit_factor':     selected['profit_factor'],
+        'monthly_returns':   selected.get('monthly_returns', {}),
+        'comparison':        comparison,
+        'trades':            selected.get('trades', []),
     })
 
 

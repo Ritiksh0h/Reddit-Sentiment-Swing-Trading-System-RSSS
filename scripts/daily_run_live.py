@@ -201,6 +201,7 @@ def main():
                     f'1D={s.predicted_1d:+.2%}  '
                     f'3D={s.predicted_3d:+.2%}  '
                     f'5D={s.predicted_5d:+.2%}  '
+                    f'hold={s.hold_days}d horizon={s.horizon}  '
                     f'target={s.price_target_5d:.2f}  '
                     f'conf={s.confidence:.0%}  '
                     f'posts={s.post_count_1d}  '

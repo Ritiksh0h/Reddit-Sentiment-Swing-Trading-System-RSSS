@@ -49,19 +49,21 @@ BEARISH_THRESHOLD = -0.015  # pred <= -1.5% → BEARISH
 class SignalRecord:
     ticker:            str
     date:              str
-    predicted_return:  float       # 5D prediction (primary, backward compat)
-    predicted_1d:      float       # 1D prediction
-    predicted_3d:      float       # 3D prediction
-    predicted_5d:      float       # 5D prediction (same as predicted_return)
-    confidence:        float       # 0.0-1.0 confidence score
+    predicted_return:  float       # best horizon pred (backward compat)
+    predicted_1d:      float
+    predicted_3d:      float
+    predicted_5d:      float
+    confidence:        float       # 0.0-1.0, based on best horizon pred
     signal:            str         # 'BULLISH' | 'BEARISH' | 'NEUTRAL'
-    price_target_1d:   float       # current_price * (1 + predicted_1d)
-    price_target_3d:   float       # current_price * (1 + predicted_3d)
-    price_target_5d:   float       # current_price * (1 + predicted_5d)
+    hold_days:         int         # 1, 3, or 5 — from winning horizon
+    horizon:           str         # '1D', '3D', or '5D'
+    price_target_1d:   float
+    price_target_3d:   float
+    price_target_5d:   float
     feature_vector:    dict
     post_count_1d:     int
-    news_count_1d:     int         # from news_fetcher
-    st_count_1d:       int         # from stocktwits_fetcher
+    news_count_1d:     int
+    st_count_1d:       int
     atr_14:            float
     price:             float
     signal_timestamp:  str
@@ -318,28 +320,73 @@ def generate_signals(
         pred_3d = preds.get('3d', 0.0)
         pred_5d = preds.get('5d', 0.0)
 
-        if abs(pred_5d) < MIN_PRED_RET:
+        # Noise filter: skip if no horizon has a meaningful prediction
+        if max(abs(pred_1d), abs(pred_3d), abs(pred_5d)) < MIN_PRED_RET:
             continue
 
-        # Confidence: 0.0 at BULLISH_THRESHOLD, 1.0 at 2× threshold
-        confidence = min(abs(pred_5d) / (BULLISH_THRESHOLD * 2), 1.0)
-
+        # Dynamic hold: 5D > 3D > 1D priority for both directions
         if pred_5d >= BULLISH_THRESHOLD:
-            signal = 'BULLISH'
+            signal    = 'BULLISH'
+            hold_days = 5
+            horizon   = '5D'
+            best_pred = pred_5d
+        elif pred_3d >= BULLISH_THRESHOLD:
+            signal    = 'BULLISH'
+            hold_days = 3
+            horizon   = '3D'
+            best_pred = pred_3d
+        elif pred_1d >= BULLISH_THRESHOLD:
+            signal    = 'BULLISH'
+            hold_days = 1
+            horizon   = '1D'
+            best_pred = pred_1d
         elif pred_5d <= BEARISH_THRESHOLD:
-            signal = 'BEARISH'
+            signal    = 'BEARISH'
+            hold_days = 5
+            horizon   = '5D'
+            best_pred = pred_5d
+        elif pred_3d <= BEARISH_THRESHOLD:
+            signal    = 'BEARISH'
+            hold_days = 3
+            horizon   = '3D'
+            best_pred = pred_3d
+        elif pred_1d <= BEARISH_THRESHOLD:
+            signal    = 'BEARISH'
+            hold_days = 1
+            horizon   = '1D'
+            best_pred = pred_1d
         else:
-            signal = 'NEUTRAL'
+            signal    = 'NEUTRAL'
+            hold_days = 5
+            horizon   = '5D'
+            best_pred = pred_5d
+
+        # Confidence: based on winning horizon pred
+        confidence = min(abs(best_pred) / (BULLISH_THRESHOLD * 2), 1.0)
+
+        logger.info(
+            f'  {signal:<8} {ticker:<6} '
+            f'1D={pred_1d*100:+.2f}% '
+            f'3D={pred_3d*100:+.2f}% '
+            f'5D={pred_5d*100:+.2f}% '
+            f'hold={hold_days}d horizon={horizon} '
+            f'conf={confidence*100:.0f}% '
+            f'posts={post_count} '
+            f'news={int(news_sent*100)} '
+            f'st={int(st_bull*100)}'
+        )
 
         signals.append(SignalRecord(
             ticker=ticker,
             date=today,
-            predicted_return=round(pred_5d, 6),   # backward compat
+            predicted_return=round(best_pred, 6),
             predicted_1d=round(pred_1d, 6),
             predicted_3d=round(pred_3d, 6),
             predicted_5d=round(pred_5d, 6),
             confidence=round(confidence, 4),
             signal=signal,
+            hold_days=hold_days,
+            horizon=horizon,
             price_target_1d=round(price * (1 + pred_1d), 2),
             price_target_3d=round(price * (1 + pred_3d), 2),
             price_target_5d=round(price * (1 + pred_5d), 2),
@@ -361,6 +408,8 @@ def generate_signals(
 
     result = bullish + neutral + bearish
     logger.info(f'signals_generated count={len(result)} '
-                f'bullish={len(bullish)} neutral={len(neutral)} '
-                f'bearish={len(bearish)} date={today}')
+                f'bullish={len(bullish)} '
+                f'bearish_logged={len(bearish)} '
+                f'neutral={len(neutral)} '
+                f'date={today}')
     return result

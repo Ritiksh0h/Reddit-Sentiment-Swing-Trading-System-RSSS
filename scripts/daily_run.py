@@ -35,7 +35,7 @@ logger = logging.getLogger('daily_run')
 
 sys.path.insert(0, '.')
 
-from portfolio.signal_generator  import generate_signals, load_model
+from portfolio.signal_generator  import generate_signals, load_models
 from portfolio.position_sizer    import compute_position_size, compute_slippage
 from portfolio.regime_detector   import classify_regime
 from portfolio.portfolio_engine  import (
@@ -195,9 +195,9 @@ def run(
         save_portfolio(state)
         return summary
 
-    # ── 7. Load model ──────────────────────────────────────────────────────
+    # ── 7. Load models ─────────────────────────────────────────────────────
     try:
-        model = load_model()
+        models = load_models()
     except FileNotFoundError as e:
         logger.error(f'MODEL_NOT_FOUND error={e}')
         summary['skipped'] = True
@@ -229,7 +229,7 @@ def run(
     try:
         signals = generate_signals(
             reddit_counts=reddit_counts,
-            model=model,
+            models=models,
             today=today,
             news_data=news_data,
             stocktwits_data=stocktwits_data,
@@ -257,7 +257,20 @@ def run(
         regime_mult     = regime.multiplier if regime else 0.75
         portfolio_value = state.total_value(current_prices)
 
+        # 1 trading day ≈ 3 cal days, 3TD ≈ 5, 5TD ≈ 7
+        _HOLD_CAL = {1: 3, 3: 5, 5: 7}
+
         for signal in signals:
+            # Long-only: BEARISH and NEUTRAL signals are logged but never opened
+            if signal.signal != 'BULLISH':
+                logger.info(
+                    f'skip_non_bullish ticker={signal.ticker} '
+                    f'signal={signal.signal} '
+                    f'pred_5d={signal.predicted_5d:.4f} '
+                    f'reason=long_only_system'
+                )
+                continue
+
             if state.n_open_positions() >= MAX_POSITIONS:
                 break
 
@@ -284,8 +297,8 @@ def run(
             )
             fill_price = signal.price * (1 + slippage)
 
-            # Approximate 5 trading days ≈ 7 calendar days
-            stop_date = (date.fromisoformat(today) + timedelta(days=7)).isoformat()
+            cal_days  = _HOLD_CAL.get(signal.hold_days, 7)
+            stop_date = (date.fromisoformat(today) + timedelta(days=cal_days)).isoformat()
 
             pos = Position(
                 ticker=signal.ticker,
@@ -300,6 +313,11 @@ def run(
                 regime_state=regime.label if regime else 'neutral',
                 regime_multiplier=regime_mult,
                 feature_vector=signal.feature_vector,
+                hold_days=signal.hold_days,
+                horizon=signal.horizon,
+                predicted_return_1d=signal.predicted_1d,
+                predicted_return_3d=signal.predicted_3d,
+                predicted_return_5d=signal.predicted_5d,
             )
 
             cost = sizing['n_shares'] * fill_price
@@ -312,7 +330,9 @@ def run(
                 feature_vector=signal.feature_vector,
                 regime_state=pos.regime_state,
                 regime_multiplier=regime_mult,
-                predicted_return_5d=signal.predicted_return,
+                predicted_return_5d=signal.predicted_5d,
+                hold_days=signal.hold_days,
+                horizon=signal.horizon,
                 predicted_1d=signal.predicted_1d,
                 predicted_3d=signal.predicted_3d,
                 atr_14=signal.atr_14,

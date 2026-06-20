@@ -522,40 +522,61 @@
 
 <!-- ── Backtest Panel ───────────────────────────────────────────────────── -->
 <section class="bg-cardBg border border-cardBorder rounded-xl p-5 shadow-lg mb-6 mx-4 md:mx-6 max-w-7xl w-full self-center" style="margin-left:auto;margin-right:auto;">
+    <!-- Header -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
         <div>
             <h2 class="text-sm font-bold uppercase tracking-wider text-zinc-300 font-mono flex items-center gap-2">
                 <i data-lucide="bar-chart-2" class="w-4 h-4 text-accentBlue"></i>
-                Walk-Forward Backtest — 2024-2025 Out-of-Sample
+                Backtest v2 — 2024-2025 Out-of-Sample
+                <span class="text-3xs font-normal text-amber-500 border border-amber-500/40 rounded px-1.5 py-0.5 normal-case tracking-normal">HISTORICAL SIMULATION</span>
             </h2>
-            <p id="bt-subtitle" class="text-xs text-zinc-500 font-mono mt-0.5">Run scripts/run_backtest.py to generate results · NOT live trading</p>
+            <p id="bt-subtitle" class="text-xs text-zinc-500 font-mono mt-0.5">Loading results…</p>
         </div>
-        <div class="flex gap-2 items-center flex-wrap">
-            <select id="bt-year-filter" onchange="updateBacktest()"
-                    class="bg-panelBg border border-cardBorder text-white px-2 py-1.5 rounded font-mono text-xs focus:outline-none focus:border-accentBlue">
-                <option value="">All Years</option>
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
-            </select>
-            <select id="bt-month-filter" onchange="updateBacktest()"
-                    class="bg-panelBg border border-cardBorder text-white px-2 py-1.5 rounded font-mono text-xs focus:outline-none focus:border-accentBlue">
-                <option value="">All Months</option>
-                <option value="1">Jan</option>
-                <option value="2">Feb</option>
-                <option value="3">Mar</option>
-                <option value="4">Apr</option>
-                <option value="5">May</option>
-                <option value="6">Jun</option>
-                <option value="7">Jul</option>
-                <option value="8">Aug</option>
-                <option value="9">Sep</option>
-                <option value="10">Oct</option>
-                <option value="11">Nov</option>
-                <option value="12">Dec</option>
-            </select>
+        <!-- System tabs A / B / C -->
+        <div class="flex gap-1 items-center">
+            <span class="text-zinc-500 font-mono text-3xs mr-1">SYSTEM</span>
+            <button id="bt-tab-A" onclick="switchBtSystem('A')"
+                    title="Long-only · Dynamic hold 1D/3D/5D"
+                    class="px-3 py-1.5 rounded text-xs font-bold font-mono transition-all bg-accentBlue text-white">A</button>
+            <button id="bt-tab-B" onclick="switchBtSystem('B')"
+                    title="Long+Short · Dynamic hold 1D/3D/5D"
+                    class="px-3 py-1.5 rounded text-xs font-bold font-mono transition-all text-zinc-400 hover:text-white">B</button>
+            <button id="bt-tab-C" onclick="switchBtSystem('C')"
+                    title="Long+Short · Fixed 5D model only (control)"
+                    class="px-3 py-1.5 rounded text-xs font-bold font-mono transition-all text-zinc-400 hover:text-white">C</button>
         </div>
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
+
+    <!-- Comparison table — all three systems + SPY -->
+    <div id="bt-comparison" class="mb-4 overflow-x-auto">
+        <table class="w-full font-mono text-xs border-collapse">
+            <thead>
+                <tr class="text-zinc-500 text-3xs uppercase border-b border-cardBorder">
+                    <th class="text-left py-1.5 pr-3 font-normal">System</th>
+                    <th class="text-right py-1.5 px-2 font-normal">Return</th>
+                    <th class="text-right py-1.5 px-2 font-normal">Alpha</th>
+                    <th class="text-right py-1.5 px-2 font-normal">Sharpe</th>
+                    <th class="text-right py-1.5 px-2 font-normal">MaxDD</th>
+                    <th class="text-right py-1.5 px-2 font-normal">WinRate</th>
+                    <th class="text-right py-1.5 pl-2 font-normal">Trades</th>
+                </tr>
+            </thead>
+            <tbody id="bt-cmp-body">
+                <tr class="border-b border-zinc-800/50">
+                    <td class="py-1.5 pr-3 text-zinc-400">SPY Buy&amp;Hold</td>
+                    <td id="bt-spy-ret" class="text-right px-2 text-bullish">—</td>
+                    <td class="text-right px-2 text-zinc-600">—</td>
+                    <td class="text-right px-2 text-zinc-600">—</td>
+                    <td class="text-right px-2 text-zinc-600">—</td>
+                    <td class="text-right px-2 text-zinc-600">—</td>
+                    <td class="text-right pl-2 text-zinc-600">—</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Selected system stat cards -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
         <div class="bg-panelBg p-3 rounded-lg border border-cardBorder text-center">
             <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Trades</div>
             <div id="bt-n" class="text-white font-mono font-bold text-lg">—</div>
@@ -565,23 +586,26 @@
             <div id="bt-wr" class="font-mono font-bold text-lg">—</div>
         </div>
         <div class="bg-panelBg p-3 rounded-lg border border-cardBorder text-center">
-            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Total PnL</div>
-            <div id="bt-pnl" class="font-mono font-bold text-lg">—</div>
-        </div>
-        <div class="bg-panelBg p-3 rounded-lg border border-cardBorder text-center">
-            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Period Return</div>
+            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Total Return</div>
             <div id="bt-pr" class="font-mono font-bold text-lg">—</div>
         </div>
         <div class="bg-panelBg p-3 rounded-lg border border-cardBorder text-center">
-            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Profit Factor</div>
-            <div id="bt-pf" class="font-mono font-bold text-lg">—</div>
+            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Sharpe</div>
+            <div id="bt-sharpe" class="font-mono font-bold text-lg">—</div>
+        </div>
+        <div class="bg-panelBg p-3 rounded-lg border border-cardBorder text-center">
+            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Max Drawdown</div>
+            <div id="bt-dd" class="font-mono font-bold text-lg">—</div>
         </div>
     </div>
+
+    <!-- Trade list for selected system -->
     <div id="bt-trades" class="space-y-1.5 max-h-[260px] overflow-y-auto custom-scrollbar">
-        <div class="text-xs text-zinc-500 font-mono text-center py-4">Run scripts/run_backtest.py to populate this panel</div>
+        <div class="text-xs text-zinc-500 font-mono text-center py-4">Loading…</div>
     </div>
+
     <div class="mt-4 p-2 bg-zinc-950 rounded border border-zinc-800 text-3xs text-zinc-600 font-mono text-center">
-        ⚠ Historical simulation only. Walk-forward on 2024-2025 out-of-sample test period. NOT live trading results.
+        ⚠ HISTORICAL SIMULATION — 2024-2025 out-of-sample test period only. NOT live trading. Past performance ≠ future results.
     </div>
 </section>
 
@@ -597,6 +621,7 @@
 <script>
     let currentMode = 'sim';
     let selectedTicker = 'NVDA';
+    let currentBtSystem = 'A';
 
     lucide.createIcons();
 
@@ -880,35 +905,74 @@
         }
     }
 
+    function switchBtSystem(sys) {
+        currentBtSystem = sys;
+        const tabActive = 'px-3 py-1.5 rounded text-xs font-bold font-mono transition-all bg-accentBlue text-white';
+        const tabInact  = 'px-3 py-1.5 rounded text-xs font-bold font-mono transition-all text-zinc-400 hover:text-white';
+        ['A', 'B', 'C'].forEach(s => {
+            const el = document.getElementById(`bt-tab-${s}`);
+            if (el) el.className = (s === sys) ? tabActive : tabInact;
+        });
+        updateBacktest();
+    }
+
     async function updateBacktest() {
-        const year  = (document.getElementById('bt-year-filter')  || {}).value || '';
-        const month = (document.getElementById('bt-month-filter') || {}).value || '';
-        let url = '/backtest-full';
-        const params = [];
-        if (year)  params.push(`year=${year}`);
-        if (month) params.push(`month=${month}`);
-        if (params.length) url += '?' + params.join('&');
-        const data = await apiFetch(url);
+        const data = await apiFetch(`/backtest-full?system=${currentBtSystem}`);
         if (!data || data.error) {
             const sub = document.getElementById('bt-subtitle');
-            if (sub) sub.textContent = data && data.message ? data.message : 'Run scripts/run_backtest.py to generate results';
+            if (sub) sub.textContent = (data && data.message) || 'Run: python scripts/run_backtest_v2.py';
             return;
         }
 
-        const n   = data.n_trades;
-        const wr  = data.win_rate;
-        const pnl = data.total_pnl;
-        const pr  = data.period_return;
-        const pf  = data.profit_factor;
-
-        // Update subtitle with full-period stats when unfiltered
+        // Subtitle
         const sub = document.getElementById('bt-subtitle');
-        if (sub && data.full_stats) {
-            const fs = data.full_stats;
-            sub.textContent = `${fs.n_trades_total} trades · Sharpe ${(fs.sharpe_ratio||0).toFixed(2)} · `
-                + `Total ${fs.total_return_pct >= 0 ? '+' : ''}${(fs.total_return_pct||0).toFixed(1)}% `
-                + `vs SPY ${fs.spy_return_pct >= 0 ? '+' : ''}${(fs.spy_return_pct||0).toFixed(1)}% · NOT live trading`;
+        if (sub) {
+            const ret = data.total_return_pct;
+            sub.textContent = `System ${data.system} · ${data.n_trades} trades · `
+                + `Return ${ret >= 0 ? '+' : ''}${ret.toFixed(1)}% `
+                + `vs SPY +${(data.spy_return_pct||0).toFixed(1)}% · HISTORICAL SIMULATION`;
         }
+
+        // SPY row in comparison table
+        const spyEl = document.getElementById('bt-spy-ret');
+        if (spyEl) {
+            const sp = data.spy_return_pct || 0;
+            spyEl.textContent = `${sp >= 0 ? '+' : ''}${sp.toFixed(1)}%`;
+        }
+
+        // Comparison table body
+        const tbody = document.getElementById('bt-cmp-body');
+        if (tbody && data.comparison) {
+            const spyRet = data.spy_return_pct || 0;
+            // Keep SPY row (first child), rebuild system rows
+            const rows = Object.entries(data.comparison).map(([lbl, s]) => {
+                const isSel   = lbl === data.system;
+                const rowCls  = isSel ? 'bg-accentBlue/10 border-b border-accentBlue/20' : 'border-b border-zinc-800/40';
+                const retCls  = s.total_return_pct >= 0 ? 'text-bullish' : 'text-bearish';
+                const alphaCls= s.alpha_pct >= 0 ? 'text-bullish' : 'text-bearish';
+                const nameTag = isSel ? `<span class="font-bold text-white">Sys ${lbl}</span><span class="ml-1.5 text-3xs text-zinc-500">${s.description}</span>`
+                                      : `<span class="text-zinc-400">Sys ${lbl}</span><span class="ml-1.5 text-3xs text-zinc-600">${s.description}</span>`;
+                return `<tr class="${rowCls}">
+                  <td class="py-1.5 pr-3">${nameTag}</td>
+                  <td class="text-right px-2 ${retCls}">${s.total_return_pct >= 0 ? '+' : ''}${s.total_return_pct.toFixed(1)}%</td>
+                  <td class="text-right px-2 ${alphaCls}">${s.alpha_pct >= 0 ? '+' : ''}${s.alpha_pct.toFixed(1)}%</td>
+                  <td class="text-right px-2 text-zinc-300">${(s.sharpe_ratio||0).toFixed(2)}</td>
+                  <td class="text-right px-2 text-bearish">${(s.max_drawdown_pct||0).toFixed(1)}%</td>
+                  <td class="text-right px-2 ${s.win_rate >= 0.5 ? 'text-bullish' : 'text-bearish'}">${(s.win_rate*100).toFixed(1)}%</td>
+                  <td class="text-right pl-2 text-zinc-400">${s.n_trades}</td>
+                </tr>`;
+            });
+            // Rebuild: keep SPY row, replace rest
+            const spyRow = tbody.querySelector('tr');
+            tbody.innerHTML = (spyRow ? spyRow.outerHTML : '') + rows.join('');
+        }
+
+        // Stat cards for selected system
+        const n  = data.n_trades;
+        const wr = data.win_rate;
+        const tr = data.total_return_pct;
+        const sh = data.sharpe_ratio;
+        const dd = data.max_drawdown_pct;
 
         document.getElementById('bt-n').textContent = n || '—';
 
@@ -916,38 +980,45 @@
         wrEl.textContent = n ? `${(wr * 100).toFixed(1)}%` : '—';
         wrEl.className = `font-mono font-bold text-lg ${wr >= 0.5 ? 'text-bullish' : 'text-bearish'}`;
 
-        const pnlEl = document.getElementById('bt-pnl');
-        pnlEl.textContent = pnl != null ? `${pnl >= 0 ? '+' : ''}$${parseFloat(pnl).toFixed(0)}` : '—';
-        pnlEl.className = `font-mono font-bold text-lg ${(pnl||0) >= 0 ? 'text-bullish' : 'text-bearish'}`;
-
         const prEl = document.getElementById('bt-pr');
-        prEl.textContent = pr != null ? `${pr >= 0 ? '+' : ''}${parseFloat(pr).toFixed(1)}%` : '—';
-        prEl.className = `font-mono font-bold text-lg ${(pr||0) >= 0 ? 'text-bullish' : 'text-bearish'}`;
+        prEl.textContent = tr != null ? `${tr >= 0 ? '+' : ''}${tr.toFixed(1)}%` : '—';
+        prEl.className = `font-mono font-bold text-lg ${(tr||0) >= 0 ? 'text-bullish' : 'text-bearish'}`;
 
-        const pfEl = document.getElementById('bt-pf');
-        pfEl.textContent = pf != null ? parseFloat(pf).toFixed(2) : '—';
-        pfEl.className = `font-mono font-bold text-lg ${(pf||0) >= 1 ? 'text-bullish' : 'text-bearish'}`;
+        const shEl = document.getElementById('bt-sharpe');
+        shEl.textContent = sh != null ? sh.toFixed(2) : '—';
+        shEl.className = `font-mono font-bold text-lg ${(sh||0) >= 0.5 ? 'text-bullish' : 'text-zinc-300'}`;
 
+        const ddEl = document.getElementById('bt-dd');
+        ddEl.textContent = dd != null ? `${dd.toFixed(1)}%` : '—';
+        ddEl.className = `font-mono font-bold text-lg ${(dd||0) <= -10 ? 'text-bearish' : 'text-neutralGold'}`;
+
+        // Trade list
         const tradesDiv = document.getElementById('bt-trades');
         if (!data.trades || !data.trades.length) {
-            tradesDiv.innerHTML = '<div class="text-xs text-zinc-500 font-mono text-center py-4">No trades match filter</div>';
+            tradesDiv.innerHTML = '<div class="text-xs text-zinc-500 font-mono text-center py-4">No trades in selected system</div>';
             return;
         }
         const sorted = [...data.trades].sort((a, b) => (b.entry_date || '').localeCompare(a.entry_date || ''));
         tradesDiv.innerHTML = sorted.map(t => {
-            const pnlD = parseFloat(t.pnl_dollars);
-            const win  = pnlD > 0;
-            const pC   = win ? 'text-bullish' : 'text-bearish';
-            const bdr  = win ? 'border-l-2 border-bullish/40' : 'border-l-2 border-bearish/40';
-            const pred = parseFloat(t.predicted_return);
-            const reason = (t.exit_reason || '').replace('_', ' ');
-            return `<div class="p-2 bg-panelBg rounded ${bdr} flex justify-between items-center">
-              <div class="flex items-center gap-3 font-mono">
-                <span class="text-white font-bold text-sm w-12">${t.ticker}</span>
-                <span class="text-zinc-500" style="font-size:10px;">${t.entry_date} → ${t.exit_date}</span>
-                <span class="text-zinc-600" style="font-size:9px;">pred=${pred >= 0 ? '+' : ''}${pred.toFixed(1)}% · ${reason}</span>
+            const pnlPct = parseFloat(t.pnl_pct) * 100;
+            const win    = pnlPct > 0;
+            const pC     = win ? 'text-bullish' : 'text-bearish';
+            const bdr    = win ? 'border-l-2 border-bullish/40' : 'border-l-2 border-bearish/40';
+            const pred   = parseFloat(t.pred_5d || 0) * 100;
+            const reason = (t.exit_reason || '').replace(/_/g, ' ');
+            const dir    = t.direction === 'SHORT'
+                ? '<span class="text-bearish font-bold" style="font-size:9px;">SHORT</span>'
+                : '<span class="text-bullish font-bold" style="font-size:9px;">LONG</span>';
+            const hz     = t.horizon ? `<span class="text-zinc-600" style="font-size:9px;">${t.horizon}</span>` : '';
+            return `<div class="p-2 bg-panelBg rounded ${bdr} flex justify-between items-center gap-2">
+              <div class="flex items-center gap-2 font-mono min-w-0">
+                <span class="text-white font-bold text-sm w-12 shrink-0">${t.ticker}</span>
+                ${dir}
+                ${hz}
+                <span class="text-zinc-500 truncate" style="font-size:10px;">${t.entry_date} → ${t.exit_date}</span>
+                <span class="text-zinc-600 hidden md:inline" style="font-size:9px;">pred ${pred >= 0 ? '+' : ''}${pred.toFixed(1)}% · ${reason}</span>
               </div>
-              <span class="font-mono font-bold ${pC} text-sm">${pnlD >= 0 ? '+' : ''}$${pnlD.toFixed(2)}</span>
+              <span class="font-mono font-bold ${pC} text-sm shrink-0">${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%</span>
             </div>`;
         }).join('');
     }

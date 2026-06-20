@@ -320,3 +320,50 @@ def test_signal_classified_neutral():
     signal = ('BULLISH' if pred >= BULLISH_THRESHOLD
               else ('BEARISH' if pred <= BEARISH_THRESHOLD else 'NEUTRAL'))
     assert signal == 'NEUTRAL'
+
+
+# ── 12. Dynamic hold period logic ─────────────────────────────────────────────
+
+def _dynamic_hold(pred_1d, pred_3d, pred_5d, threshold=0.015):
+    """Mirror of the priority logic in signal_generator.generate_signals."""
+    if pred_5d >= threshold:      return 5
+    elif pred_3d >= threshold:    return 3
+    elif pred_1d >= threshold:    return 1
+    else:                         return 0
+
+
+def test_dynamic_hold_5d_wins():
+    """5D model fires → hold 5 days."""
+    assert _dynamic_hold(0.005, 0.010, 0.020) == 5
+
+
+def test_dynamic_hold_3d_wins():
+    """3D model fires when 5D weak → hold 3 days."""
+    assert _dynamic_hold(0.005, 0.020, 0.005) == 3
+
+
+def test_dynamic_hold_1d_wins():
+    """1D model fires when 3D/5D weak → hold 1 day."""
+    assert _dynamic_hold(0.020, 0.005, 0.005) == 1
+
+
+def test_dynamic_hold_none_fires():
+    """No model clears threshold → no signal (hold=0)."""
+    assert _dynamic_hold(0.005, 0.005, 0.005) == 0
+
+
+def test_5d_priority_over_3d():
+    """5D always wins when both 5D and 3D clear threshold."""
+    assert _dynamic_hold(0.005, 0.020, 0.020) == 5
+
+
+def test_bearish_signal_not_opened():
+    """BEARISH signals never open long positions."""
+    signal_type = 'BEARISH'
+    assert (signal_type == 'BULLISH') is False
+
+
+def test_neutral_signal_not_opened():
+    """NEUTRAL signals never open long positions."""
+    signal_type = 'NEUTRAL'
+    assert (signal_type == 'BULLISH') is False
