@@ -162,30 +162,54 @@ def get_backtest_full(system: str = 'A'):
             'profit_factor':    v['profit_factor'],
         }
 
+    # Best system by Sharpe ratio
+    best_lbl  = max(comparison, key=lambda k: comparison[k]['sharpe_ratio'])
+    best_s    = comparison[best_lbl]
+    sys_names = {'A': 'Long+Dynamic', 'B': 'Long+Short+Dynamic', 'C': 'Long+Short+Fixed5D'}
+    recommendation = (
+        f'System {best_lbl} — {sys_names.get(best_lbl, best_lbl)} '
+        f'(best Sharpe {best_s["sharpe_ratio"]:.2f})'
+    )
+
+    sel_lbl = (system or 'A').upper()
+    selected_data = {
+        'n_trades':         selected['n_trades'],
+        'n_long':           selected['n_long'],
+        'n_short':          selected['n_short'],
+        'n_1d_trades':      selected.get('n_1d_trades', 0),
+        'n_3d_trades':      selected.get('n_3d_trades', 0),
+        'n_5d_trades':      selected.get('n_5d_trades', 0),
+        'win_rate':         selected['win_rate'],
+        'win_rate_1d':      selected['win_rate_1d'],
+        'win_rate_3d':      selected['win_rate_3d'],
+        'win_rate_5d':      selected['win_rate_5d'],
+        'long_win_rate':    selected['long_win_rate'],
+        'short_win_rate':   selected['short_win_rate'],
+        'long_avg_return_pct':  selected.get('long_avg_return_pct', 0),
+        'short_avg_return_pct': selected.get('short_avg_return_pct', 0),
+        'total_return_pct': selected['total_return_pct'],
+        'alpha_pct':        selected['alpha_pct'],
+        'sharpe_ratio':     selected['sharpe_ratio'],
+        'sortino_ratio':    selected['sortino_ratio'],
+        'max_drawdown_pct': selected['max_drawdown_pct'],
+        'profit_factor':    selected['profit_factor'],
+        'monthly_returns':  selected.get('monthly_returns', {}),
+    }
+
     return _sanitize({
-        'simulation':        True,
-        'note':              data.get('note', ''),
-        'period':            data['period'],
-        'system':            (system or 'A').upper(),
-        'spy_return_pct':    data['spy_return_pct'],
-        'n_trades':          selected['n_trades'],
-        'n_long':            selected['n_long'],
-        'n_short':           selected['n_short'],
-        'win_rate':          selected['win_rate'],
-        'win_rate_1d':       selected['win_rate_1d'],
-        'win_rate_3d':       selected['win_rate_3d'],
-        'win_rate_5d':       selected['win_rate_5d'],
-        'long_win_rate':     selected['long_win_rate'],
-        'short_win_rate':    selected['short_win_rate'],
-        'total_return_pct':  selected['total_return_pct'],
-        'alpha_pct':         selected['alpha_pct'],
-        'sharpe_ratio':      selected['sharpe_ratio'],
-        'sortino_ratio':     selected['sortino_ratio'],
-        'max_drawdown_pct':  selected['max_drawdown_pct'],
-        'profit_factor':     selected['profit_factor'],
-        'monthly_returns':   selected.get('monthly_returns', {}),
-        'comparison':        comparison,
-        'trades':            selected.get('trades', []),
+        'simulation':       True,
+        'note':             data.get('note', ''),
+        'period':           data['period'],
+        'spy_return_pct':   data['spy_return_pct'],
+        'recommendation':   recommendation,
+        'selected_system':  sel_lbl,
+        'system':           sel_lbl,           # kept for backwards compat
+        'selected_data':    selected_data,
+        'comparison':       comparison,
+        'trades':           selected.get('trades', []),
+        # flat fields kept for backwards compat
+        **{k: v for k, v in selected_data.items() if k != 'monthly_returns'},
+        'monthly_returns':  selected_data['monthly_returns'],
     })
 
 

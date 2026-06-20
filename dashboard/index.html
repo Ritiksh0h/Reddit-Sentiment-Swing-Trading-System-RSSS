@@ -522,33 +522,32 @@
 
 <!-- ── Backtest Panel ───────────────────────────────────────────────────── -->
 <section class="bg-cardBg border border-cardBorder rounded-xl p-5 shadow-lg mb-6 mx-4 md:mx-6 max-w-7xl w-full self-center" style="margin-left:auto;margin-right:auto;">
+
     <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
-        <div>
-            <h2 class="text-sm font-bold uppercase tracking-wider text-zinc-300 font-mono flex items-center gap-2">
-                <i data-lucide="bar-chart-2" class="w-4 h-4 text-accentBlue"></i>
-                Backtest v2 — 2024-2025 Out-of-Sample
-                <span class="text-3xs font-normal text-amber-500 border border-amber-500/40 rounded px-1.5 py-0.5 normal-case tracking-normal">HISTORICAL SIMULATION</span>
-            </h2>
-            <p id="bt-subtitle" class="text-xs text-zinc-500 font-mono mt-0.5">Loading results…</p>
-        </div>
-        <!-- System tabs A / B / C -->
-        <div class="flex gap-1 items-center">
-            <span class="text-zinc-500 font-mono text-3xs mr-1">SYSTEM</span>
-            <button id="bt-tab-A" onclick="switchBtSystem('A')"
-                    title="Long-only · Dynamic hold 1D/3D/5D"
-                    class="px-3 py-1.5 rounded text-xs font-bold font-mono transition-all bg-accentBlue text-white">A</button>
-            <button id="bt-tab-B" onclick="switchBtSystem('B')"
-                    title="Long+Short · Dynamic hold 1D/3D/5D"
-                    class="px-3 py-1.5 rounded text-xs font-bold font-mono transition-all text-zinc-400 hover:text-white">B</button>
-            <button id="bt-tab-C" onclick="switchBtSystem('C')"
-                    title="Long+Short · Fixed 5D model only (control)"
-                    class="px-3 py-1.5 rounded text-xs font-bold font-mono transition-all text-zinc-400 hover:text-white">C</button>
+    <div class="mb-4">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-zinc-300 font-mono flex items-center gap-2">
+            <i data-lucide="bar-chart-2" class="w-4 h-4 text-accentBlue"></i>
+            Backtest v2 — 2024-2025 Out-of-Sample
+            <span class="text-3xs font-normal text-amber-500 border border-amber-500/40 rounded px-1.5 py-0.5 normal-case tracking-normal">HISTORICAL SIMULATION</span>
+        </h2>
+        <p id="bt-subtitle" class="text-xs text-zinc-500 font-mono mt-0.5">Loading results…</p>
+    </div>
+
+    <!-- KEY FINDING callout -->
+    <div class="mb-4 p-3 rounded-lg border border-amber-500/40 bg-amber-950/20 font-mono">
+        <div class="text-amber-400 text-xs font-bold mb-1.5 uppercase tracking-wider">KEY FINDING</div>
+        <div class="space-y-1 text-xs text-amber-200/80">
+            <div>· Short selling reduced returns by <span class="text-bearish font-bold">−4.1%</span>
+                 — System B underperforms System A by that margin</div>
+            <div>· System A (Long+Dynamic) is <span class="text-bullish font-bold">optimal for live trading</span>
+                 — best Sharpe ratio (0.93) of all three systems</div>
+            <div>· BEARISH signals are <span class="text-zinc-300 font-bold">logged but never traded</span>
+                 in the live system (long-only)</div>
         </div>
     </div>
 
-    <!-- Comparison table — all three systems + SPY -->
-    <div id="bt-comparison" class="mb-4 overflow-x-auto">
+    <!-- Comparison table — SPY + all three systems -->
+    <div class="mb-4 overflow-x-auto">
         <table class="w-full font-mono text-xs border-collapse">
             <thead>
                 <tr class="text-zinc-500 text-3xs uppercase border-b border-cardBorder">
@@ -559,53 +558,83 @@
                     <th class="text-right py-1.5 px-2 font-normal">MaxDD</th>
                     <th class="text-right py-1.5 px-2 font-normal">WinRate</th>
                     <th class="text-right py-1.5 pl-2 font-normal">Trades</th>
+                    <th class="text-left py-1.5 pl-2 font-normal"></th>
                 </tr>
             </thead>
             <tbody id="bt-cmp-body">
                 <tr class="border-b border-zinc-800/50">
                     <td class="py-1.5 pr-3 text-zinc-400">SPY Buy&amp;Hold</td>
-                    <td id="bt-spy-ret" class="text-right px-2 text-bullish">—</td>
+                    <td id="bt-spy-ret" class="text-right px-2 text-bullish font-bold">—</td>
                     <td class="text-right px-2 text-zinc-600">—</td>
                     <td class="text-right px-2 text-zinc-600">—</td>
                     <td class="text-right px-2 text-zinc-600">—</td>
                     <td class="text-right px-2 text-zinc-600">—</td>
                     <td class="text-right pl-2 text-zinc-600">—</td>
+                    <td class="pl-2"></td>
                 </tr>
+                <!-- system rows injected by JS -->
             </tbody>
         </table>
     </div>
 
-    <!-- Selected system stat cards -->
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-        <div class="bg-panelBg p-3 rounded-lg border border-cardBorder text-center">
-            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Trades</div>
-            <div id="bt-n" class="text-white font-mono font-bold text-lg">—</div>
+    <!-- System selector tabs -->
+    <div class="flex gap-2 items-center mb-4 flex-wrap">
+        <span class="text-zinc-500 font-mono text-3xs uppercase tracking-wider mr-1">View system:</span>
+        <button id="bt-tab-A" onclick="switchBtSystem('A')"
+                title="Long-only · Dynamic hold 1D/3D/5D · Best Sharpe"
+                class="px-3 py-1.5 rounded text-xs font-bold font-mono transition-all bg-accentBlue text-white border border-accentBlue">
+            A — Long+Dynamic
+        </button>
+        <button id="bt-tab-B" onclick="switchBtSystem('B')"
+                title="Long+Short · Dynamic hold 1D/3D/5D"
+                class="px-3 py-1.5 rounded text-xs font-bold font-mono transition-all text-zinc-400 border border-zinc-700 hover:border-zinc-500 hover:text-white">
+            B — Long+Short+Dynamic
+        </button>
+        <button id="bt-tab-C" onclick="switchBtSystem('C')"
+                title="Long+Short · Fixed 5D only · Control"
+                class="px-3 py-1.5 rounded text-xs font-bold font-mono transition-all text-zinc-400 border border-zinc-700 hover:border-zinc-500 hover:text-white">
+            C — Long+Short+Fixed5D
+        </button>
+    </div>
+
+    <!-- KPI strip for selected system -->
+    <div class="grid grid-cols-3 md:grid-cols-6 gap-2 mb-3">
+        <div class="bg-panelBg p-2.5 rounded border border-cardBorder text-center">
+            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Return</div>
+            <div id="bt-pr" class="font-mono font-bold text-base">—</div>
         </div>
-        <div class="bg-panelBg p-3 rounded-lg border border-cardBorder text-center">
-            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Win Rate</div>
-            <div id="bt-wr" class="font-mono font-bold text-lg">—</div>
+        <div class="bg-panelBg p-2.5 rounded border border-cardBorder text-center">
+            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Alpha</div>
+            <div id="bt-alpha" class="font-mono font-bold text-base">—</div>
         </div>
-        <div class="bg-panelBg p-3 rounded-lg border border-cardBorder text-center">
-            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Total Return</div>
-            <div id="bt-pr" class="font-mono font-bold text-lg">—</div>
-        </div>
-        <div class="bg-panelBg p-3 rounded-lg border border-cardBorder text-center">
+        <div class="bg-panelBg p-2.5 rounded border border-cardBorder text-center">
             <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Sharpe</div>
-            <div id="bt-sharpe" class="font-mono font-bold text-lg">—</div>
+            <div id="bt-sharpe" class="font-mono font-bold text-base">—</div>
         </div>
-        <div class="bg-panelBg p-3 rounded-lg border border-cardBorder text-center">
-            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Max Drawdown</div>
-            <div id="bt-dd" class="font-mono font-bold text-lg">—</div>
+        <div class="bg-panelBg p-2.5 rounded border border-cardBorder text-center">
+            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">MaxDD</div>
+            <div id="bt-dd" class="font-mono font-bold text-base">—</div>
+        </div>
+        <div class="bg-panelBg p-2.5 rounded border border-cardBorder text-center">
+            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Win Rate</div>
+            <div id="bt-wr" class="font-mono font-bold text-base">—</div>
+        </div>
+        <div class="bg-panelBg p-2.5 rounded border border-cardBorder text-center">
+            <div class="text-zinc-500 font-mono text-3xs uppercase mb-1">Trades</div>
+            <div id="bt-n" class="text-white font-mono font-bold text-base">—</div>
         </div>
     </div>
 
-    <!-- Trade list for selected system -->
+    <!-- System-specific breakdown row -->
+    <div id="bt-breakdown" class="mb-3 px-3 py-2 bg-panelBg rounded border border-cardBorder font-mono text-xs text-zinc-400 min-h-[2rem]"></div>
+
+    <!-- Trade list -->
     <div id="bt-trades" class="space-y-1.5 max-h-[260px] overflow-y-auto custom-scrollbar">
         <div class="text-xs text-zinc-500 font-mono text-center py-4">Loading…</div>
     </div>
 
     <div class="mt-4 p-2 bg-zinc-950 rounded border border-zinc-800 text-3xs text-zinc-600 font-mono text-center">
-        ⚠ HISTORICAL SIMULATION — 2024-2025 out-of-sample test period only. NOT live trading. Past performance ≠ future results.
+        ⚠ Historical simulation 2024-2025. Not live trading results. Initial capital $10,000. Out-of-sample test period only.
     </div>
 </section>
 
@@ -907,90 +936,127 @@
 
     function switchBtSystem(sys) {
         currentBtSystem = sys;
-        const tabActive = 'px-3 py-1.5 rounded text-xs font-bold font-mono transition-all bg-accentBlue text-white';
-        const tabInact  = 'px-3 py-1.5 rounded text-xs font-bold font-mono transition-all text-zinc-400 hover:text-white';
+        const active = 'px-3 py-1.5 rounded text-xs font-bold font-mono transition-all bg-accentBlue text-white border border-accentBlue';
+        const inact  = 'px-3 py-1.5 rounded text-xs font-bold font-mono transition-all text-zinc-400 border border-zinc-700 hover:border-zinc-500 hover:text-white';
         ['A', 'B', 'C'].forEach(s => {
             const el = document.getElementById(`bt-tab-${s}`);
-            if (el) el.className = (s === sys) ? tabActive : tabInact;
+            if (el) el.className = (s === sys) ? active : inact;
         });
         updateBacktest();
     }
 
     async function updateBacktest() {
         const data = await apiFetch(`/backtest-full?system=${currentBtSystem}`);
+        const sub  = document.getElementById('bt-subtitle');
+
         if (!data || data.error) {
-            const sub = document.getElementById('bt-subtitle');
             if (sub) sub.textContent = (data && data.message) || 'Run: python scripts/run_backtest_v2.py';
             return;
         }
 
-        // Subtitle
-        const sub = document.getElementById('bt-subtitle');
-        if (sub) {
-            const ret = data.total_return_pct;
-            sub.textContent = `System ${data.system} · ${data.n_trades} trades · `
-                + `Return ${ret >= 0 ? '+' : ''}${ret.toFixed(1)}% `
-                + `vs SPY +${(data.spy_return_pct||0).toFixed(1)}% · HISTORICAL SIMULATION`;
-        }
+        // Subtitle — use recommendation from API
+        if (sub) sub.textContent = data.recommendation || `System ${data.system} · HISTORICAL SIMULATION 2024-2025`;
 
-        // SPY row in comparison table
+        // SPY row
         const spyEl = document.getElementById('bt-spy-ret');
         if (spyEl) {
             const sp = data.spy_return_pct || 0;
             spyEl.textContent = `${sp >= 0 ? '+' : ''}${sp.toFixed(1)}%`;
         }
 
-        // Comparison table body
+        // Comparison table — determine best Sharpe for ← BEST marker
         const tbody = document.getElementById('bt-cmp-body');
         if (tbody && data.comparison) {
-            const spyRet = data.spy_return_pct || 0;
-            // Keep SPY row (first child), rebuild system rows
-            const rows = Object.entries(data.comparison).map(([lbl, s]) => {
-                const isSel   = lbl === data.system;
-                const rowCls  = isSel ? 'bg-accentBlue/10 border-b border-accentBlue/20' : 'border-b border-zinc-800/40';
-                const retCls  = s.total_return_pct >= 0 ? 'text-bullish' : 'text-bearish';
-                const alphaCls= s.alpha_pct >= 0 ? 'text-bullish' : 'text-bearish';
-                const nameTag = isSel ? `<span class="font-bold text-white">Sys ${lbl}</span><span class="ml-1.5 text-3xs text-zinc-500">${s.description}</span>`
-                                      : `<span class="text-zinc-400">Sys ${lbl}</span><span class="ml-1.5 text-3xs text-zinc-600">${s.description}</span>`;
-                return `<tr class="${rowCls}">
-                  <td class="py-1.5 pr-3">${nameTag}</td>
-                  <td class="text-right px-2 ${retCls}">${s.total_return_pct >= 0 ? '+' : ''}${s.total_return_pct.toFixed(1)}%</td>
+            const cmp     = data.comparison;
+            const bestLbl = Object.keys(cmp).reduce((a, b) =>
+                (cmp[a].sharpe_ratio || 0) >= (cmp[b].sharpe_ratio || 0) ? a : b);
+
+            const sysOrder = ['A', 'B', 'C'];
+            const sysNames = { A: 'A  Long+Dynamic', B: 'B  Long+Short+Dyn', C: 'C  Long+Short+5D' };
+            const rows = sysOrder.filter(l => cmp[l]).map(lbl => {
+                const s      = cmp[lbl];
+                const isSel  = lbl === data.system;
+                const isBest = lbl === bestLbl;
+                const rowCls = isSel
+                    ? 'bg-accentBlue/10 border-b border-accentBlue/20'
+                    : 'border-b border-zinc-800/40 hover:bg-zinc-800/20';
+                const retCls   = s.total_return_pct >= 0 ? 'text-bullish' : 'text-bearish';
+                const alphaCls = s.alpha_pct >= 0 ? 'text-bullish' : 'text-bearish';
+                const nameCls  = isSel ? 'font-bold text-white' : 'text-zinc-400';
+                const bestTag  = isBest
+                    ? '<span class="ml-1 text-3xs text-amber-400 border border-amber-500/40 rounded px-1">← BEST</span>'
+                    : '';
+                return `<tr class="${rowCls} cursor-pointer" onclick="switchBtSystem('${lbl}')">
+                  <td class="py-1.5 pr-3 ${nameCls}">${sysNames[lbl] || lbl}${bestTag}</td>
+                  <td class="text-right px-2 ${retCls} font-bold">${s.total_return_pct >= 0 ? '+' : ''}${s.total_return_pct.toFixed(1)}%</td>
                   <td class="text-right px-2 ${alphaCls}">${s.alpha_pct >= 0 ? '+' : ''}${s.alpha_pct.toFixed(1)}%</td>
-                  <td class="text-right px-2 text-zinc-300">${(s.sharpe_ratio||0).toFixed(2)}</td>
+                  <td class="text-right px-2 ${isBest ? 'text-bullish font-bold' : 'text-zinc-300'}">${(s.sharpe_ratio||0).toFixed(2)}</td>
                   <td class="text-right px-2 text-bearish">${(s.max_drawdown_pct||0).toFixed(1)}%</td>
                   <td class="text-right px-2 ${s.win_rate >= 0.5 ? 'text-bullish' : 'text-bearish'}">${(s.win_rate*100).toFixed(1)}%</td>
                   <td class="text-right pl-2 text-zinc-400">${s.n_trades}</td>
+                  <td class="pl-2"></td>
                 </tr>`;
             });
-            // Rebuild: keep SPY row, replace rest
+            // Keep static SPY row, replace system rows
             const spyRow = tbody.querySelector('tr');
             tbody.innerHTML = (spyRow ? spyRow.outerHTML : '') + rows.join('');
         }
 
-        // Stat cards for selected system
-        const n  = data.n_trades;
-        const wr = data.win_rate;
-        const tr = data.total_return_pct;
-        const sh = data.sharpe_ratio;
-        const dd = data.max_drawdown_pct;
-
-        document.getElementById('bt-n').textContent = n || '—';
-
-        const wrEl = document.getElementById('bt-wr');
-        wrEl.textContent = n ? `${(wr * 100).toFixed(1)}%` : '—';
-        wrEl.className = `font-mono font-bold text-lg ${wr >= 0.5 ? 'text-bullish' : 'text-bearish'}`;
-
-        const prEl = document.getElementById('bt-pr');
-        prEl.textContent = tr != null ? `${tr >= 0 ? '+' : ''}${tr.toFixed(1)}%` : '—';
-        prEl.className = `font-mono font-bold text-lg ${(tr||0) >= 0 ? 'text-bullish' : 'text-bearish'}`;
+        // KPI strip
+        const sd = data.selected_data || data;
+        const setKpi = (id, val, fmt, positiveGood = true) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = val != null ? fmt(val) : '—';
+            if (val != null) {
+                const good = positiveGood ? val >= 0 : val >= -5;
+                el.className = `font-mono font-bold text-base ${good ? 'text-bullish' : 'text-bearish'}`;
+            }
+        };
+        setKpi('bt-pr',    sd.total_return_pct, v => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`);
+        setKpi('bt-alpha', sd.alpha_pct,         v => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`);
+        setKpi('bt-dd',    sd.max_drawdown_pct,  v => `${v.toFixed(1)}%`, false);
+        setKpi('bt-wr',    sd.win_rate,          v => `${(v*100).toFixed(1)}%`);
 
         const shEl = document.getElementById('bt-sharpe');
-        shEl.textContent = sh != null ? sh.toFixed(2) : '—';
-        shEl.className = `font-mono font-bold text-lg ${(sh||0) >= 0.5 ? 'text-bullish' : 'text-zinc-300'}`;
+        if (shEl) {
+            shEl.textContent = sd.sharpe_ratio != null ? sd.sharpe_ratio.toFixed(2) : '—';
+            shEl.className = `font-mono font-bold text-base ${(sd.sharpe_ratio||0) >= 0.5 ? 'text-bullish' : 'text-zinc-300'}`;
+        }
+        document.getElementById('bt-n').textContent = sd.n_trades || '—';
 
-        const ddEl = document.getElementById('bt-dd');
-        ddEl.textContent = dd != null ? `${dd.toFixed(1)}%` : '—';
-        ddEl.className = `font-mono font-bold text-lg ${(dd||0) <= -10 ? 'text-bearish' : 'text-neutralGold'}`;
+        // Breakdown row (system-specific)
+        const bk = document.getElementById('bt-breakdown');
+        if (bk) {
+            const sys = data.system;
+            if (sys === 'A') {
+                bk.innerHTML = [
+                    `<span class="text-zinc-500">Horizon breakdown:</span>`,
+                    `<span class="ml-3">1D: <span class="text-white">${sd.n_1d_trades}</span> trades`,
+                    ` win <span class="${(sd.win_rate_1d||0) >= 0.5 ? 'text-bullish' : 'text-bearish'}">${((sd.win_rate_1d||0)*100).toFixed(0)}%</span></span>`,
+                    `<span class="ml-3">3D: <span class="text-white">${sd.n_3d_trades}</span> trades`,
+                    ` win <span class="${(sd.win_rate_3d||0) >= 0.5 ? 'text-bullish' : 'text-bearish'}">${((sd.win_rate_3d||0)*100).toFixed(0)}%</span></span>`,
+                    `<span class="ml-3">5D: <span class="text-white">${sd.n_5d_trades}</span> trades`,
+                    ` win <span class="${(sd.win_rate_5d||0) >= 0.5 ? 'text-bullish' : 'text-bearish'}">${((sd.win_rate_5d||0)*100).toFixed(0)}%</span></span>`,
+                ].join('');
+            } else if (sys === 'B' || sys === 'C') {
+                const lWR  = ((sd.long_win_rate||0)*100).toFixed(0);
+                const sWR  = ((sd.short_win_rate||0)*100).toFixed(0);
+                const lAvg = (sd.long_avg_return_pct||0).toFixed(2);
+                const sAvg = (sd.short_avg_return_pct||0).toFixed(2);
+                bk.innerHTML = [
+                    `<span class="text-zinc-500">Direction breakdown:</span>`,
+                    `<span class="ml-3">Long: <span class="text-white">${sd.n_long}</span> trades`,
+                    ` win <span class="${sd.long_win_rate >= 0.5 ? 'text-bullish' : 'text-bearish'}">${lWR}%</span>`,
+                    ` avg <span class="${parseFloat(lAvg) >= 0 ? 'text-bullish' : 'text-bearish'}">${parseFloat(lAvg) >= 0 ? '+' : ''}${lAvg}%</span></span>`,
+                    `<span class="ml-3">Short: <span class="text-white">${sd.n_short}</span> trades`,
+                    ` win <span class="${sd.short_win_rate >= 0.5 ? 'text-bullish' : 'text-bearish'}">${sWR}%</span>`,
+                    ` avg <span class="${parseFloat(sAvg) >= 0 ? 'text-bullish' : 'text-bearish'}">${parseFloat(sAvg) >= 0 ? '+' : ''}${sAvg}%</span></span>`,
+                ].join('');
+            } else {
+                bk.innerHTML = '';
+            }
+        }
 
         // Trade list
         const tradesDiv = document.getElementById('bt-trades');
@@ -1007,16 +1073,17 @@
             const pred   = parseFloat(t.pred_5d || 0) * 100;
             const reason = (t.exit_reason || '').replace(/_/g, ' ');
             const dir    = t.direction === 'SHORT'
-                ? '<span class="text-bearish font-bold" style="font-size:9px;">SHORT</span>'
-                : '<span class="text-bullish font-bold" style="font-size:9px;">LONG</span>';
-            const hz     = t.horizon ? `<span class="text-zinc-600" style="font-size:9px;">${t.horizon}</span>` : '';
+                ? '<span class="text-bearish font-bold shrink-0" style="font-size:9px;">SHORT</span>'
+                : '<span class="text-bullish font-bold shrink-0" style="font-size:9px;">LONG</span>';
+            const hz     = t.horizon
+                ? `<span class="text-zinc-600 shrink-0" style="font-size:9px;">${t.horizon}</span>`
+                : '';
             return `<div class="p-2 bg-panelBg rounded ${bdr} flex justify-between items-center gap-2">
               <div class="flex items-center gap-2 font-mono min-w-0">
                 <span class="text-white font-bold text-sm w-12 shrink-0">${t.ticker}</span>
-                ${dir}
-                ${hz}
+                ${dir}${hz}
                 <span class="text-zinc-500 truncate" style="font-size:10px;">${t.entry_date} → ${t.exit_date}</span>
-                <span class="text-zinc-600 hidden md:inline" style="font-size:9px;">pred ${pred >= 0 ? '+' : ''}${pred.toFixed(1)}% · ${reason}</span>
+                <span class="text-zinc-600 hidden md:inline shrink-0" style="font-size:9px;">pred ${pred >= 0 ? '+' : ''}${pred.toFixed(1)}% · ${reason}</span>
               </div>
               <span class="font-mono font-bold ${pC} text-sm shrink-0">${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%</span>
             </div>`;
