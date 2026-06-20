@@ -3,15 +3,5 @@ builder = "dockerfile"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "python -m uvicorn api.main:app --host 0.0.0.0 --port $PORT"
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
-
-[[volumes]]
-mountPath = "/app/data"
-
-[[volumes]]
-mountPath = "/app/logs"
-
-[[volumes]]
-mountPath = "/app/models"
