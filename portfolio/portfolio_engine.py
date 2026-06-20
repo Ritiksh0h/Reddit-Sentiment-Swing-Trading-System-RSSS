@@ -47,6 +47,7 @@ class Position:
     predicted_return_1d: float = 0.0
     predicted_return_3d: float = 0.0
     predicted_return_5d: float = 0.0
+    pcr_confirmation:    str   = 'UNKNOWN'
 
 
 @dataclass

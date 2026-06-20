@@ -291,6 +291,20 @@ def run(
             if sizing['n_shares'] == 0:
                 continue
 
+            # Apply PCR size multiplier (CAUTION = 50% size; never blocks signal)
+            pcr_mult = getattr(signal, 'pcr_size_multiplier', 1.0)
+            if pcr_mult < 1.0:
+                reduced_n = max(1, int(sizing['n_shares'] * pcr_mult))
+                sizing = dict(sizing)
+                sizing['n_shares']         = reduced_n
+                sizing['position_dollars'] = reduced_n * signal.price
+                logger.info(
+                    f'pcr_size_reduction ticker={signal.ticker} '
+                    f'pcr={getattr(signal, "pcr", None)} '
+                    f'conf={getattr(signal, "pcr_confirmation", "?")} '
+                    f'original_n={sizing["n_shares"]} reduced_n={reduced_n}'
+                )
+
             slippage   = compute_slippage(
                 price=signal.price,
                 mention_growth_7d=signal.feature_vector.get('mention_growth_7d', 0),
@@ -318,6 +332,7 @@ def run(
                 predicted_return_1d=signal.predicted_1d,
                 predicted_return_3d=signal.predicted_3d,
                 predicted_return_5d=signal.predicted_5d,
+                pcr_confirmation=getattr(signal, 'pcr_confirmation', 'UNKNOWN'),
             )
 
             cost = sizing['n_shares'] * fill_price
@@ -345,6 +360,10 @@ def run(
                 confidence=signal.confidence,
                 news_count_1d=signal.news_count_1d,
                 st_count_1d=signal.st_count_1d,
+                pcr=getattr(signal, 'pcr', None),
+                pcr_confirmation=getattr(signal, 'pcr_confirmation', 'UNKNOWN'),
+                pcr_size_mult=getattr(signal, 'pcr_size_multiplier', 1.0),
+                pcr_reason=getattr(signal, 'pcr_reason', ''),
             )
 
             logger.info(f'opened_position ticker={signal.ticker} '

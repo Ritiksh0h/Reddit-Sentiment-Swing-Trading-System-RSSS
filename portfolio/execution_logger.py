@@ -48,6 +48,10 @@ def log_signal(
     confidence:            float = 0.0,
     news_count_1d:         int = 0,
     st_count_1d:           int = 0,
+    pcr:                   Optional[float] = None,
+    pcr_confirmation:      str = 'UNKNOWN',
+    pcr_size_mult:         float = 1.0,
+    pcr_reason:            str = '',
 ) -> None:
     """Append one signal record to the execution log."""
     Path('logs').mkdir(exist_ok=True)
@@ -72,6 +76,10 @@ def log_signal(
         'confidence':            confidence,
         'news_count_1d':         news_count_1d,
         'st_count_1d':           st_count_1d,
+        'pcr':                   pcr,
+        'pcr_confirmation':      pcr_confirmation,
+        'pcr_size_mult':         pcr_size_mult,
+        'pcr_reason':            pcr_reason,
         'atr_14':                atr_14,
         'position_size_dollars': position_size_dollars,
         'slippage_applied':      slippage_applied,

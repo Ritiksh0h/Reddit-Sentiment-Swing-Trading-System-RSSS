@@ -847,12 +847,22 @@
                 ? '<div class="mt-1.5 text-xs text-orange-400 font-mono">&#9888; Approaching stop-loss (-8%)</div>'
                 : '';
 
+            const pcrConf  = p.pcr_confirmation || '';
+            const pcrBadge = pcrConf === 'CONFIRM'
+                ? `<span class="text-2xs border px-1.5 py-0.5 rounded font-mono font-semibold bg-bullish/10 text-bullish border-bullish/20" title="PCR ${p.pcr != null ? p.pcr.toFixed(2) : '—'}">PCR&#x2713;</span>`
+                : pcrConf === 'CAUTION'
+                ? `<span class="text-2xs border px-1.5 py-0.5 rounded font-mono font-semibold bg-orange-500/10 text-orange-400 border-orange-500/20" title="PCR ${p.pcr != null ? p.pcr.toFixed(2) : '—'} — puts dominate, size halved">PCR&#x26A0;</span>`
+                : pcrConf === 'NEUTRAL'
+                ? `<span class="text-2xs border px-1.5 py-0.5 rounded font-mono font-semibold bg-zinc-700/30 text-zinc-400 border-zinc-600" title="PCR ${p.pcr != null ? p.pcr.toFixed(2) : '—'}">PCR~</span>`
+                : '';
+
             return `<div class="p-3 bg-panelBg border border-cardBorder rounded-lg hover:border-zinc-700 transition">
                 <div class="flex justify-between items-start">
                     <div>
                         <div class="flex items-center gap-2">
                             <span class="font-bold font-mono text-white text-sm">${p.ticker}</span>
                             ${signalBadge ? `<span class="text-2xs border px-1.5 py-0.5 rounded font-mono font-semibold ${badgeColor}">${signalBadge}</span>` : ''}
+                            ${pcrBadge}
                         </div>
                         <p class="text-zinc-500 text-xs mt-0.5 font-mono">Entry $${parseFloat(p.entry_price).toFixed(2)} · ${entryFmt} &rarr; ${stopFmt}</p>
                         <p class="text-zinc-400 text-xs mt-0.5 font-mono">Current ${currentPx}</p>
@@ -870,7 +880,7 @@
 
     async function apiFetch(path) {
         try {
-            const r = await fetch('http://localhost:8000' + path);
+            const r = await fetch(window.location.origin + path);
             if (!r.ok) return null;
             return await r.json();
         } catch { return null; }
@@ -1091,7 +1101,7 @@
     }
 
     async function fetchLiveAPIData() {
-        const base = 'http://localhost:8000';
+        const base = window.location.origin;
         try {
             const [statusRes, portRes, predRes, shapRes, accRes] = await Promise.all([
                 fetch(`${base}/status`),

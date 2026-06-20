@@ -35,6 +35,7 @@ FEATURES     = ARCH['features']          # 14 features
 DENSITY_GATE = 10
 
 from config.settings import load_tickers, TICKERS_TRADE_PATH, TICKERS_DROP_PATH
+from data.options_fetcher import fetch_pcr, interpret_pcr
 
 TRADE_UNIVERSE = set(load_tickers(TICKERS_TRADE_PATH)) or None  # None = unrestricted fallback
 DROP_TICKERS   = set(load_tickers(TICKERS_DROP_PATH)) or set(ARCH['drop_tickers'])
@@ -67,6 +68,10 @@ class SignalRecord:
     atr_14:            float
     price:             float
     signal_timestamp:  str
+    pcr:               Optional[float] = None
+    pcr_confirmation:  str = 'UNKNOWN'
+    pcr_size_multiplier: float = 1.0
+    pcr_reason:        str = ''
 
 
 def load_models(model_dir: str = 'models/registry') -> dict:
@@ -364,6 +369,13 @@ def generate_signals(
         # Confidence: based on winning horizon pred
         confidence = min(abs(best_pred) / (BULLISH_THRESHOLD * 2), 1.0)
 
+        # PCR confirmation for BULLISH signals only — never blocks, only modulates size
+        pcr_val  = None
+        pcr_info = {'confirmation': 'UNKNOWN', 'size_multiplier': 1.0, 'reason': 'not_bullish'}
+        if signal == 'BULLISH':
+            pcr_val  = fetch_pcr(ticker)
+            pcr_info = interpret_pcr(pcr_val)
+
         logger.info(
             f'  {signal:<8} {ticker:<6} '
             f'1D={pred_1d*100:+.2f}% '
@@ -373,7 +385,8 @@ def generate_signals(
             f'conf={confidence*100:.0f}% '
             f'posts={post_count} '
             f'news={int(news_sent*100)} '
-            f'st={int(st_bull*100)}'
+            f'st={int(st_bull*100)} '
+            f'pcr={pcr_val} pcr_conf={pcr_info["confirmation"]}'
         )
 
         signals.append(SignalRecord(
@@ -397,6 +410,10 @@ def generate_signals(
             atr_14=round(atr, 6),
             price=round(price, 4),
             signal_timestamp=ts,
+            pcr=pcr_val,
+            pcr_confirmation=pcr_info['confirmation'],
+            pcr_size_multiplier=pcr_info['size_multiplier'],
+            pcr_reason=pcr_info['reason'],
         ))
 
     bullish = sorted([s for s in signals if s.signal == 'BULLISH'],

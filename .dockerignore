@@ -1,0 +1,39 @@
+.git
+.gitignore
+.venv
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+
+# Logs — mounted as volume at runtime
+logs/
+
+# Large data files — mounted as volume at runtime
+data/raw/
+data/features/
+data/processed/
+data/backfill_backup/
+
+# Model binaries — mounted as volume at runtime
+models/registry/*.pkl
+
+# Archive and notebooks
+archive/
+*.ipynb
+
+# Secrets / environment
+.env
+.env.*
+ngrok
+ngrok.yml
+
+# macOS artifacts
+.DS_Store
+**/.DS_Store
+
+# Parquet files (too large for image, served from volume)
+*.parquet
+
+# Railway / Docker build artifacts
+railway.log
