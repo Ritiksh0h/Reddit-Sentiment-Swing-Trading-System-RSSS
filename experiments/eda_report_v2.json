@@ -1,0 +1,172 @@
+{
+  "generated": "2026-06-22T13:49:08.371182",
+  "findings": {
+    "ticker_mismatch": {
+      "description": "Current feature store trained on wrong tickers",
+      "current": [
+        "AMC",
+        "ASTS",
+        "BA",
+        "BABA",
+        "BB",
+        "BBBY",
+        "COIN",
+        "DKNG",
+        "F",
+        "GS",
+        "JPM",
+        "LCID",
+        "META",
+        "MSFT",
+        "MSTR",
+        "NFLX",
+        "NIO",
+        "NOK",
+        "PLTR",
+        "PYPL",
+        "RIOT",
+        "RIVN",
+        "ROKU",
+        "SMCI",
+        "SNAP",
+        "SPCE",
+        "TSLA",
+        "UBER",
+        "WMT"
+      ],
+      "missing_trade": [
+        "AAPL",
+        "AMD",
+        "AMZN",
+        "GME",
+        "GOOG",
+        "HOOD",
+        "MARA",
+        "MU",
+        "NVDA",
+        "QQQ",
+        "SOFI",
+        "SPY"
+      ],
+      "stale_present": [
+        "AMC",
+        "ASTS",
+        "BA",
+        "BABA",
+        "BB",
+        "BBBY",
+        "DKNG",
+        "F",
+        "LCID",
+        "MSTR",
+        "NIO",
+        "NOK",
+        "RIOT",
+        "RIVN",
+        "SMCI",
+        "SPCE"
+      ],
+      "severity": "CRITICAL"
+    },
+    "sentiment_quality": {
+      "finbert_neutral_pct": 86.8,
+      "vader_neutral_pct": 52.0,
+      "recommendation": "Use VADER for Reddit, FinBERT for formal news",
+      "severity": "HIGH"
+    },
+    "contrarian_sentiment": {
+      "avg_sentiment_ic": -0.01525188255066334,
+      "q1_bearish_return": 0.0077,
+      "q4_bullish_return": 0.0053,
+      "is_contrarian": true,
+      "recommendation": "Use as contrarian signal, invert sign"
+    },
+    "best_features": {
+      "positive_significant": [
+        {
+          "feature": "volume",
+          "ic": 0.03327276868153889
+        },
+        {
+          "feature": "total_comments_1d",
+          "ic": 0.023836556850756484
+        },
+        {
+          "feature": "total_upvotes_1d",
+          "ic": 0.022693262361868506
+        }
+      ],
+      "negative_significant": [
+        {
+          "feature": "st_count_1d",
+          "ic": -0.018389637525254496
+        },
+        {
+          "feature": "st_bear_count",
+          "ic": -0.01849916816815134
+        },
+        {
+          "feature": "st_bull_count",
+          "ic": -0.019261252174427094
+        },
+        {
+          "feature": "news_count_1d",
+          "ic": -0.021484148830253944
+        },
+        {
+          "feature": "avg_sentiment_3d",
+          "ic": -0.022597542168095244
+        },
+        {
+          "feature": "news_sentiment_std",
+          "ic": -0.023439164066165877
+        },
+        {
+          "feature": "atr_14",
+          "ic": -0.043830935646606804
+        }
+      ]
+    },
+    "redundant_features": [
+      "avg_sentiment_1d",
+      "avg_sentiment_3d",
+      "dist_from_20ma",
+      "dist_from_50ma",
+      "mention_growth_1d",
+      "post_count_1d",
+      "post_count_3d",
+      "post_count_7d",
+      "returns_5d",
+      "total_upvotes_1d",
+      "unique_authors_1d"
+    ],
+    "overall_ic": 0.043830935646606804
+  },
+  "recommendations": {
+    "features_v2_tickers": [
+      "AAPL",
+      "AMZN",
+      "AMD",
+      "COIN",
+      "GME",
+      "GOOG",
+      "META",
+      "MARA",
+      "MSFT",
+      "NFLX",
+      "NVDA",
+      "PLTR",
+      "QQQ",
+      "SOFI",
+      "HOOD",
+      "SPY",
+      "TSLA",
+      "UBER",
+      "MU"
+    ],
+    "features_v2_count": 14,
+    "expected_ic": "0.085-0.10",
+    "expected_live_win_rate": "50-55%",
+    "retrain_threshold": 0.0846
+  }
+}
