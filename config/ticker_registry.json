@@ -1,0 +1,554 @@
+{
+  "tickers": {
+    "NVDA": {
+      "company_names": [
+        "Nvidia",
+        "NVDA"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing",
+        "options"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "TSLA": {
+      "company_names": [
+        "Tesla",
+        "TSLA"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing",
+        "options"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "AAPL": {
+      "company_names": [
+        "Apple",
+        "Apple Inc",
+        "AAPL"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "AMD": {
+      "company_names": [
+        "AMD",
+        "Advanced Micro Devices"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing",
+        "options"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "MSFT": {
+      "company_names": [
+        "Microsoft",
+        "MSFT"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "META": {
+      "company_names": [
+        "Meta",
+        "Facebook",
+        "META"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "AMZN": {
+      "company_names": [
+        "Amazon",
+        "AMZN"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "GOOG": {
+      "company_names": [
+        "Google",
+        "Alphabet",
+        "GOOG",
+        "GOOGL"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "COIN": {
+      "company_names": [
+        "Coinbase",
+        "COIN"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "options"
+      ],
+      "active": true,
+      "added_date": "2021-04-14",
+      "tier": "trade"
+    },
+    "GME": {
+      "company_names": [
+        "GameStop",
+        "GME"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "PLTR": {
+      "company_names": [
+        "Palantir",
+        "PLTR"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2020-09-30",
+      "tier": "trade"
+    },
+    "MARA": {
+      "company_names": [
+        "Marathon Digital",
+        "MARA",
+        "Marathon Holdings"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "options"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "SOFI": {
+      "company_names": [
+        "SoFi",
+        "SOFI",
+        "SoFi Technologies"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2021-06-01",
+      "tier": "trade"
+    },
+    "HOOD": {
+      "company_names": [
+        "Robinhood",
+        "HOOD"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2021-07-29",
+      "tier": "trade"
+    },
+    "MU": {
+      "company_names": [
+        "Micron",
+        "MU",
+        "Micron Technology"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing",
+        "options"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "NFLX": {
+      "company_names": [
+        "Netflix",
+        "NFLX"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "UBER": {
+      "company_names": [
+        "Uber",
+        "UBER"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "SPY": {
+      "company_names": [
+        "SPY",
+        "S&P 500",
+        "SP500"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing",
+        "options"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "QQQ": {
+      "company_names": [
+        "QQQ",
+        "Nasdaq",
+        "NASDAQ"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing",
+        "options"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade"
+    },
+    "SHOP": {
+      "company_names": [
+        "Shopify",
+        "SHOP"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "ROKU": {
+      "company_names": [
+        "Roku",
+        "ROKU"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "SNAP": {
+      "company_names": [
+        "Snap",
+        "Snapchat",
+        "SNAP"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "HIMS": {
+      "company_names": [
+        "Hims",
+        "HIMS",
+        "Hims & Hers"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks"
+      ],
+      "active": true,
+      "added_date": "2021-01-22",
+      "tier": "watch"
+    },
+    "RKLB": {
+      "company_names": [
+        "Rocket Lab",
+        "RKLB"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks"
+      ],
+      "active": true,
+      "added_date": "2021-08-25",
+      "tier": "watch"
+    },
+    "RDDT": {
+      "company_names": [
+        "Reddit",
+        "RDDT"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2024-03-21",
+      "tier": "watch"
+    },
+    "INTC": {
+      "company_names": [
+        "Intel",
+        "INTC"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "ARM": {
+      "company_names": [
+        "ARM",
+        "Arm Holdings"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks"
+      ],
+      "active": true,
+      "added_date": "2023-09-14",
+      "tier": "watch"
+    },
+    "BAC": {
+      "company_names": [
+        "Bank of America",
+        "BAC"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "JPM": {
+      "company_names": [
+        "JPMorgan",
+        "JPMorgan Chase",
+        "JPM"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "GS": {
+      "company_names": [
+        "Goldman Sachs",
+        "Goldman",
+        "GS"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "SCHW": {
+      "company_names": [
+        "Charles Schwab",
+        "Schwab",
+        "SCHW"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "WMT": {
+      "company_names": [
+        "Walmart",
+        "WMT"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "COST": {
+      "company_names": [
+        "Costco",
+        "COST"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "PYPL": {
+      "company_names": [
+        "PayPal",
+        "PYPL"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "SQ": {
+      "company_names": [
+        "Block",
+        "Square",
+        "SQ"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "ABBV": {
+      "company_names": [
+        "AbbVie",
+        "ABBV"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "LLY": {
+      "company_names": [
+        "Eli Lilly",
+        "Lilly",
+        "LLY"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    },
+    "PFE": {
+      "company_names": [
+        "Pfizer",
+        "PFE"
+      ],
+      "subreddits": [
+        "wallstreetbets",
+        "stocks",
+        "investing"
+      ],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch"
+    }
+  },
+  "version": "1.0",
+  "last_updated": "2026-06-21"
+}

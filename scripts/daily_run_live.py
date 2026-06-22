@@ -128,15 +128,33 @@ def main():
         logger.error(f'Reddit fetch failed: {e}')
         reddit_counts = {}
 
-    # ── Step 1b: Fetch yfinance news sentiment ────────────────────────────
-    logger.info('Fetching yfinance news...')
+    # ── Step 1b: Fetch news sentiment (Finnhub primary, yfinance fallback) ──
+    logger.info('Fetching news sentiment...')
+    news_data: dict = {}
     try:
-        from data.news_fetcher import fetch_yfinance_news
-        news_data = fetch_yfinance_news()
-        logger.info(f'yfinance news ready: {len(news_data)} tickers')
+        from data.finnhub_news_fetcher import fetch_live_news_sentiment
+        finnhub_key = os.getenv('FINNHUB_API_KEY')
+        if finnhub_key:
+            from config.settings import load_tickers, TICKERS_TRADE_PATH, TICKERS_WATCH_PATH
+            _all_tickers = sorted(
+                set(load_tickers(TICKERS_TRADE_PATH)) |
+                set(load_tickers(TICKERS_WATCH_PATH))
+            )
+            news_data = fetch_live_news_sentiment(_all_tickers, finnhub_key)
+            logger.info(f'Finnhub news ready: {len(news_data)} tickers')
+        else:
+            logger.warning('FINNHUB_API_KEY not set — skipping Finnhub')
     except Exception as e:
-        logger.warning(f'yfinance news fetch failed: {e} — continuing without news')
-        news_data = {}
+        logger.warning(f'Finnhub news fetch failed: {e} — trying yfinance fallback')
+
+    if not news_data or all(v.get('news_count_1d', 0) == 0 for v in news_data.values()):
+        try:
+            from data.news_fetcher import fetch_yfinance_news
+            news_data = fetch_yfinance_news()
+            logger.info(f'yfinance news fallback ready: {len(news_data)} tickers')
+        except Exception as e:
+            logger.warning(f'yfinance news fetch failed: {e} — continuing without news')
+            news_data = {}
 
     # ── Step 1c: Fetch StockTwits sentiment ───────────────────────────────
     logger.info('Fetching StockTwits...')
