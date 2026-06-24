@@ -53,9 +53,10 @@ data/
     merged_with_sentiment_full.parquet     ← 2019-2026, 932K rows ✓
   features/
     features_expanded.parquet             ← 2019-2024 backup (keep)
-    features_full.parquet                 ← 2019-2026, 14,889 rows ✓ PRIMARY
+    features_full.parquet                 ← 2019-2026, 14,889 rows ✓ PRIMARY (phase3)
     features_complete.parquet             ← with news+ST merged ✓
     features_live_2026.parquet            ← live rows (grows daily, t+5 filled)
+    features_v2.parquet                   ← V2: 53,592 rows, 27 cols (incl. regime)
   live/
     paper_portfolio.json                  ← current portfolio state
     paper_performance.jsonl               ← daily PnL snapshots
@@ -105,6 +106,9 @@ scripts/
   fix3_switch_to_17_features.py ← Fix 3 protocol
   test_historical_run.py        ← backfill test against historical feature store
   merge_external_features.py    ← merges news+ST into feature store
+  build_features_v2.py          ← V2: builds features_v2.parquet (27 cols + regime)
+  train_models_v2.py            ← V2: GKX stumps with ICEarlyStopping, 16 features
+  run_backtest_v2.py            ← V2: rank-based core-satellite backtest
 
 api/
   main.py                       ← FastAPI thin entry point + /dashboard route
@@ -169,6 +173,8 @@ Ticker cooldown: 7 days
 
 ## Model State
 
+### Phase 3 — Live System (ACTIVE)
+
 ```
 Current model:    phase3_v3_multihorizon
 Features:         14 (8 market + 3 attention + 1 news + 2 StockTwits)
@@ -185,12 +191,49 @@ Train/test gap:   0.35
 
 Feature store:    data/features/features_full.parquet (14,889 rows)
 
-IMPORTANT: news/ST retrain completed but did NOT improve IC:
+news/ST retrain did NOT improve IC:
   2019-2022 train (with real ST data):  IC = 0.0686
   2019-2023 train (features_full):      IC = 0.0796  ← best, current
-  Reason: news coverage only 24-38%, ST only covers 2019-2022.
-  Source validation sprint (PROJECT_COMPLETION_SPRINT.md) will
-  formally test whether any combination beats current baseline.
+```
+
+### V2 Research Track — GKX Stumps + Regime Features (NOT in live system yet)
+
+```
+Architecture:  GKX stumps (Gu, Kelly & Xiu 2020)
+               max_depth=1, Pseudo-Huber loss, L2 reg_lambda=5, min_child_weight=20
+               Per-horizon gamma: 1D=0.0 / 3D=0.1 / 5D=0.5
+               ICEarlyStopping callback (Spearman) — two-phase: scout then clean fit
+
+Features (16): 14 phase3 features + 2 regime features:
+  spy_above_200ma  float — 1.0 if SPY close > SPY 200-day MA, else 0.0
+  regime_score     spy_above×0.6 + (1−vix_pct)×0.4
+
+Feature store: data/features/features_v2.parquet (53,592 rows, 27 cols)
+Density gate:  >= 5 (training) / >= 3 (backtest signal generation)
+Train gated:   12,032 rows  |  Test gated: 3,797 rows
+
+V2 model metrics (test 2024-2025):
+  model_1d_v2:  IC=0.041  trees=13  dir=53.7%
+  model_3d_v2:  IC=0.013  trees=1   dir=54.5%  (1 tree: gamma=0.1 limits splits)
+  model_5d_v2:  IC=0.041  trees=28  dir=55.8%
+  Note: lower IC vs phase3 0.0796 because GKX stumps compress predictions
+        to ~mean; signal is in rank ordering, not absolute magnitude
+
+V2 backtest (rank-based, core-satellite 70% SPY / 30% RSSS, 2024-2025 OOS):
+  Signal:   composite = 0.5×pred5d + 0.3×pred3d + 0.2×pred1d
+            top 2 per day, quality gates: score>0, regime_score≥0.3, rel_vol≥0.8
+  Combined: +35.6%  |  SPY: +49.7%  |  Alpha: -12.2%
+  Sharpe:   1.32  |  Max DD: -14.1%
+  Trades:   167   |  Win rate: 57.5%  |  p=0.063 (borderline, not significant)
+  Sys A = Sys B (model-reversal never fires — GKX stumps always predict positive)
+
+V2 files:
+  scripts/build_features_v2.py      ← builds features_v2.parquet (27 cols)
+  scripts/train_models_v2.py        ← GKX training with ICEarlyStopping
+  scripts/run_backtest_v2.py        ← rank-based core-satellite backtest
+  models/model_{1d,3d,5d}_v2.json  ← XGBoost JSON format (16 features)
+  models/training_metadata_v2.json  ← training metrics + status
+  experiments/backtest_v2_results.json
 ```
 
 ---
@@ -347,6 +390,12 @@ DONE — Cleanup Sprint (all 9 phases complete, June 2026):
   ✓ README.md rewritten
   ✓ CLAUDE.md updated
 
+DONE — V2 Research Sprint (June 2026):
+  ✓ build_features_v2.py: regime features (spy_above_200ma, regime_score), 27-col store
+  ✓ train_models_v2.py: GKX stumps, per-horizon gamma, ICEarlyStopping, 16 features
+  ✓ run_backtest_v2.py: rank-based core-satellite (70/30), 167 trades, Sharpe 1.32
+  V2 NOT deployed to live system — gate is IC improvement > 0.005 over 0.0796
+
 Priority 1 — NEXT (Claude Code):
   Part B: Signal Validation Sprint
     Create experiments/source_validation/validate_sources.py
@@ -464,5 +513,5 @@ bash push.sh "[scope] what you built"
 ---
 
 *CLAUDE.md — June 2026*
-*Updated: cleanup sprint complete (all 9 phases), API split into routes/,*
-*canonical compute_ic, live data in data/live/, docstrings added, README rewritten*
+*Updated: V2 research sprint complete — GKX stumps (16 features, regime), rank-based*
+*backtest (167 trades, Sharpe 1.32, p=0.063). V2 NOT in live system (gate: IC > 0.0796+0.005).*

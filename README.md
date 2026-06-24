@@ -26,15 +26,19 @@ annual IC, and walk-forward IC across four time windows (2022–2025).
 
 **Phase 4 — Paper Trading (live since June 15, 2026)**
 
-| Metric | Value |
-|---|---|
-| Model | XGBoost, 14 features, 5-day horizon |
-| Train split | 2019–2023 (3,106 rows after density gate) |
-| Test split | 2024–2025 (3,582 rows, 2-year out-of-sample) |
-| IC_test (5D) | **0.0796** |
-| Directional accuracy | **52.4%** |
-| Train/test IC gap | 0.35 (healthy) |
-| Automation | launchd, 09:00 / 11:30 / 14:00 ET Mon–Fri |
+| Metric | Phase 3 (live) | V2 Research Track |
+|---|---|---|
+| Model | XGBoost, 14 features | GKX stumps, 16 features |
+| Extra features | — | `spy_above_200ma`, `regime_score` |
+| Train split | 2019–2023 | 2019–2023 |
+| Test split | 2024–2025 (3,582 rows) | 2024–2025 (3,797 rows) |
+| IC_test (5D) | **0.0796** | 0.041 (rank-ordered, not absolute) |
+| Backtest trades | 57 (abs. threshold) | **167 (rank-based)** |
+| Backtest Sharpe | 0.93 | **1.32** |
+| Win rate | 54.4% | 57.5% |
+| Stat significant | NO | NO (p=0.063, borderline) |
+| Deployed to live | YES | NO (gate: ΔIC > 0.005) |
+| Automation | launchd, 09:00 / 11:30 / 14:00 ET Mon–Fri | — |
 
 Dashboard: `http://localhost:8000/dashboard`
 
@@ -129,6 +133,14 @@ Retrain on `features_complete.parquet` produced IC = 0.0686 — below the 0.0796
 baseline. News coverage is only 24–38%; StockTwits covers 2019–2022 only (0.0 for 2023+).
 Live fetchers populate all three sources daily for future retraining.
 
+**V2 GKX stump models with regime features.**
+Added `spy_above_200ma` (SPY > 200-day MA) and `regime_score` (SPY×0.6 + (1−VIX_pct)×0.4).
+GKX stumps (max_depth=1, Pseudo-Huber loss) compress predictions to near-mean — signal
+lives in rank ordering, not absolute magnitude. Rank-based backtest (top 2 tickers/day by
+composite score) produced 167 trades vs 57 previously, Sharpe 1.32 vs 0.93, win rate 57.5%,
+p=0.063 (borderline). Core-satellite 70% SPY / 30% RSSS structure. Not deployed to live
+system until IC gate is cleared (ΔIC > 0.005 over current 0.0796 baseline).
+
 ---
 
 ## Project Structure
@@ -213,7 +225,7 @@ archive/
 
 ## Model Details
 
-**14-feature locked set** (`experiments/phase3_locked_architecture.json`):
+### Phase 3 (live) — 14-feature locked set (`experiments/phase3_locked_architecture.json`)
 
 | Group | Features |
 |---|---|
@@ -226,6 +238,19 @@ archive/
 
 **IC monitoring gate**: GREEN ≥ 0.03 | AMBER 0.01–0.03 | RED < 0.01
 Fix 3 triggers only after **two consecutive** red weeks — never after one.
+
+### V2 (research) — 16-feature GKX stumps (`scripts/train_models_v2.py`)
+
+14 phase 3 features **plus**:
+
+| Group | Features |
+|---|---|
+| Regime (2) | spy_above_200ma, regime_score |
+
+Architecture: `max_depth=1`, Pseudo-Huber loss, `reg_lambda=5`, `min_child_weight=20`,
+per-horizon gamma (1D=0.0 / 3D=0.1 / 5D=0.5), ICEarlyStopping (Spearman).
+Feature store: `data/features/features_v2.parquet` (53,592 rows, 27 cols).
+Models: `models/model_{1d,3d,5d}_v2.json` (XGBoost JSON, not pkl).
 
 ---
 
@@ -262,4 +287,4 @@ Reload: launchctl unload ~/Library/LaunchAgents/com.rsss.dailyrun.plist \
 
 ---
 
-*Phase 4 — Paper Trading | June 2026 | IC_test=0.0796 | dir_acc=52.4%*
+*Phase 4 — Paper Trading | June 2026 | Phase3 IC=0.0796 | V2 rank-based Sharpe=1.32 (research)*

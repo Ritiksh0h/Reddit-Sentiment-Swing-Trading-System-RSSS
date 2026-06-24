@@ -1,0 +1,64 @@
+{
+  "trained_at": "2026-06-24T16:47:40.293723+00:00",
+  "feature_cols": [
+    "post_count_1d",
+    "abnormal_attention_1d",
+    "total_comments_1d",
+    "vader_sentiment_1d",
+    "sentiment_extremity",
+    "sentiment_accel",
+    "volume",
+    "relative_volume",
+    "returns_1d",
+    "returns_20d",
+    "rsi_14",
+    "news_sentiment_1d",
+    "vix_percentile",
+    "vix_x_volume",
+    "spy_above_200ma",
+    "regime_score"
+  ],
+  "feature_count": 16,
+  "density_gate": 5,
+  "train_rows": 35052,
+  "test_rows": 15060,
+  "train_rows_gated": 12032,
+  "test_rows_gated": 3797,
+  "train_date_range": [
+    "2019-01-02",
+    "2023-12-29"
+  ],
+  "test_date_range": [
+    "2024-01-02",
+    "2025-12-31"
+  ],
+  "model_1d": {
+    "train_ic": 0.040939551871710854,
+    "test_ic": 0.04076146761423349,
+    "train_dir": 0.5064827127659575,
+    "test_dir": 0.5370028970239663,
+    "n_train": 12032,
+    "n_test": 3797,
+    "n_trees": 13
+  },
+  "model_3d": {
+    "train_ic": 0.043538923627540756,
+    "test_ic": 0.012900211445651809,
+    "train_dir": 0.5306682180851063,
+    "test_dir": 0.5454306031077166,
+    "n_train": 12032,
+    "n_test": 3797,
+    "n_trees": 1
+  },
+  "model_5d": {
+    "train_ic": 0.04175190364930814,
+    "test_ic": 0.040782897837001356,
+    "train_dir": 0.5369015957446809,
+    "test_dir": 0.5578087964182249,
+    "n_train": 12032,
+    "n_test": 3797,
+    "n_trees": 28
+  },
+  "retrain_threshold_ic": 0.0846,
+  "status": "PASS"
+}

@@ -120,6 +120,14 @@ def build_market_data() -> dict[str, pd.DataFrame]:
         raw.columns = ["_".join(str(c) for c in col).strip()
                        for col in raw.columns]
 
+    # SPY 200-day MA for regime features — computed once, aligned per ticker
+    if "Close_SPY" in raw.columns:
+        _spy_close_full   = raw["Close_SPY"].dropna().sort_index()
+    else:
+        _spy_close_full   = pd.Series(dtype=float)
+    _spy_200ma_full       = _spy_close_full.rolling(200, min_periods=100).mean()
+    _spy_above_200ma_full = (_spy_close_full > _spy_200ma_full).astype(float)
+
     market_dfs: dict[str, pd.DataFrame] = {}
 
     for ticker in ALL_TICKERS:
@@ -153,6 +161,14 @@ def build_market_data() -> dict[str, pd.DataFrame]:
             # VIX percentile aligned to this ticker's trading dates
             vix_aligned = vix_pct.reindex(close.index, method="ffill").fillna(0.5)
 
+            # Regime features — SPY 200MA status + VIX calm composite
+            spy_above_s = (
+                _spy_above_200ma_full
+                .reindex(close.index, method="ffill")
+                .fillna(0.0)
+            )
+            regime_score_s = spy_above_s * 0.6 + (1.0 - vix_aligned) * 0.4
+
             # ── Forward close prices for target computation ─────────────────
             close_fwd1 = close.shift(-1)
             close_fwd3 = close.shift(-3)
@@ -169,6 +185,8 @@ def build_market_data() -> dict[str, pd.DataFrame]:
                     "rsi_14":           rsi_14.values,
                     "relative_volume":  rel_vol.values,
                     "vix_percentile":   vix_aligned.values,
+                    "spy_above_200ma":  spy_above_s.values,
+                    "regime_score":     regime_score_s.values,
                     "close_fwd1":       close_fwd1.values,
                     "close_fwd3":       close_fwd3.values,
                     "close_fwd5":       close_fwd5.values,
@@ -184,7 +202,8 @@ def build_market_data() -> dict[str, pd.DataFrame]:
 
             # Save per-ticker parquet (columns per spec)
             save_cols = ["date", "close", "volume", "returns_1d", "returns_20d",
-                         "rsi_14", "relative_volume", "vix_percentile"]
+                         "rsi_14", "relative_volume", "vix_percentile",
+                         "spy_above_200ma", "regime_score"]
             df[save_cols].to_parquet(MARKET_DIR / f"{ticker}_ohlcv.parquet", index=False)
 
             market_dfs[ticker] = df
@@ -551,6 +570,7 @@ def build_feature_grid(
     mkt_all["date"] = pd.to_datetime(mkt_all["date"])
     mkt_cols = ["ticker", "date", "close", "volume", "returns_1d", "returns_20d",
                 "rsi_14", "relative_volume", "vix_percentile",
+                "spy_above_200ma", "regime_score",
                 "close_fwd1", "close_fwd3", "close_fwd5"]
     grid = grid.merge(mkt_all[mkt_cols], on=["ticker", "date"], how="left")
 
@@ -632,10 +652,14 @@ def build_feature_grid(
                  "sentiment_accel", "comment_sentiment_1d"]
     MARKET    = ["volume", "relative_volume", "returns_1d", "returns_20d", "rsi_14"]
     NEWS      = ["news_sentiment_1d", "news_count_1d"]
-    REGIME    = ["vix_percentile"]
+    REGIME    = ["vix_percentile", "spy_above_200ma", "regime_score"]
     TARGETS   = ["target_return_1d", "target_return_3d", "target_return_5d"]
 
-    FINAL_COLS = IDENTITY + ATTENTION + SENTIMENT + MARKET + NEWS + REGIME + TARGETS
+    # Interaction feature — high VIX fear + abnormal volume = strong signal
+    grid["vix_x_volume"] = grid["vix_percentile"] * grid["relative_volume"]
+
+    INTERACTION = ["vix_x_volume"]
+    FINAL_COLS = IDENTITY + ATTENTION + SENTIMENT + MARKET + NEWS + REGIME + INTERACTION + TARGETS
     # Keep close for potential debugging but not as a model feature
     grid = grid[FINAL_COLS + ["close"]].copy()
 
@@ -676,6 +700,7 @@ def validate(df: pd.DataFrame) -> None:
         "comment_sentiment_1d", "volume", "relative_volume",
         "returns_1d", "returns_20d", "rsi_14",
         "news_sentiment_1d", "vix_percentile",
+        "vix_x_volume", "spy_above_200ma", "regime_score",
     ]
 
     train = df[(df["split"] == "train") & df["target_return_5d"].notna()].copy()
