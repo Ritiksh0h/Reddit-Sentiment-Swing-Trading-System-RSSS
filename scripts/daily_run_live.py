@@ -104,7 +104,7 @@ def main():
     try:
         from data.reddit_live_fetcher import fetch_recent_posts, compute_mention_growth
 
-        reddit_counts_raw = fetch_recent_posts(hours_back=24)
+        reddit_counts_raw = fetch_recent_posts()
 
         if not reddit_counts_raw:
             logger.warning('No Reddit data fetched — api_anomaly handler will trigger')

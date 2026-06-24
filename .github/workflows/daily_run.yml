@@ -1,0 +1,49 @@
+name: RSSS Daily Pipeline
+
+on:
+  schedule:
+    # 08:30 ET = 12:30 UTC (EST) or 13:30 UTC (EDT)
+    # Run at both times to handle daylight saving
+    - cron: '30 12 * * 1-5'
+    - cron: '30 13 * * 1-5'
+  workflow_dispatch:  # manual trigger button
+
+jobs:
+  daily-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run daily pipeline
+        env:
+          FINNHUB_API_KEY:      ${{ secrets.FINNHUB_API_KEY }}
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
+          stocktwits_token:     ${{ secrets.STOCKTWITS_TOKEN }}
+          DEEPSEEK_API_KEY:     ${{ secrets.DEEPSEEK_API_KEY }}
+          HF_TOKEN:             ${{ secrets.HF_TOKEN }}
+          DB_URL:               ${{ secrets.DB_URL }}
+          LOG_LEVEL:            INFO
+        run: |
+          python scripts/daily_run_live.py
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-logs-${{ github.run_number }}
+          path: logs/
+          retention-days: 30

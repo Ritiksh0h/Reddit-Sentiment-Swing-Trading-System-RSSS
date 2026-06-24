@@ -6,6 +6,9 @@ scipy>=1.17
 # Market data
 yfinance>=1.4
 
+# HTTP client (Arctic Shift Reddit API)
+requests>=2.31
+
 # Reddit (pending API approval)
 praw>=7.7
 
@@ -41,6 +44,10 @@ alembic>=1.13
 
 # Database
 psycopg2-binary>=2.9
+
+# Scheduling (Railway container + local)
+schedule>=1.2
+pytz>=2024.1
 
 # Testing
 pytest>=8.0

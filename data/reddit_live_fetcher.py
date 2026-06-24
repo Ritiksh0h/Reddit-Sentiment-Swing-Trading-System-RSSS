@@ -1,6 +1,6 @@
 """
 Live Reddit post fetcher using Arctic Shift API.
-Fetches posts from the last 24 hours for tracked tickers.
+Uses a 24-72h delay window to stay within Arctic Shift's indexing lag.
 
 Arctic Shift endpoint:
     https://arctic-shift.photon-reddit.com/api/posts/search
@@ -22,7 +22,15 @@ import requests
 logger = logging.getLogger(__name__)
 
 ARCTIC_SHIFT_BASE  = 'https://arctic-shift.photon-reddit.com/api/posts/search'
-TRACKED_SUBREDDITS = ['wallstreetbets', 'stocks', 'investing', 'options']
+TRACKED_SUBREDDITS = ['wallstreetbets', 'stocks', 'investing', 'options', 'SecurityAnalysis']
+
+# Delay window: fetch posts from 72h ago up to 24h ago.
+# Arctic Shift indexes posts with a ~24-48h lag — fetching too recent
+# risks missing posts that haven't been indexed yet.
+FETCH_HOURS_START = 72  # window open (older boundary)
+FETCH_HOURS_END   = 24  # window close (newer boundary)
+
+USER_AGENT = 'rsss-swing-trader/1.0'
 
 from config.settings import load_tickers, TICKERS_TRADE_PATH, TICKERS_WATCH_PATH
 
@@ -69,18 +77,21 @@ def _fetch_subreddit_page(subreddit: str, after: int, before: int) -> list:
         'before':    before,
         'limit':     API_PAGE_LIMIT,
     }
-    resp = requests.get(ARCTIC_SHIFT_BASE, params=params, timeout=15)
+    headers = {'User-Agent': USER_AGENT}
+    resp = requests.get(ARCTIC_SHIFT_BASE, params=params, headers=headers, timeout=15)
     resp.raise_for_status()
     return resp.json().get('data', [])
 
 
 def fetch_recent_posts(
-    hours_back: int = 24,
+    hours_start: int = FETCH_HOURS_START,
+    hours_end: int   = FETCH_HOURS_END,
     max_pages_per_subreddit: int = 5,
 ) -> dict:
     """
-    Fetch posts from the last `hours_back` hours across all tracked subreddits.
-    Paginates up to `max_pages_per_subreddit` × 100 posts per subreddit.
+    Fetch posts from the 24–72h delay window across all tracked subreddits.
+    Uses a delayed window (default: 72h → 24h ago) to stay within Arctic
+    Shift's indexing lag — fetching real-time risks missing un-indexed posts.
 
     Returns:
         dict of ticker → {
@@ -93,8 +104,8 @@ def fetch_recent_posts(
     Returns empty dict on total API failure → triggers api_anomaly handler.
     """
     now    = datetime.now(timezone.utc)
-    after  = int((now - timedelta(hours=hours_back)).timestamp())
-    before = int(now.timestamp())
+    after  = int((now - timedelta(hours=hours_start)).timestamp())
+    before = int((now - timedelta(hours=hours_end)).timestamp())
 
     ticker_posts  = defaultdict(list)
     total_fetched = 0
