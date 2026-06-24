@@ -7,9 +7,12 @@ Coverage: 20-35 tickers with recent news on a typical trading day.
 Latency: ~15-25 seconds for full ticker list.
 """
 import logging
+import os
 import time
 
 import yfinance as yf
+
+SKIP_FINBERT = os.getenv('SKIP_FINBERT', '0') == '1'
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +27,8 @@ def _score_headlines_finbert(headlines: list) -> list:
     """Run FinBERT on headlines. Returns scores -1.0 to +1.0."""
     if not headlines:
         return []
+    if SKIP_FINBERT:
+        return [0.0] * len(headlines)
     try:
         from transformers import pipeline as hf_pipeline
         import torch

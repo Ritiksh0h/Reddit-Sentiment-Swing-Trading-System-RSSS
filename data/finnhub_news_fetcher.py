@@ -14,6 +14,7 @@ Output format matches fetch_yfinance_news() — drop-in replacement.
 """
 
 import logging
+import os
 import time
 from datetime import date, datetime, timedelta, timezone
 
@@ -25,6 +26,8 @@ logger = logging.getLogger(__name__)
 FINNHUB_BASE    = "https://finnhub.io/api/v1"
 RATE_LIMIT_SLEEP = 1.1   # free tier: 60 calls/min
 RETRY_SLEEP_429  = 60    # sleep on 429 before one retry
+
+SKIP_FINBERT = os.getenv('SKIP_FINBERT', '0') == '1'
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -88,7 +91,40 @@ def fetch_ticker_news(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Step 1B — FinBERT scoring with VADER fallback
+# Step 1B — Finnhub native sentiment (no model loading)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def fetch_native_sentiment(ticker: str, api_key: str) -> float | None:
+    """
+    Fetch Finnhub pre-computed news sentiment via /news-sentiment endpoint.
+    Returns score in [-1, +1], or None if endpoint unavailable or no data.
+
+    Prefers buzz.sentiment if present; falls back to bullishPercent - bearishPercent.
+    Completely avoids model loading — primary path when SKIP_FINBERT=1.
+    """
+    if not api_key:
+        return None
+    url = f"{FINNHUB_BASE}/news-sentiment?symbol={ticker}&token={api_key}"
+    try:
+        resp = requests.get(url, timeout=10)
+        if resp.status_code != 200:
+            return None
+        data = resp.json()
+        buzz_sentiment = data.get("buzz", {}).get("sentiment", None)
+        if buzz_sentiment is not None:
+            return float(buzz_sentiment)
+        bull = data.get("sentiment", {}).get("bullishPercent", None)
+        bear = data.get("sentiment", {}).get("bearishPercent", None)
+        if bull is not None and bear is not None:
+            return float(bull) - float(bear)
+        return None
+    except Exception as e:
+        logger.debug(f"finnhub_native_sentiment_failed ticker={ticker}: {e}")
+        return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Step 1C — FinBERT scoring with VADER fallback
 # ─────────────────────────────────────────────────────────────────────────────
 
 def score_articles(articles: list[dict]) -> list[float]:
@@ -109,8 +145,10 @@ def score_articles(articles: list[dict]) -> list[float]:
         combined = (headline + ". " + summary).strip()
         texts.append(combined[:512])
 
-    # ── Try FinBERT ──────────────────────────────────────────────────────────
+    # ── Try FinBERT (skip in CI) ─────────────────────────────────────────────
     try:
+        if SKIP_FINBERT:
+            raise RuntimeError('SKIP_FINBERT=1')
         from transformers import pipeline as hf_pipeline
         import torch
 
@@ -157,7 +195,7 @@ def score_articles(articles: list[dict]) -> list[float]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Step 1C — Daily aggregation
+# Step 1D — Daily aggregation
 # ─────────────────────────────────────────────────────────────────────────────
 
 def compute_daily_sentiment(
@@ -203,7 +241,7 @@ def compute_daily_sentiment(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Step 1D — Live daily fetch (called by daily_run_live.py)
+# Step 1E — Live daily fetch (called by daily_run_live.py)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def fetch_live_news_sentiment(
@@ -226,8 +264,19 @@ def fetch_live_news_sentiment(
     results: dict[str, dict] = {}
 
     for ticker in tickers:
-        articles = fetch_ticker_news(ticker, yesterday, today, api_key)
+        # Primary path: Finnhub native sentiment — no model loading
+        native_score = fetch_native_sentiment(ticker, api_key)
+        if native_score is not None:
+            results[ticker] = {
+                "news_count_1d":     1,
+                "news_sentiment_1d": round(native_score, 4),
+                "news_titles":       [],
+            }
+            time.sleep(RATE_LIMIT_SLEEP)
+            continue
 
+        # Fallback: score article headlines with FinBERT/VADER
+        articles = fetch_ticker_news(ticker, yesterday, today, api_key)
         if articles:
             scores = score_articles(articles)
             titles = [
