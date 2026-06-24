@@ -1,0 +1,29 @@
+# Development / training dependencies
+# NOT installed in CI (daily_run_live.py doesn't need these)
+# Install with: pip install -r requirements.txt -r requirements-dev.txt
+
+# Heavy NLP (FinBERT) — skipped in live pipeline via SKIP_FINBERT=1
+torch>=2.0
+transformers>=4.40
+
+# SHAP attribution — lazy-imported in api/routes/predictions.py (/shap/{ticker})
+shap>=0.45
+
+# LightGBM — research/experiments only (not in live pipeline)
+lightgbm>=4.0
+
+# Sklearn / statsmodels — training scripts only
+scikit-learn>=1.4
+statsmodels>=0.14
+
+# Feature engineering — historical pipeline only
+pandas-market-calendars>=4.3
+
+# Data validation — historical pipeline only
+pandera>=0.19
+
+# Structured logging — historical pipeline only
+structlog>=24.0
+
+# Database migrations — setup only, not runtime
+alembic>=1.13

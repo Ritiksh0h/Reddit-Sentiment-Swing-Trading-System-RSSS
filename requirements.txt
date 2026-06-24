@@ -12,34 +12,19 @@ requests>=2.31
 # Reddit (pending API approval)
 praw>=7.7
 
-# NLP / Sentiment
-transformers>=4.40
-torch>=2.0
+# NLP / Sentiment (lightweight — FinBERT disabled in CI via SKIP_FINBERT=1)
+vaderSentiment>=3.3
 
-# ML
+# ML — inference only
 xgboost>=2.0
-lightgbm>=4.0
-scikit-learn>=1.4
-statsmodels>=0.14
-shap>=0.45
-
-# Feature engineering
-pandas-market-calendars>=4.3
-
-# Data validation
-pandera>=0.19
-
-# Logging
-structlog>=24.0
 
 # Environment
 python-dotenv>=1.0
 
-# API (Phase 3)
+# API server
 fastapi>=0.111
 uvicorn>=0.29
 sqlalchemy>=2.0
-alembic>=1.13
 
 # Database
 psycopg2-binary>=2.9
