@@ -24,7 +24,6 @@ statsmodels>=0.14
 shap>=0.45
 
 # Feature engineering
-pandas-ta>=0.3
 pandas-market-calendars>=4.3
 
 # Data validation
