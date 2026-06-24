@@ -1,0 +1,566 @@
+{
+  "generated_at": "2026-06-24T19:04:17.372020+00:00",
+  "wf_start": "2019-01-01",
+  "wf_end": "2025-12-31",
+  "fold_step": 63,
+  "min_train": 252,
+  "purge_days": 5,
+  "embargo_days": 5,
+  "is_lookback": 252,
+  "feature_count": 16,
+  "aggregate": {
+    "n_folds": 23,
+    "pooled_sharpe": 0.857,
+    "avg_return_per_fold": 3.19,
+    "avg_win_rate": 0.5017,
+    "total_trades": 692,
+    "wfe": 1.246,
+    "dsr_confidence": 0.0,
+    "pct_positive_folds": 0.739,
+    "bear_2022_return": -3.88,
+    "regime_summary": {
+      "bull_2019": {
+        "n_folds": 1,
+        "avg_return": -15.54,
+        "avg_sharpe": -1.642,
+        "win_rate": 0.5172,
+        "n_trades": 29
+      },
+      "covid_crash": {
+        "n_folds": 1,
+        "avg_return": 17.52,
+        "avg_sharpe": 3.12,
+        "win_rate": 0.8889,
+        "n_trades": 18
+      },
+      "covid_recovery": {
+        "n_folds": 3,
+        "avg_return": 8.1,
+        "avg_sharpe": 2.646,
+        "win_rate": 0.5476,
+        "n_trades": 126
+      },
+      "meme_bull_2021": {
+        "n_folds": 4,
+        "avg_return": 2.05,
+        "avg_sharpe": 1.099,
+        "win_rate": 0.487,
+        "n_trades": 154
+      },
+      "bear_2022": {
+        "n_folds": 3,
+        "avg_return": -3.88,
+        "avg_sharpe": -0.774,
+        "win_rate": 0.2381,
+        "n_trades": 21
+      },
+      "recovery_2023": {
+        "n_folds": 4,
+        "avg_return": 4.49,
+        "avg_sharpe": 1.737,
+        "win_rate": 0.5561,
+        "n_trades": 187
+      },
+      "ai_bull_2024": {
+        "n_folds": 7,
+        "avg_return": 4.67,
+        "avg_sharpe": 1.885,
+        "win_rate": 0.586,
+        "n_trades": 157
+      }
+    },
+    "gates": {
+      "g1_pooled_sharpe_ge_0.8": true,
+      "g2_60pct_profitable": true,
+      "g3_bear_2022_gt_neg20": true,
+      "g4_wfe_ge_0.5": true,
+      "g5_dsr_ge_0.95": false,
+      "overall": false
+    }
+  },
+  "folds": [
+    {
+      "fold": 1,
+      "regime": "bull_2019",
+      "train_end": "2019-12-17",
+      "test_start": "2020-01-02",
+      "test_end": "2020-04-02",
+      "oos": {
+        "n_trades": 29,
+        "total_return_pct": -15.542,
+        "sat_return_pct": -0.139,
+        "win_rate": 0.5172,
+        "sharpe": -1.642,
+        "max_dd_pct": -24.56
+      },
+      "is_sharpe": 2.007,
+      "is_ic": {
+        "1d": 0.20784599946661247,
+        "3d": 0.0,
+        "5d": 0.0
+      }
+    },
+    {
+      "fold": 2,
+      "regime": "covid_crash",
+      "train_end": "2020-03-19",
+      "test_start": "2020-04-02",
+      "test_end": "2020-07-02",
+      "oos": {
+        "n_trades": 18,
+        "total_return_pct": 17.516,
+        "sat_return_pct": 1.585,
+        "win_rate": 0.8889,
+        "sharpe": 3.12,
+        "max_dd_pct": -5.38
+      },
+      "is_sharpe": -0.38,
+      "is_ic": {
+        "1d": 0.2139058712847679,
+        "3d": 0.158079022689776,
+        "5d": 0.0
+      }
+    },
+    {
+      "fold": 3,
+      "regime": "covid_recovery",
+      "train_end": "2020-06-18",
+      "test_start": "2020-07-02",
+      "test_end": "2020-10-01",
+      "oos": {
+        "n_trades": 41,
+        "total_return_pct": 6.804,
+        "sat_return_pct": 3.51,
+        "win_rate": 0.561,
+        "sharpe": 2.1,
+        "max_dd_pct": -7.28
+      },
+      "is_sharpe": 0.429,
+      "is_ic": {
+        "1d": 0.18063451020517857,
+        "3d": 0.22532200753524678,
+        "5d": 0.10413335575431651
+      }
+    },
+    {
+      "fold": 4,
+      "regime": "covid_recovery",
+      "train_end": "2020-09-17",
+      "test_start": "2020-10-01",
+      "test_end": "2020-12-31",
+      "oos": {
+        "n_trades": 40,
+        "total_return_pct": 9.256,
+        "sat_return_pct": 4.635,
+        "win_rate": 0.5,
+        "sharpe": 3.056,
+        "max_dd_pct": -5.41
+      },
+      "is_sharpe": 0.596,
+      "is_ic": {
+        "1d": 0.16250777134375266,
+        "3d": 0.15783293653927874,
+        "5d": 0.08988608797208056
+      }
+    },
+    {
+      "fold": 5,
+      "regime": "covid_recovery",
+      "train_end": "2020-12-16",
+      "test_start": "2020-12-31",
+      "test_end": "2021-04-05",
+      "oos": {
+        "n_trades": 45,
+        "total_return_pct": 8.225,
+        "sat_return_pct": 6.697,
+        "win_rate": 0.5778,
+        "sharpe": 2.781,
+        "max_dd_pct": -2.81
+      },
+      "is_sharpe": 0.659,
+      "is_ic": {
+        "1d": 0.14663057493071266,
+        "3d": 0.14683284553362666,
+        "5d": 0.07938344696337053
+      }
+    },
+    {
+      "fold": 6,
+      "regime": "meme_bull_2021",
+      "train_end": "2021-03-19",
+      "test_start": "2021-04-05",
+      "test_end": "2021-07-02",
+      "oos": {
+        "n_trades": 44,
+        "total_return_pct": 4.578,
+        "sat_return_pct": -0.889,
+        "win_rate": 0.5227,
+        "sharpe": 2.367,
+        "max_dd_pct": -3.07
+      },
+      "is_sharpe": 2.287,
+      "is_ic": {
+        "1d": 0.12510133337740245,
+        "3d": 0.11749542438867326,
+        "5d": 0.09285220804986823
+      }
+    },
+    {
+      "fold": 7,
+      "regime": "meme_bull_2021",
+      "train_end": "2021-06-18",
+      "test_start": "2021-07-02",
+      "test_end": "2021-10-01",
+      "oos": {
+        "n_trades": 42,
+        "total_return_pct": 0.451,
+        "sat_return_pct": 0.827,
+        "win_rate": 0.4762,
+        "sharpe": 0.296,
+        "max_dd_pct": -4.0
+      },
+      "is_sharpe": 2.26,
+      "is_ic": {
+        "1d": 0.11342283847664673,
+        "3d": 0.14087301488425602,
+        "5d": 0.08432420499713707
+      }
+    },
+    {
+      "fold": 8,
+      "regime": "meme_bull_2021",
+      "train_end": "2021-09-17",
+      "test_start": "2021-10-01",
+      "test_end": "2021-12-31",
+      "oos": {
+        "n_trades": 43,
+        "total_return_pct": 6.661,
+        "sat_return_pct": -0.19,
+        "win_rate": 0.5349,
+        "sharpe": 2.526,
+        "max_dd_pct": -3.33
+      },
+      "is_sharpe": 2.576,
+      "is_ic": {
+        "1d": 0.10283479103944436,
+        "3d": 0.12089405404098173,
+        "5d": 0.07033714447098306
+      }
+    },
+    {
+      "fold": 9,
+      "regime": "meme_bull_2021",
+      "train_end": "2021-12-16",
+      "test_start": "2021-12-31",
+      "test_end": "2022-04-01",
+      "oos": {
+        "n_trades": 25,
+        "total_return_pct": -3.498,
+        "sat_return_pct": -1.19,
+        "win_rate": 0.36,
+        "sharpe": -0.795,
+        "max_dd_pct": -9.86
+      },
+      "is_sharpe": 2.212,
+      "is_ic": {
+        "1d": 0.10385422503047459,
+        "3d": 0.10287357898978501,
+        "5d": 0.05034667569471787
+      }
+    },
+    {
+      "fold": 10,
+      "regime": "bear_2022",
+      "train_end": "2022-03-18",
+      "test_start": "2022-04-01",
+      "test_end": "2022-07-05",
+      "oos": {
+        "n_trades": 2,
+        "total_return_pct": -10.913,
+        "sat_return_pct": -0.373,
+        "win_rate": 0.0,
+        "sharpe": -2.276,
+        "max_dd_pct": -13.98
+      },
+      "is_sharpe": 0.909,
+      "is_ic": {
+        "1d": 0.0704965000435313,
+        "3d": 0.08502514994780073,
+        "5d": 0.060433495578948
+      }
+    },
+    {
+      "fold": 11,
+      "regime": "bear_2022",
+      "train_end": "2022-06-17",
+      "test_start": "2022-07-05",
+      "test_end": "2022-10-03",
+      "oos": {
+        "n_trades": 1,
+        "total_return_pct": -2.758,
+        "sat_return_pct": -0.399,
+        "win_rate": 0.0,
+        "sharpe": -0.609,
+        "max_dd_pct": -12.08
+      },
+      "is_sharpe": -0.506,
+      "is_ic": {
+        "1d": 0.05800468609039354,
+        "3d": 0.11450384518325825,
+        "5d": 0.05756982043109241
+      }
+    },
+    {
+      "fold": 12,
+      "regime": "bear_2022",
+      "train_end": "2022-09-19",
+      "test_start": "2022-10-03",
+      "test_end": "2023-01-03",
+      "oos": {
+        "n_trades": 18,
+        "total_return_pct": 2.03,
+        "sat_return_pct": -3.025,
+        "win_rate": 0.2778,
+        "sharpe": 0.562,
+        "max_dd_pct": -6.1
+      },
+      "is_sharpe": -0.546,
+      "is_ic": {
+        "1d": 0.07561542665296322,
+        "3d": 0.12712547323714693,
+        "5d": 0.06074295579224513
+      }
+    },
+    {
+      "fold": 13,
+      "regime": "recovery_2023",
+      "train_end": "2022-12-16",
+      "test_start": "2023-01-03",
+      "test_end": "2023-04-04",
+      "oos": {
+        "n_trades": 49,
+        "total_return_pct": 6.651,
+        "sat_return_pct": 4.526,
+        "win_rate": 0.5714,
+        "sharpe": 2.089,
+        "max_dd_pct": -5.62
+      },
+      "is_sharpe": -0.761,
+      "is_ic": {
+        "1d": 0.06934052352510511,
+        "3d": 0.09788672766185248,
+        "5d": 0.06440450656045034
+      }
+    },
+    {
+      "fold": 14,
+      "regime": "recovery_2023",
+      "train_end": "2023-03-21",
+      "test_start": "2023-04-04",
+      "test_end": "2023-07-06",
+      "oos": {
+        "n_trades": 48,
+        "total_return_pct": 6.501,
+        "sat_return_pct": 3.42,
+        "win_rate": 0.6458,
+        "sharpe": 2.842,
+        "max_dd_pct": -2.31
+      },
+      "is_sharpe": -0.313,
+      "is_ic": {
+        "1d": 0.072909534770153,
+        "3d": 0.10304041708025065,
+        "5d": 0.05928896153572147
+      }
+    },
+    {
+      "fold": 15,
+      "regime": "recovery_2023",
+      "train_end": "2023-06-21",
+      "test_start": "2023-07-06",
+      "test_end": "2023-10-04",
+      "oos": {
+        "n_trades": 44,
+        "total_return_pct": -2.935,
+        "sat_return_pct": -2.28,
+        "win_rate": 0.4318,
+        "sharpe": -1.263,
+        "max_dd_pct": -6.44
+      },
+      "is_sharpe": 1.007,
+      "is_ic": {
+        "1d": 0.051911043069119034,
+        "3d": 0.1134138221213934,
+        "5d": 0.06266719669876944
+      }
+    },
+    {
+      "fold": 16,
+      "regime": "recovery_2023",
+      "train_end": "2023-09-20",
+      "test_start": "2023-10-04",
+      "test_end": "2024-01-04",
+      "oos": {
+        "n_trades": 46,
+        "total_return_pct": 7.732,
+        "sat_return_pct": 1.7,
+        "win_rate": 0.5652,
+        "sharpe": 3.28,
+        "max_dd_pct": -4.72
+      },
+      "is_sharpe": 0.799,
+      "is_ic": {
+        "1d": 0.06110769177281714,
+        "3d": 0.09005055365896229,
+        "5d": 0.059597664770898055
+      }
+    },
+    {
+      "fold": 17,
+      "regime": "ai_bull_2024",
+      "train_end": "2023-12-19",
+      "test_start": "2024-01-04",
+      "test_end": "2024-04-05",
+      "oos": {
+        "n_trades": 30,
+        "total_return_pct": 8.165,
+        "sat_return_pct": 1.259,
+        "win_rate": 0.6,
+        "sharpe": 3.786,
+        "max_dd_pct": -1.44
+      },
+      "is_sharpe": 1.764,
+      "is_ic": {
+        "1d": 0.07085632677036044,
+        "3d": 0.10532271663639073,
+        "5d": 0.06066629216453667
+      }
+    },
+    {
+      "fold": 18,
+      "regime": "ai_bull_2024",
+      "train_end": "2024-03-21",
+      "test_start": "2024-04-05",
+      "test_end": "2024-07-08",
+      "oos": {
+        "n_trades": 28,
+        "total_return_pct": 4.481,
+        "sat_return_pct": -2.08,
+        "win_rate": 0.5714,
+        "sharpe": 2.419,
+        "max_dd_pct": -3.27
+      },
+      "is_sharpe": 2.499,
+      "is_ic": {
+        "1d": 0.07308548247713692,
+        "3d": 0.09516195725861289,
+        "5d": 0.05727533687917331
+      }
+    },
+    {
+      "fold": 19,
+      "regime": "ai_bull_2024",
+      "train_end": "2024-06-21",
+      "test_start": "2024-07-08",
+      "test_end": "2024-10-04",
+      "oos": {
+        "n_trades": 18,
+        "total_return_pct": 2.789,
+        "sat_return_pct": 1.484,
+        "win_rate": 0.5556,
+        "sharpe": 1.046,
+        "max_dd_pct": -6.17
+      },
+      "is_sharpe": 2.175,
+      "is_ic": {
+        "1d": 0.07842551448497206,
+        "3d": 0.10585839551061718,
+        "5d": 0.051377622223582504
+      }
+    },
+    {
+      "fold": 20,
+      "regime": "ai_bull_2024",
+      "train_end": "2024-09-20",
+      "test_start": "2024-10-04",
+      "test_end": "2025-01-06",
+      "oos": {
+        "n_trades": 30,
+        "total_return_pct": 3.679,
+        "sat_return_pct": 2.697,
+        "win_rate": 0.6,
+        "sharpe": 1.595,
+        "max_dd_pct": -2.43
+      },
+      "is_sharpe": 2.298,
+      "is_ic": {
+        "1d": 0.05522472199446302,
+        "3d": 0.07224561827821498,
+        "5d": 0.053669114207050075
+      }
+    },
+    {
+      "fold": 21,
+      "regime": "ai_bull_2024",
+      "train_end": "2024-12-19",
+      "test_start": "2025-01-06",
+      "test_end": "2025-04-08",
+      "oos": {
+        "n_trades": 20,
+        "total_return_pct": -11.628,
+        "sat_return_pct": -0.299,
+        "win_rate": 0.4,
+        "sharpe": -3.07,
+        "max_dd_pct": -13.46
+      },
+      "is_sharpe": 1.927,
+      "is_ic": {
+        "1d": 0.04609275931833892,
+        "3d": 0.08082445711577416,
+        "5d": 0.05104612519177183
+      }
+    },
+    {
+      "fold": 22,
+      "regime": "ai_bull_2024",
+      "train_end": "2025-03-25",
+      "test_start": "2025-04-08",
+      "test_end": "2025-07-10",
+      "oos": {
+        "n_trades": 17,
+        "total_return_pct": 19.497,
+        "sat_return_pct": 3.778,
+        "win_rate": 0.8824,
+        "sharpe": 3.774,
+        "max_dd_pct": -4.56
+      },
+      "is_sharpe": 0.78,
+      "is_ic": {
+        "1d": 0.05951743407323,
+        "3d": 0.09107572150483703,
+        "5d": 0.0494490093155966
+      }
+    },
+    {
+      "fold": 23,
+      "regime": "ai_bull_2024",
+      "train_end": "2025-06-25",
+      "test_start": "2025-07-10",
+      "test_end": "2025-10-08",
+      "oos": {
+        "n_trades": 14,
+        "total_return_pct": 5.701,
+        "sat_return_pct": 1.053,
+        "win_rate": 0.5,
+        "sharpe": 3.645,
+        "max_dd_pct": -1.86
+      },
+      "is_sharpe": 0.701,
+      "is_ic": {
+        "1d": 0.05635479094401019,
+        "3d": 0.06271046024118287,
+        "5d": 0.04892139817721851
+      }
+    }
+  ]
+}

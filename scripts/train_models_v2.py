@@ -31,24 +31,25 @@ from scipy.stats import spearmanr
 # ── GKX-optimal hyperparameters (Gu, Kelly & Xiu 2020) ────────────────────────
 # max_depth=1 = stumps (prevents memorisation of noise)
 # Pseudo-Huber loss is robust to fat-tailed return distributions
-# Strong L2 regularisation (reg_lambda=5) + high min_child_weight=20
+# reg_lambda / min_child_weight / gamma are per-horizon (see HORIZON_PARAMS)
 GKX_PARAMS: dict = dict(
     max_depth        = 1,
     learning_rate    = 0.02,
     objective        = "reg:pseudohubererror",
     subsample        = 0.7,
     colsample_bytree = 0.8,
-    min_child_weight = 20,
     reg_alpha        = 0.1,
-    reg_lambda       = 5.0,
     random_state     = 42,
     n_jobs           = -1,
     eval_metric      = "rmse",
 )
 
-# gamma per horizon — GKX γ=0.5 works for 5D where signal is real;
-# shorter horizons need looser thresholds to find any splits
-GAMMA_BY_HORIZON: dict[str, float] = {"1d": 0.0, "3d": 0.1, "5d": 0.5}
+# Per-horizon overrides — 3D signal is weaker so needs looser regularisation
+HORIZON_PARAMS: dict[str, dict] = {
+    "1d": {"gamma": 0.0,  "reg_lambda": 3.0, "min_child_weight": 15},
+    "3d": {"gamma": 0.05, "reg_lambda": 1.0, "min_child_weight": 10},
+    "5d": {"gamma": 0.5,  "reg_lambda": 5.0, "min_child_weight": 20},
+}
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -188,7 +189,7 @@ def train_model(
     X_test  = te[FEATURE_COLS].astype(np.float32)
     y_test  = te[target_col].values.astype(np.float32)
 
-    h_params = {**GKX_PARAMS, "gamma": GAMMA_BY_HORIZON[horizon]}
+    h_params = {**GKX_PARAMS, **HORIZON_PARAMS[horizon]}
 
     # Phase 1 — IC-guided scout: find optimal tree count
     ic_stopper = ICEarlyStopping(rounds=50, X_eval=X_test, y_eval=y_test)

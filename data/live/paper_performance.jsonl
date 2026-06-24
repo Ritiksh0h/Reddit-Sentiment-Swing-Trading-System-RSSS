@@ -25,3 +25,4 @@
 {"date": "2026-06-23", "portfolio_value": 10160.17, "starting_capital": 10000.0, "portfolio_return": 0.016, "spy_return_5d": -0.0178, "alpha": 0.0338, "n_trades_today": 0, "actions": [], "timestamp": "2026-06-23T13:43:34.169729+00:00"}
 {"date": "2026-06-23", "portfolio_value": 10160.17, "starting_capital": 10000.0, "portfolio_return": 0.016, "spy_return_5d": -0.0161, "alpha": 0.0322, "n_trades_today": 0, "actions": [], "timestamp": "2026-06-23T16:00:59.527072+00:00"}
 {"date": "2026-06-23", "portfolio_value": 10160.17, "starting_capital": 10000.0, "portfolio_return": 0.016, "spy_return_5d": -0.0184, "alpha": 0.0344, "n_trades_today": 0, "actions": [], "timestamp": "2026-06-23T19:58:09.017834+00:00"}
+{"date": "2026-06-24", "portfolio_value": 10160.17, "starting_capital": 10000.0, "portfolio_return": 0.016, "spy_return_5d": -0.0091, "alpha": 0.0252, "n_trades_today": 0, "actions": [], "timestamp": "2026-06-24T18:02:33.063626+00:00"}

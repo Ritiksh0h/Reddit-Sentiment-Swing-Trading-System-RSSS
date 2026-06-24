@@ -1,5 +1,5 @@
 {
-  "trained_at": "2026-06-24T16:47:40.293723+00:00",
+  "trained_at": "2026-06-24T18:51:51.485525+00:00",
   "feature_cols": [
     "post_count_1d",
     "abnormal_attention_1d",
