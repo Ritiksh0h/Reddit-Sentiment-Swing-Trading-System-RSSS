@@ -11,6 +11,49 @@ from api._helpers import _load_trade_log, _sanitize
 router = APIRouter()
 
 
+@router.get('/top-bullish')
+def get_top_bullish(n: int = 5):
+    """
+    Top n tickers by composite score from the latest daily run.
+    Composite = 0.5 * pred5d + 0.3 * pred3d + 0.2 * pred1d
+    Only OPEN signals are considered; sorted descending by composite.
+    """
+    trades = _load_trade_log(300)
+    opens  = [t for t in trades if t.get('action') == 'OPEN']
+    if not opens:
+        return {'date': None, 'tickers': [], 'total': 0}
+
+    latest_date = max(t.get('date', '') for t in opens)
+    day_opens   = [t for t in opens if t.get('date') == latest_date]
+
+    def _composite(t: dict) -> float:
+        p5 = float(t.get('predicted_5d') or t.get('predicted_return_5d') or 0)
+        p3 = float(t.get('predicted_3d') or 0)
+        p1 = float(t.get('predicted_1d') or 0)
+        return 0.5 * p5 + 0.3 * p3 + 0.2 * p1
+
+    ranked = sorted(day_opens, key=_composite, reverse=True)[:n]
+
+    result = []
+    for t in ranked:
+        p5 = float(t.get('predicted_5d') or t.get('predicted_return_5d') or 0)
+        p3 = float(t.get('predicted_3d') or 0)
+        p1 = float(t.get('predicted_1d') or 0)
+        result.append({
+            'ticker':          t.get('ticker'),
+            'signal':          t.get('signal', 'NEUTRAL'),
+            'composite_score': round(_composite(t), 6),
+            'predicted_1d':    round(p1, 6),
+            'predicted_3d':    round(p3, 6),
+            'predicted_5d':    round(p5, 6),
+            'confidence':      t.get('confidence', 0),
+            'post_count_1d':   t.get('post_count_1d', 0),
+            'date':            t.get('date'),
+        })
+
+    return {'date': latest_date, 'tickers': result, 'total': len(result)}
+
+
 @router.get('/top-predictions')
 def get_top_predictions():
     trades = _load_trade_log(200)

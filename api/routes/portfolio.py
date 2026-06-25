@@ -81,6 +81,41 @@ def get_positions():
     return _load_portfolio().get('positions', [])
 
 
+@router.get('/signals')
+def get_signals(n: int = 50):
+    """
+    Return all OPEN signals from the latest daily run date.
+    Falls back to the most recent n signals if no date boundary is found.
+    """
+    trades = _load_trade_log(n * 5)
+    opens  = [t for t in trades if t.get('action') == 'OPEN']
+    if not opens:
+        return {'date': None, 'signals': [], 'total': 0}
+
+    latest_date = max(t.get('date', '') for t in opens)
+    day_signals = [t for t in opens if t.get('date') == latest_date]
+
+    bullish = sorted(
+        [t for t in day_signals if t.get('signal') == 'BULLISH'],
+        key=lambda x: x.get('predicted_return_5d') or x.get('predicted_5d') or 0,
+        reverse=True,
+    )
+    bearish = sorted(
+        [t for t in day_signals if t.get('signal') == 'BEARISH'],
+        key=lambda x: x.get('predicted_return_5d') or x.get('predicted_5d') or 0,
+    )
+    neutral = [t for t in day_signals if t.get('signal', 'NEUTRAL') == 'NEUTRAL']
+
+    return {
+        'date':    latest_date,
+        'signals': bullish + neutral + bearish,
+        'total':   len(day_signals),
+        'bullish': len(bullish),
+        'bearish': len(bearish),
+        'neutral': len(neutral),
+    }
+
+
 @router.get('/signals/recent')
 def get_recent_signals(n: int = 20):
     trades = _load_trade_log(n * 3)
