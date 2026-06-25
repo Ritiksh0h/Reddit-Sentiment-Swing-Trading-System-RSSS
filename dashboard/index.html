@@ -61,7 +61,7 @@
             </div>
             <div class="flex items-center gap-2 bg-cardBg px-3 py-1.5 rounded border border-cardBorder">
                 <div id="health-indicator" class="w-2.5 h-2.5 rounded-full bg-accentBlue animate-pulse"></div>
-                <span id="health-text" class="text-xs font-mono font-bold uppercase tracking-wider text-zinc-300">Simulating Framework</span>
+                <span id="system-status" class="text-xs font-mono font-bold uppercase tracking-wider text-zinc-300">Simulating Framework</span>
             </div>
         </div>
     </div>
@@ -85,7 +85,7 @@
             </div>
             <div class="flex items-baseline gap-2 mb-2">
                 <span id="port-equity" class="text-3xl font-extrabold font-mono text-white">$—</span>
-                <span id="port-return" class="text-sm font-bold font-mono text-zinc-400">—</span>
+                <span id="port-total-return" class="text-sm font-bold font-mono text-zinc-400">—</span>
             </div>
             <div class="space-y-2 mt-4 pt-4 border-t border-cardBorder">
                 <div class="flex justify-between text-xs font-mono">
@@ -99,11 +99,17 @@
             <div class="grid grid-cols-2 gap-3 mt-5 pt-4 border-t border-cardBorder text-xs">
                 <div class="bg-panelBg p-2 rounded border border-cardBorder">
                     <p class="text-zinc-500">Active Positions</p>
-                    <p id="port-positions" class="font-bold font-mono text-white text-sm mt-0.5">— / 3 Max</p>
+                    <p id="port-positions-count" class="font-bold font-mono text-white text-sm mt-0.5">— / 3 Max</p>
                 </div>
                 <div class="bg-panelBg p-2 rounded border border-cardBorder">
                     <p class="text-zinc-500">Regime Sizing</p>
                     <p id="regime-sizing" class="font-bold font-mono text-accentBlue text-sm mt-0.5">— (—%)</p>
+                </div>
+            </div>
+            <div class="mt-3 text-xs font-mono">
+                <div class="flex justify-between items-center p-2 bg-panelBg rounded border border-cardBorder">
+                    <span class="text-zinc-500">Available Cash</span>
+                    <span id="port-cash" class="text-white font-bold">$10,000.00</span>
                 </div>
             </div>
         </section>
@@ -131,12 +137,31 @@
                 </h2>
                 <span id="trade-history-summary" class="text-xs font-mono bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">—</span>
             </div>
-            <div id="trade-history-container" class="space-y-2 max-h-[280px] overflow-y-auto custom-scrollbar">
-                <div class="text-xs text-zinc-500 font-mono text-center py-4">Toggle to <span class="text-accentBlue">Live RSSS API</span> to load</div>
+            <div class="max-h-[280px] overflow-y-auto custom-scrollbar">
+                <table class="w-full font-mono text-xs">
+                    <thead class="sticky top-0 bg-cardBg">
+                        <tr class="text-zinc-500 text-3xs uppercase border-b border-cardBorder">
+                            <th class="text-left py-1.5 pr-3 font-normal">Ticker</th>
+                            <th class="text-left py-1.5 px-2 font-normal">Entry</th>
+                            <th class="text-left py-1.5 px-2 font-normal">Exit</th>
+                            <th class="text-right py-1.5 px-2 font-normal">Entry&nbsp;$</th>
+                            <th class="text-right py-1.5 px-2 font-normal">Exit&nbsp;$</th>
+                            <th class="text-right py-1.5 px-2 font-normal">P&amp;L</th>
+                            <th class="text-center py-1.5 font-normal">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="trades-tbody">
+                        <tr>
+                            <td colspan="7" class="py-6 text-center text-zinc-500 text-xs font-mono">
+                                No trades yet — reset June 25, 2026
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             <div id="trade-history-footer" class="mt-3 pt-3 border-t border-cardBorder hidden">
                 <div class="grid grid-cols-3 gap-2 text-center text-xs font-mono">
-                    <div><div class="text-zinc-500">Win Rate</div><div id="th-winrate" class="text-white font-bold">—</div></div>
+                    <div><div class="text-zinc-500">Win Rate</div><div id="th-win-rate" class="text-white font-bold">—</div></div>
                     <div><div class="text-zinc-500">Total PnL</div><div id="th-total-pnl" class="font-bold">—</div></div>
                     <div><div class="text-zinc-500">Real Trades</div><div id="th-real" class="text-white font-bold">—</div></div>
                 </div>
@@ -520,6 +545,70 @@
     </div>
 </main>
 
+<!-- ── Live Signals + Top Bullish ─────────────────────────────────────── -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-4 md:px-6 mb-6 max-w-7xl mx-auto w-full">
+
+    <!-- Today's Signals -->
+    <section class="bg-cardBg border border-cardBorder rounded-xl p-5 shadow-lg">
+        <div class="flex justify-between items-center mb-3">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-zinc-300 font-mono flex items-center gap-2">
+                <i data-lucide="zap" class="w-4 h-4 text-bullish"></i> Today's Signals
+            </h2>
+            <span class="text-xs font-mono bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">Live Feed</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full font-mono text-xs">
+                <thead>
+                    <tr class="text-zinc-500 text-3xs uppercase border-b border-cardBorder">
+                        <th class="text-left pb-2 pr-3 font-normal">Ticker</th>
+                        <th class="text-left pb-2 px-2 font-normal">Signal</th>
+                        <th class="text-right pb-2 px-2 font-normal">5D Pred</th>
+                        <th class="text-right pb-2 px-2 font-normal">Conf</th>
+                        <th class="text-right pb-2 font-normal">Posts</th>
+                    </tr>
+                </thead>
+                <tbody id="signals-tbody">
+                    <tr>
+                        <td colspan="5" class="py-6 text-center text-zinc-500 text-xs font-mono">
+                            Waiting for v2 signals — reset June 25, 2026
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Top Bullish -->
+    <section class="bg-cardBg border border-cardBorder rounded-xl p-5 shadow-lg">
+        <div class="flex justify-between items-center mb-3">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-zinc-300 font-mono flex items-center gap-2">
+                <i data-lucide="trending-up" class="w-4 h-4 text-bullish"></i> Top Bullish
+            </h2>
+            <span class="text-xs font-mono bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">Composite Score</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full font-mono text-xs">
+                <thead>
+                    <tr class="text-zinc-500 text-3xs uppercase border-b border-cardBorder">
+                        <th class="text-left pb-2 pr-2 font-normal">#</th>
+                        <th class="text-left pb-2 pr-3 font-normal">Ticker</th>
+                        <th class="text-right pb-2 px-2 font-normal">Score</th>
+                        <th class="text-right pb-2 px-2 font-normal">5D Pred</th>
+                        <th class="text-right pb-2 font-normal">Conf</th>
+                    </tr>
+                </thead>
+                <tbody id="top-bullish-tbody">
+                    <tr>
+                        <td colspan="5" class="py-6 text-center text-zinc-500 text-xs font-mono">
+                            Waiting for v2 signals — reset June 25, 2026
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
 <!-- ── Backtest Panel ───────────────────────────────────────────────────── -->
 <section class="bg-cardBg border border-cardBorder rounded-xl p-5 shadow-lg mb-6 mx-4 md:mx-6 max-w-7xl w-full self-center" style="margin-left:auto;margin-right:auto;">
 
@@ -642,6 +731,7 @@
 <footer class="border-t border-cardBorder bg-cardBg py-4 text-center text-xs text-zinc-500">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
         <p>RSSS Swing Trading Engine · Out-of-sample IC: <span class="text-bullish font-mono font-bold">0.0796</span></p>
+        <p class="text-3xs font-mono">Updated: <span id="last-updated" class="text-zinc-400">—</span></p>
         <p class="text-3xs font-mono">com.rsss.api · port 8000 · Phase 4 Paper Trading</p>
     </div>
 </footer>
@@ -685,7 +775,7 @@
         const simBtn  = document.getElementById('toggle-sim-btn');
         const liveBtn = document.getElementById('toggle-live-btn');
         const panel   = document.getElementById('sim-sliders-panel');
-        const healthText = document.getElementById('health-text');
+        const healthText = document.getElementById('system-status');
         const healthDot  = document.getElementById('health-indicator');
         const active = "px-3 py-1.5 rounded-md text-xs font-semibold transition-all bg-accentBlue text-white";
         const inact  = "px-3 py-1.5 rounded-md text-xs font-semibold text-zinc-400 transition-all hover:text-white";
@@ -880,7 +970,7 @@
 
     async function apiFetch(path) {
         try {
-            const r = await fetch(window.location.origin + path);
+            const r = await fetch(API_BASE + path);
             if (!r.ok) return null;
             return await r.json();
         } catch { return null; }
@@ -889,53 +979,46 @@
     async function updateTradeHistory() {
         const data = await apiFetch('/trades/history');
         if (!data) return;
-        const container = document.getElementById('trade-history-container');
-        const summary   = document.getElementById('trade-history-summary');
-        const footer    = document.getElementById('trade-history-footer');
-        const trades    = data.trades || [];
-        summary.textContent = `${data.n_total} trades`;
+        const tbody   = document.getElementById('trades-tbody');
+        const summary = document.getElementById('trade-history-summary');
+        const footer  = document.getElementById('trade-history-footer');
+        const trades  = data.trades || [];
+        if (summary) summary.textContent = `${data.n_total} trades`;
         if (!trades.length) {
-            container.innerHTML = '<div class="text-xs text-zinc-500 font-mono text-center py-4">No closed trades yet</div>';
+            if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-zinc-500 text-xs font-mono">No closed trades yet</td></tr>';
             return;
         }
-        container.innerHTML = trades.map(t => {
-            const pC  = t.pnl_pct > 0 ? 'text-bullish' : (t.pnl_pct < 0 ? 'text-bearish' : 'text-zinc-500');
-            const sgn = t.pnl_pct >= 0 ? '+' : '';
-            const bdr = t.result === 'WIN'  ? 'border-l-2 border-bullish/40'
-                      : t.result === 'LOSS' ? 'border-l-2 border-bearish/40'
-                      : 'border-l-2 border-zinc-700';
-            const zeroBadge = !t.has_real_pnl
-                ? '<span class="text-zinc-600 text-3xs ml-1">(exit bug)</span>' : '';
-            const epx  = t.exit_price ? parseFloat(t.exit_price).toFixed(2) : '—';
-            const dlr  = t.pnl_dollars != null
-                ? `${t.pnl_dollars >= 0 ? '+' : ''}$${parseFloat(t.pnl_dollars).toFixed(2)}` : '—';
-            return `<div class="p-2.5 bg-panelBg rounded-lg ${bdr} hover:border-zinc-600 transition">
-              <div class="flex justify-between items-center">
-                <div class="flex items-center gap-2">
-                  <span class="font-mono font-bold text-white text-sm">${t.ticker}</span>
-                  <span class="text-zinc-500 font-mono" style="font-size:10px;">${t.entry_date} → ${t.exit_date}</span>
-                </div>
-                <div class="text-right">
-                  <span class="font-mono font-bold ${pC} text-sm">${sgn}${parseFloat(t.pnl_pct).toFixed(2)}%${zeroBadge}</span>
-                  <div class="text-zinc-500 font-mono" style="font-size:10px;">${dlr}</div>
-                </div>
-              </div>
-              <div class="flex gap-3 mt-1" style="font-size:9px;">
-                <span class="text-zinc-600 font-mono">Entry: $${parseFloat(t.entry_price).toFixed(2)}</span>
-                <span class="text-zinc-600 font-mono">Exit: $${epx}</span>
-                <span class="text-zinc-600 font-mono">${t.n_shares} shares</span>
-                <span class="text-zinc-600 font-mono">${t.exit_reason || '—'}</span>
-              </div>
-            </div>`;
-        }).join('');
-        if (data.n_real > 0) {
+        if (tbody) {
+            tbody.innerHTML = trades.map(t => {
+                const pnl = (t.pnl_pct * 100).toFixed(2);
+                const win = t.pnl_pct > 0;
+                return `<tr class="border-b border-cardBorder hover:bg-cardBg/50">
+                    <td class="px-3 py-2 font-mono font-bold text-white">${t.ticker}</td>
+                    <td class="px-3 py-2 text-zinc-400 text-xs">${t.entry_date}</td>
+                    <td class="px-3 py-2 text-zinc-400 text-xs">${t.exit_date}</td>
+                    <td class="px-3 py-2 font-mono text-xs">$${t.entry_price?.toFixed(2)}</td>
+                    <td class="px-3 py-2 font-mono text-xs">$${t.exit_price?.toFixed(2)}</td>
+                    <td class="px-3 py-2 font-mono font-bold text-xs ${win ? 'text-bullish' : 'text-bearish'}">
+                        ${pnl >= 0 ? '+' : ''}${pnl}%
+                    </td>
+                    <td class="px-3 py-2">
+                        <span class="text-xs px-2 py-0.5 rounded font-semibold
+                            ${win ? 'bg-bullish/10 text-bullish border border-bullish/20'
+                                  : 'bg-bearish/10 text-bearish border border-bearish/20'}">
+                            ${win ? 'WIN' : 'LOSS'}
+                        </span>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        if (data.n_real > 0 && footer) {
             footer.classList.remove('hidden');
-            const rt  = trades.filter(t => t.has_real_pnl);
+            const rt   = trades.filter(t => t.has_real_pnl);
             const wins = rt.filter(t => t.result === 'WIN').length;
-            const wr  = (wins / rt.length * 100).toFixed(0);
-            const tp  = data.total_pnl_dollars;
-            const tpC = tp >= 0 ? 'text-bullish' : 'text-bearish';
-            document.getElementById('th-winrate').textContent = `${wr}%`;
+            const wr   = (wins / rt.length * 100).toFixed(0);
+            const tp   = data.total_pnl_dollars;
+            const tpC  = tp >= 0 ? 'text-bullish' : 'text-bearish';
+            document.getElementById('th-win-rate').textContent = `${wr}%`;
             const tpEl = document.getElementById('th-total-pnl');
             tpEl.className = `font-bold ${tpC}`;
             tpEl.textContent = `${tp >= 0 ? '+' : ''}$${parseFloat(tp).toFixed(2)}`;
@@ -1101,7 +1184,7 @@
     }
 
     async function fetchLiveAPIData() {
-        const base = window.location.origin;
+        const base = API_BASE;
         try {
             const [statusRes, portRes, predRes, shapRes, accRes] = await Promise.all([
                 fetch(`${base}/status`),
@@ -1112,16 +1195,16 @@
             ]);
 
             await statusRes.json();
-            document.getElementById('health-text').innerText = "LIVE ACTIVE";
+            document.getElementById('system-status').innerText = "LIVE ACTIVE";
             document.getElementById('health-indicator').className = "w-2.5 h-2.5 rounded-full bg-bullish animate-pulse";
 
             const port = await portRes.json();
             document.getElementById('port-equity').innerText    = `$${parseFloat(port.equity).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
             const ret = parseFloat(port.total_return_pct);
-            const retEl = document.getElementById('port-return');
+            const retEl = document.getElementById('port-total-return');
             retEl.innerText   = (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%';
             retEl.className   = 'text-sm font-bold font-mono ' + (ret >= 0 ? 'text-bullish' : 'text-bearish');
-            document.getElementById('port-positions').innerText = `${port.positions_count} / 3 Max`;
+            document.getElementById('port-positions-count').innerText = `${port.positions_count} / 3 Max`;
             document.getElementById('regime-sizing').innerText  = `${port.regime_label} (${port.sizing_pct}%)`;
             document.getElementById('port-alpha').innerText     = `+${ret.toFixed(2)}% total return`;
             document.getElementById('port-alpha-bar').style.width = `${Math.min(Math.abs(ret) * 10, 100)}%`;
@@ -1153,11 +1236,197 @@
 
         } catch (err) {
             console.warn('API offline:', err.message);
-            document.getElementById('health-text').innerText = "Live API Offline";
+            document.getElementById('system-status').innerText = "Live API Offline";
             document.getElementById('health-indicator').className = "w-2.5 h-2.5 rounded-full bg-bearish";
             updateSimulation();
         }
     }
+
+    // ── Railway API integration ──────────────────────────────────────────────
+    const API_BASE = 'https://reddit-sentiment-swing-trading-system-rsss-production-032d.up.railway.app';
+
+    async function fetchAPI(endpoint) {
+        try {
+            const resp = await fetch(`${API_BASE}${endpoint}`);
+            if (!resp.ok) return null;
+            return await resp.json();
+        } catch(e) {
+            console.warn(`API fetch failed: ${endpoint}`, e);
+            return null;
+        }
+    }
+
+    async function refreshDashboard() {
+        const [health, portfolio, performance,
+               signals, topBullish] = await Promise.all([
+            fetchAPI('/health'),
+            fetchAPI('/portfolio'),
+            fetchAPI('/performance'),
+            fetchAPI('/signals'),
+            fetchAPI('/top-bullish'),
+        ]);
+
+        // ── PORTFOLIO OVERVIEW ──────────────────────
+        if (portfolio) {
+            const equity    = portfolio.equity || 10000;
+            const returnPct = portfolio.total_return_pct || 0;
+
+            document.querySelectorAll('[id*="equity"], [id*="portfolio-value"], [id*="total-value"]')
+                .forEach(el => {
+                    el.innerText = `$${equity.toLocaleString('en-US',
+                        {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+                });
+
+            document.querySelectorAll('[id*="total-return"], [id*="return-pct"]')
+                .forEach(el => {
+                    el.innerText = `${returnPct >= 0 ? '+' : ''}${returnPct.toFixed(2)}%`;
+                    el.className = el.className.replace(/text-(bullish|bearish|zinc-\d+)/g, '');
+                    el.classList.add(returnPct >= 0 ? 'text-bullish' : 'text-bearish');
+                });
+
+            const posCount = (portfolio.positions || []).length;
+            document.querySelectorAll('[id*="positions-count"]')
+                .forEach(el => el.innerText = `${posCount} / 3 Max`);
+
+            document.querySelectorAll('[id*="cash"]')
+                .forEach(el => {
+                    el.innerText = `$${(portfolio.cash || 0).toLocaleString('en-US',
+                        {minimumFractionDigits:2})}`;
+                });
+
+            // Closed trades table
+            const trades     = (portfolio.closed_trades || []).slice(-20).reverse();
+            const tradesTbody = document.getElementById('trades-tbody');
+            if (tradesTbody && trades.length > 0) {
+                tradesTbody.innerHTML = trades.map(t => {
+                    const pnl = (t.pnl_pct * 100).toFixed(2);
+                    const win = t.pnl_pct > 0;
+                    return `<tr class="border-b border-cardBorder hover:bg-cardBg/50">
+                        <td class="px-3 py-2 font-mono font-bold text-white">${t.ticker}</td>
+                        <td class="px-3 py-2 text-zinc-400 text-xs">${t.entry_date}</td>
+                        <td class="px-3 py-2 text-zinc-400 text-xs">${t.exit_date}</td>
+                        <td class="px-3 py-2 font-mono text-xs">$${t.entry_price?.toFixed(2)}</td>
+                        <td class="px-3 py-2 font-mono text-xs">$${t.exit_price?.toFixed(2)}</td>
+                        <td class="px-3 py-2 font-mono font-bold text-xs ${win ? 'text-bullish' : 'text-bearish'}">
+                            ${pnl >= 0 ? '+' : ''}${pnl}%
+                        </td>
+                        <td class="px-3 py-2">
+                            <span class="text-xs px-2 py-0.5 rounded font-semibold
+                                ${win ? 'bg-bullish/10 text-bullish border border-bullish/20'
+                                      : 'bg-bearish/10 text-bearish border border-bearish/20'}">
+                                ${win ? 'WIN' : 'LOSS'}
+                            </span>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } else if (tradesTbody) {
+                tradesTbody.innerHTML = `<tr><td colspan="7"
+                    class="px-3 py-8 text-center text-zinc-500 text-sm font-mono">
+                    No trades yet — waiting for v2 signals
+                </td></tr>`;
+            }
+        }
+
+        // ── PERFORMANCE ─────────────────────────────
+        if (performance && performance.n_trades > 0) {
+            const winRate = ((performance.win_rate || 0) * 100).toFixed(1);
+            document.querySelectorAll('[id*="win-rate"]')
+                .forEach(el => el.innerText = `${winRate}%`);
+            document.querySelectorAll('[id*="profit-factor"]')
+                .forEach(el => el.innerText = (performance.profit_factor || 0).toFixed(2));
+            document.querySelectorAll('[id*="n-trades"], [id*="trade-count"]')
+                .forEach(el => el.innerText = performance.n_trades);
+        }
+
+        // ── SIGNALS ─────────────────────────────────
+        if (signals && signals.total > 0) {
+            const sigTbody = document.getElementById('signals-tbody');
+            if (sigTbody) {
+                sigTbody.innerHTML = signals.signals.map(s => {
+                    const isBull = s.signal === 'BULLISH';
+                    const isBear = s.signal === 'BEARISH';
+                    const pred5d = ((s.predicted_5d || s.predicted_return_5d || 0) * 100).toFixed(2);
+                    const conf   = Math.round((s.confidence || 0) * 100);
+                    return `<tr class="border-b border-cardBorder">
+                        <td class="px-3 py-2 font-mono font-bold text-white">${s.ticker}</td>
+                        <td class="px-3 py-2">
+                            <span class="text-xs px-2 py-0.5 rounded font-bold
+                                ${isBull ? 'bg-bullish/10 text-bullish border border-bullish/20'
+                                : isBear ? 'bg-bearish/10 text-bearish border border-bearish/20'
+                                : 'bg-neutralGold/10 text-neutralGold border border-neutralGold/20'}">
+                                ${s.signal}
+                            </span>
+                        </td>
+                        <td class="px-3 py-2 font-mono text-xs
+                            ${parseFloat(pred5d) >= 0 ? 'text-bullish' : 'text-bearish'}">
+                            ${parseFloat(pred5d) >= 0 ? '+' : ''}${pred5d}%
+                        </td>
+                        <td class="px-3 py-2 font-mono text-xs text-zinc-400">${conf}%</td>
+                        <td class="px-3 py-2 font-mono text-xs text-zinc-400 text-right">
+                            ${s.post_count_1d || 0}
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+        }
+
+        // ── TOP BULLISH ──────────────────────────────
+        if (topBullish && topBullish.total > 0) {
+            const bullTbody = document.getElementById('top-bullish-tbody');
+            if (bullTbody) {
+                bullTbody.innerHTML = topBullish.tickers.map((t, i) => {
+                    const score  = (t.composite_score || 0).toFixed(4);
+                    const pred5d = ((t.predicted_5d || 0) * 100).toFixed(2);
+                    const conf   = Math.round((t.confidence || 0) * 100);
+                    return `<tr class="border-b border-cardBorder">
+                        <td class="px-3 py-2 text-zinc-500 text-xs">#${i + 1}</td>
+                        <td class="px-3 py-2 font-mono font-bold text-white">${t.ticker}</td>
+                        <td class="px-3 py-2 font-mono text-xs text-accentBlue">${score}</td>
+                        <td class="px-3 py-2 font-mono text-xs text-bullish">+${pred5d}%</td>
+                        <td class="px-3 py-2 font-mono text-xs text-zinc-400 text-right">${conf}%</td>
+                    </tr>`;
+                }).join('');
+            }
+        }
+
+        // ── HEALTH / STATUS ──────────────────────────
+        if (health) {
+            const live = health.status === 'ok';
+            document.querySelectorAll('[id*="system-status"]').forEach(el => {
+                el.innerText = live ? 'LIVE' : 'OFFLINE';
+                el.className = el.className.replace(/text-(bullish|bearish)/g, '');
+                el.classList.add(live ? 'text-bullish' : 'text-bearish');
+            });
+            // Also update the animated dot
+            const dot = document.getElementById('health-indicator');
+            if (dot) dot.className = `w-2.5 h-2.5 rounded-full animate-pulse ${live ? 'bg-bullish' : 'bg-bearish'}`;
+        }
+
+        // ── LAST UPDATED ────────────────────────────
+        document.querySelectorAll('[id*="last-updated"]')
+            .forEach(el => el.innerText = new Date().toLocaleTimeString());
+    }
+
+    async function updateEquityChart() {
+        const portfolio = await fetchAPI('/portfolio');
+        if (!portfolio || typeof equityChartInstance === 'undefined') return;
+        const dailyPnl = portfolio.daily_pnl || {};
+        const dates    = Object.keys(dailyPnl).sort();
+        if (!dates.length) return;
+        let equity = 10000;
+        const equities = dates.map(d => {
+            equity = equity * (1 + (dailyPnl[d] || 0));
+            return equity.toFixed(2);
+        });
+        equityChartInstance.data.labels               = dates.map(d => d.slice(5));
+        equityChartInstance.data.datasets[0].data     = equities;
+        equityChartInstance.update();
+    }
+
+    // Initial load + auto-refresh every 60 s
+    refreshDashboard();
+    updateEquityChart();
+    setInterval(() => { refreshDashboard(); updateEquityChart(); }, 60000);
 </script>
 </body>
 </html>
