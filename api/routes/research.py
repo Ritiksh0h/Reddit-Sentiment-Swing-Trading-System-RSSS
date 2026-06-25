@@ -13,91 +13,61 @@ router = APIRouter()
 
 
 @router.get('/backtest')
-def get_backtest(ticker: str = None, year: int = None):
+def get_backtest():
     """
-    Return backtest results from Experiment C.
-    Optionally filter by ticker and/or year.
-    Source: experiments/experiment_c/results.json
-    Historical simulation (2024 data) — not live trading.
+    V2 backtest summary — 2024-2025 out-of-sample, rank-based core-satellite.
+    Three system variants (A/B/C) plus walk-forward validation results.
     """
-    results_path = Path('experiments/experiment_c/results.json')
-    if not results_path.exists():
-        return {'error': 'Backtest results not found', 'path': str(results_path)}
-
-    with open(results_path) as f:
-        results = json.load(f)
-
-    trades = list(results.get('trade_log', []))
-
-    if ticker:
-        ticker = ticker.upper()
-        trades = [t for t in trades if t.get('ticker') == ticker]
-    if year:
-        trades = [t for t in trades if t.get('entry_date', '').startswith(str(year))]
-
-    if not trades:
-        return {
-            'n_trades': 0,
-            'filter':   {'ticker': ticker, 'year': year},
-            'message':  'No trades match the filter',
-            'trades':   [],
-        }
-
-    pnls   = [t.get('pnl', t.get('gross_pnl', 0)) for t in trades]
-    wins   = [p for p in pnls if p > 0]
-    losses = [p for p in pnls if p < 0]
-    total  = sum(pnls)
-
-    equity = [10000.0]
-    for p in pnls:
-        equity.append(round(equity[-1] + p, 2))
-
-    max_dd = 0.0
-    peak   = equity[0]
-    for v in equity:
-        if v > peak:
-            peak = v
-        dd = (v - peak) / peak
-        if dd < max_dd:
-            max_dd = dd
-
-    formatted = sorted([{
-        'ticker':      t.get('ticker'),
-        'entry_date':  t.get('entry_date'),
-        'exit_date':   t.get('exit_date'),
-        'entry_price': t.get('entry_price'),
-        'exit_price':  t.get('exit_price'),
-        'pred_return': round(t.get('pred_return', 0) * 100, 2),
-        'pnl':         round(t.get('pnl', t.get('gross_pnl', 0)), 2),
-        'exit_reason': t.get('exit_reason', 'hold_days'),
-        'result':      'WIN' if t.get('pnl', t.get('gross_pnl', 0)) > 0 else 'LOSS',
-    } for t in trades], key=lambda x: x['entry_date'])
-
-    def _safe(v):
-        return None if (v is None or (isinstance(v, float) and math.isnan(v))) else v
-
-    return _sanitize({
-        'source':        'Experiment C — Historical Simulation 2024',
-        'filter':        {'ticker': ticker, 'year': year},
-        'n_trades':      len(trades),
-        'win_rate':      round(len(wins) / len(pnls), 3) if pnls else 0,
-        'total_pnl':     round(total, 2),
-        'mean_pnl':      round(total / len(pnls), 2) if pnls else 0,
-        'max_drawdown':  round(max_dd * 100, 2),
-        'profit_factor': _safe(
-            round(sum(wins) / abs(sum(losses)), 3) if losses else None
-        ),
-        'equity_curve':  equity,
-        'trades':        formatted,
-        'full_stats': {
-            'ic_test':        results.get('ic_test'),
-            'sharpe_ratio':   results.get('sharpe_ratio'),
-            'total_return':   results.get('total_return'),
-            'spy_return':     results.get('spy_return'),
-            'alpha':          results.get('alpha'),
-            'n_trades_total': len(results.get('trade_log', [])),
-        } if not ticker and not year else None,
-    })
+    return {
+        'system':          'A — Long+Dynamic (Rank-Based)',
+        'period':          '2024-2025 Out-of-Sample',
+        'version':         'v2',
+        'ticker_universe': 'RSSS 29-ticker universe (NVDA/AAPL/TSLA etc.)',
+        'spy_return':      47.8,
+        'systems': {
+            'A': {
+                'name':        'Long+Dynamic (Rank-Based)',
+                'return_pct':  35.6,
+                'alpha':       -12.2,
+                'sharpe':      1.32,
+                'max_dd':      -14.1,
+                'win_rate':    57.5,
+                'trades':      167,
+                'description': 'Core-satellite 70/30, rank-based signals, vol-targeted sizing, '
+                               'regime filter, long-only',
+            },
+            'B': {
+                'name':        'Long+Dynamic (Fixed Threshold)',
+                'return_pct':  33.6,
+                'alpha':       -14.2,
+                'sharpe':      1.27,
+                'max_dd':      -14.1,
+                'win_rate':    57.9,
+                'trades':      19,
+                'description': 'Same as A but uses fixed threshold pred_5d > 0.7% '
+                               'instead of rank-based',
+            },
+            'C': {
+                'name':        'Original Baseline',
+                'return_pct':  23.2,
+                'alpha':       -24.7,
+                'sharpe':      0.93,
+                'max_dd':      -9.9,
+                'win_rate':    54.4,
+                'trades':      57,
+                'description': 'Pre-fix system — absolute threshold, equal sizing, '
+                               'no regime filter',
+            },
+        },
+        'walk_forward': {
+            'folds':            23,
+            'pooled_sharpe':    0.86,
+            'pct_profitable':   74,
+            'bear_2022_return': -3.9,
+            'wfe':              1.25,
+            'gates_passed':     '4/5',
+        },
+    }
 
 
 @router.get('/backtest-full')
