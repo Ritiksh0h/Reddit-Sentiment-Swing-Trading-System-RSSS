@@ -17,6 +17,7 @@ vaderSentiment>=3.3
 
 # ML — inference only
 xgboost>=2.0
+shap>=0.45
 
 # Environment
 python-dotenv>=1.0

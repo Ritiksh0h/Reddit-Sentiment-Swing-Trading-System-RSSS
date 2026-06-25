@@ -226,9 +226,17 @@ def run_backfill_endpoint(
 
 @router.get('/model-metadata')
 def get_model_metadata():
-    """Return Phase 3 model baseline metadata."""
-    path = Path('models/registry/phase3_model_baseline.json')
-    if not path.exists():
-        return {}
-    with open(path) as f:
-        return json.load(f)
+    """Return model training metadata. Reads v2 metadata first, falls back to phase3 baseline."""
+    v2_path = Path('models/training_metadata_v2.json')
+    if v2_path.exists():
+        return json.loads(v2_path.read_text())
+
+    registry_path = Path('models/registry/phase3_model_baseline.json')
+    if registry_path.exists():
+        return json.loads(registry_path.read_text())
+
+    return {
+        'status':        'models_not_found',
+        'message':       'Run train_models_v2.py to generate models',
+        'expected_path': 'models/training_metadata_v2.json',
+    }
