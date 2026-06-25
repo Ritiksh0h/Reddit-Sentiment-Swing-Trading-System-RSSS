@@ -74,30 +74,38 @@ class SignalRecord:
     pcr_reason:        str = ''
 
 
+def _load_booster_from_pkl(path: Path) -> xgb.Booster:
+    """Load an XGBRegressor pickle and return its underlying native Booster.
+
+    Avoids the sklearn wrapper entirely — `set_params` / `get_params` are not
+    called, so this survives XGBoost major-version mismatches between the
+    training environment (local 3.x) and CI (2.x).
+    """
+    import pickle
+    with open(path, 'rb') as f:
+        sklearn_model = pickle.load(f)
+    return sklearn_model.get_booster()
+
+
 def load_models(model_dir: str = 'models/registry') -> dict:
     """
     Load all three horizon models.
-    Returns dict: {'1d': model, '3d': model, '5d': model}
+    Returns dict: {'1d': booster, '3d': booster, '5d': booster}
     Falls back to phase3_model.pkl for 5d if individual models missing.
     """
-    import pickle
     models   = {}
     dir_path = Path(model_dir)
 
     for horizon in ['1d', '3d', '5d']:
         model_path = dir_path / f'model_{horizon}.pkl'
         if model_path.exists():
-            with open(model_path, 'rb') as f:
-                models[horizon] = pickle.load(f)
-            models[horizon].set_params(n_jobs=1)
+            models[horizon] = _load_booster_from_pkl(model_path)
             logger.info(f'Loaded model_{horizon}')
         else:
             if horizon == '5d':
                 fallback = dir_path / 'phase3_model.pkl'
                 if fallback.exists():
-                    with open(fallback, 'rb') as f:
-                        models['5d'] = pickle.load(f)
-                    models['5d'].set_params(n_jobs=1)
+                    models['5d'] = _load_booster_from_pkl(fallback)
                     logger.warning('Using legacy phase3_model.pkl for 5d')
                 else:
                     raise FileNotFoundError(
@@ -114,16 +122,12 @@ def load_models(model_dir: str = 'models/registry') -> dict:
 
 def load_model(model_path: str = 'models/registry/phase3_model.pkl'):
     """Backward-compatible single model loader for daily_run.py."""
-    import pickle
     if not Path(model_path).exists():
         raise FileNotFoundError(
             f'Model not found at {model_path}. '
             'Run scripts/train_phase3_model.py first.'
         )
-    with open(model_path, 'rb') as f:
-        m = pickle.load(f)
-    m.set_params(n_jobs=1)
-    return m
+    return _load_booster_from_pkl(Path(model_path))
 
 
 def compute_features_live(
@@ -311,12 +315,13 @@ def generate_signals(
         X     = pd.DataFrame([features])[avail].fillna(0)
 
         preds = {}
+        dmatrix = xgb.DMatrix(X)
         for horizon, m in models.items():
             if m is None:
                 preds[horizon] = 0.0
                 continue
             try:
-                preds[horizon] = float(m.predict(X)[0])
+                preds[horizon] = float(m.predict(dmatrix)[0])
             except Exception as e:
                 logger.error(f'predict_fail ticker={ticker} horizon={horizon}: {e}')
                 preds[horizon] = 0.0

@@ -329,11 +329,12 @@ def run_system(
                 # Model-reversal: re-score the position with today's features
                 row = test_lut.get((pos.ticker, current_date))
                 if row is not None:
-                    X = pd.DataFrame(
+                    X  = pd.DataFrame(
                         [row[FEATURE_COLS].fillna(0.0).to_dict()])
-                    p5 = float(models['5d'].predict(X)[0])
-                    p3 = float(models['3d'].predict(X)[0])
-                    p1 = float(models['1d'].predict(X)[0])
+                    dm = xgb.DMatrix(X)
+                    p5 = float(models['5d'].predict(dm)[0])
+                    p3 = float(models['3d'].predict(dm)[0])
+                    p1 = float(models['1d'].predict(dm)[0])
                     if _composite_score(p1, p3, p5) <= 0:
                         reason = 'model_reversal'
 
@@ -412,9 +413,10 @@ def run_system(
 
             # Score via composite model prediction
             X  = pd.DataFrame([row[FEATURE_COLS].fillna(0.0).to_dict()])
-            p5 = float(models['5d'].predict(X)[0])
-            p3 = float(models['3d'].predict(X)[0])
-            p1 = float(models['1d'].predict(X)[0])
+            dm = xgb.DMatrix(X)
+            p5 = float(models['5d'].predict(dm)[0])
+            p3 = float(models['3d'].predict(dm)[0])
+            p1 = float(models['1d'].predict(dm)[0])
             score = _composite_score(p1, p3, p5)
 
             # Gate C: positive expected return
@@ -640,7 +642,7 @@ def main():
     # ── Load v2 models ─────────────────────────────────────────────────────────
     models = {}
     for hz in ('1d', '3d', '5d'):
-        m = xgb.XGBRegressor()
+        m = xgb.Booster()
         m.load_model(f'models/model_{hz}_v2.json')
         models[hz] = m
     print('V2 models loaded (16 features each)')
