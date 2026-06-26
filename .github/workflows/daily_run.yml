@@ -2,9 +2,8 @@ name: RSSS Daily Pipeline
 
 on:
   schedule:
-    # 08:30 ET EDT (UTC-4) = 12:30 UTC
-    # When clocks change to EST (UTC-5) in November: update to '30 13 * * 1-5'
-    - cron: '30 12 * * 1-5'
+    - cron: '30 12 * * 1-5'  # 08:30 ET (EDT)
+    - cron: '30 17 * * 1-5'  # 13:30 ET (EDT)
   workflow_dispatch:  # manual trigger button
 
 jobs:

@@ -106,6 +106,60 @@ def min_track_record_length(
     return int(np.ceil(num / denom + 1))
 
 
+def block_bootstrap_sharpe(
+    returns: list,
+    block_size: int = 5,
+    n_bootstrap: int = 1000,
+    confidence: float = 0.95,
+) -> dict:
+    """
+    Block bootstrap for Sharpe ratio.
+    Handles time-series dependence.
+    block_size=5 matches 5-day holding period.
+    """
+    if len(returns) < 20:
+        return {
+            'sharpe_mean': None,
+            'sharpe_ci_low': None,
+            'sharpe_ci_high': None,
+        }
+    r = np.array(returns)
+    n = len(r)
+    bootstrap_sharpes = []
+    for _ in range(n_bootstrap):
+        indices = []
+        while len(indices) < n:
+            start = np.random.randint(
+                0, max(1, n - block_size + 1))
+            indices.extend(range(
+                start, min(start + block_size, n)))
+        boot_r = r[indices[:n]]
+        std = boot_r.std()
+        if std > 0:
+            sr = (boot_r.mean() / std *
+                  np.sqrt(252))
+            bootstrap_sharpes.append(sr)
+    if not bootstrap_sharpes:
+        return {
+            'sharpe_mean': None,
+            'sharpe_ci_low': None,
+            'sharpe_ci_high': None,
+        }
+    alpha = 1 - confidence
+    return {
+        'sharpe_mean': round(float(
+            np.mean(bootstrap_sharpes)), 3),
+        'sharpe_ci_low': round(float(
+            np.percentile(bootstrap_sharpes,
+                          alpha / 2 * 100)), 3),
+        'sharpe_ci_high': round(float(
+            np.percentile(bootstrap_sharpes,
+                          (1 - alpha / 2) * 100)), 3),
+        'n_bootstrap': n_bootstrap,
+        'block_size': block_size,
+    }
+
+
 def run_validation():
     """Run full statistical validation."""
     trades = load_all_trades()
@@ -140,6 +194,21 @@ def run_validation():
     print('--- PROBABILISTIC SHARPE RATIO ---')
     print(f'PSR (vs 0):  {psr:.3f}')
     print(f'Significant: {"YES ✓" if psr > 0.95 else "NO ✗"}')
+    print()
+
+    # 2b. Block bootstrap Sharpe
+    bootstrap = block_bootstrap_sharpe(returns)
+    print()
+    print('--- BLOCK BOOTSTRAP SHARPE ---')
+    if bootstrap['sharpe_mean'] is not None:
+        print(f'Mean Sharpe:  {bootstrap["sharpe_mean"]}')
+        print(f'95% CI:       {bootstrap["sharpe_ci_low"]}'
+              f' → {bootstrap["sharpe_ci_high"]}')
+        ci_positive = (bootstrap['sharpe_ci_low'] or 0) > 0
+        print(f'Significant:  '
+              f'{"YES ✓" if ci_positive else "NO ✗"}')
+    else:
+        print('Insufficient data')
     print()
 
     # 3. DSR
