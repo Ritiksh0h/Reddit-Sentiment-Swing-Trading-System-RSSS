@@ -19,43 +19,43 @@
   "min_activity_gate": 3,
   "max_daily_signals": 2,
   "max_hold_days": 5,
-  "feature_count": 16,
+  "feature_count": 18,
   "systems": {
     "A_rank_dynamic": {
       "final_core": 10333.46,
-      "final_satellite": 3310.43,
-      "final_total": 13643.89,
-      "satellite_return_pct": 10.35,
-      "total_return_pct": 36.44,
-      "alpha_vs_spy_pct": -11.4,
-      "n_trades": 139,
-      "win_rate": 0.5755,
+      "final_satellite": 3318.85,
+      "final_total": 13652.3,
+      "satellite_return_pct": 10.63,
+      "total_return_pct": 36.52,
+      "alpha_vs_spy_pct": -11.32,
+      "n_trades": 141,
+      "win_rate": 0.5745,
       "avg_hold_days": 4.4,
       "exit_reasons": {
+        "stop_loss": 16,
         "hold_expired": 101,
-        "stop_loss": 15,
-        "take_profit": 23
+        "take_profit": 24
       },
       "significance": {
-        "n_trades": 139,
-        "n_wins": 80,
-        "win_rate": 0.5755,
-        "pvalue": 0.0895,
-        "ci_low": 0.4924,
-        "ci_high": 0.6546,
+        "n_trades": 141,
+        "n_wins": 81,
+        "win_rate": 0.5745,
+        "pvalue": 0.0918,
+        "ci_low": 0.4919,
+        "ci_high": 0.653,
         "significant": false,
-        "n_needed_for_significance": 42
+        "n_needed_for_significance": 43
       },
       "monthly_returns": {
-        "2024-01": 1.46,
+        "2024-01": 1.59,
         "2024-02": 3.14,
         "2024-03": 1.55,
         "2024-04": -3.03,
-        "2024-05": 4.55,
+        "2024-05": 4.54,
         "2024-06": 2.85,
         "2024-07": 0.54,
-        "2024-08": 2.85,
-        "2024-09": 3.22,
+        "2024-08": 2.84,
+        "2024-09": 3.18,
         "2024-10": 0.19,
         "2024-11": 4.17,
         "2024-12": -1.84,
@@ -63,7 +63,7 @@
         "2025-02": -0.04,
         "2025-03": -2.97,
         "2025-04": -0.83,
-        "2025-05": 4.15,
+        "2025-05": 4.14,
         "2025-06": 3.77,
         "2025-07": 2.24,
         "2025-08": 3.01,
@@ -73,6 +73,20 @@
         "2025-12": 0.28
       },
       "trades": [
+        {
+          "ticker": "MARA",
+          "entry_date": "2024-01-04",
+          "exit_date": "2024-01-05",
+          "entry_fill": 26.3094,
+          "exit_fill": 24.0838,
+          "n_shares": 6,
+          "cost": 157.86,
+          "pnl_pct": -0.0846,
+          "exit_reason": "stop_loss",
+          "actual_hold": 1,
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
+        },
         {
           "ticker": "COIN",
           "entry_date": "2024-01-02",
@@ -84,8 +98,22 @@
           "pnl_pct": -0.0341,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005328,
-          "pred_5d": 0.006962
+          "entry_score": 0.00538,
+          "pred_5d": 0.006916
+        },
+        {
+          "ticker": "NVDA",
+          "entry_date": "2024-01-02",
+          "exit_date": "2024-01-09",
+          "entry_fill": 48.1547,
+          "exit_fill": 52.9662,
+          "n_shares": 3,
+          "cost": 144.46,
+          "pnl_pct": 0.0999,
+          "exit_reason": "take_profit",
+          "actual_hold": 5,
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -98,36 +126,8 @@
           "pnl_pct": 0.0174,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005735,
-          "pred_5d": 0.006962
-        },
-        {
-          "ticker": "AMD",
-          "entry_date": "2024-01-04",
-          "exit_date": "2024-01-11",
-          "entry_fill": 136.214,
-          "exit_fill": 147.798,
-          "n_shares": 1,
-          "cost": 136.21,
-          "pnl_pct": 0.085,
-          "exit_reason": "hold_expired",
-          "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
-        },
-        {
-          "ticker": "MARA",
-          "entry_date": "2024-01-11",
-          "exit_date": "2024-01-12",
-          "entry_fill": 22.4336,
-          "exit_fill": 18.9515,
-          "n_shares": 7,
-          "cost": 157.04,
-          "pnl_pct": -0.1552,
-          "exit_reason": "stop_loss",
-          "actual_hold": 1,
-          "entry_score": 0.005735,
-          "pred_5d": 0.006962
+          "entry_score": 0.006298,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -140,8 +140,8 @@
           "pnl_pct": -0.0008,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -154,22 +154,36 @@
           "pnl_pct": -0.0007,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
-          "ticker": "HOOD",
+          "ticker": "MARA",
           "entry_date": "2024-01-12",
-          "exit_date": "2024-01-22",
-          "entry_fill": 11.0365,
-          "exit_fill": 10.9735,
-          "n_shares": 15,
-          "cost": 165.55,
-          "pnl_pct": -0.0057,
+          "exit_date": "2024-01-17",
+          "entry_fill": 19.0085,
+          "exit_fill": 17.2341,
+          "n_shares": 9,
+          "cost": 171.08,
+          "pnl_pct": -0.0933,
+          "exit_reason": "stop_loss",
+          "actual_hold": 2,
+          "entry_score": 0.007537,
+          "pred_5d": 0.006916
+        },
+        {
+          "ticker": "AMD",
+          "entry_date": "2024-01-10",
+          "exit_date": "2024-01-18",
+          "entry_fill": 148.7628,
+          "exit_fill": 162.426,
+          "n_shares": 1,
+          "cost": 148.76,
+          "pnl_pct": 0.0918,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -182,8 +196,8 @@
           "pnl_pct": 0.1184,
           "exit_reason": "take_profit",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -196,8 +210,8 @@
           "pnl_pct": -0.0694,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -210,8 +224,8 @@
           "pnl_pct": 0.0089,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -224,8 +238,8 @@
           "pnl_pct": -0.0239,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -238,8 +252,8 @@
           "pnl_pct": 0.0541,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -252,8 +266,8 @@
           "pnl_pct": 0.1107,
           "exit_reason": "take_profit",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "COIN",
@@ -266,8 +280,8 @@
           "pnl_pct": 0.139,
           "exit_reason": "take_profit",
           "actual_hold": 1,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -280,8 +294,8 @@
           "pnl_pct": -0.0869,
           "exit_reason": "stop_loss",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "MARA",
@@ -294,8 +308,8 @@
           "pnl_pct": -0.0956,
           "exit_reason": "stop_loss",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005096,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -308,8 +322,8 @@
           "pnl_pct": 0.1274,
           "exit_reason": "take_profit",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -322,8 +336,8 @@
           "pnl_pct": 0.0095,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -336,8 +350,8 @@
           "pnl_pct": 0.0635,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -350,8 +364,8 @@
           "pnl_pct": 0.0684,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -364,22 +378,22 @@
           "pnl_pct": -0.0393,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
           "entry_date": "2024-03-18",
           "exit_date": "2024-03-25",
           "entry_fill": 147.4031,
-          "exit_fill": 149.6043,
+          "exit_fill": 149.6042,
           "n_shares": 1,
           "cost": 147.4,
           "pnl_pct": 0.0149,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -392,8 +406,8 @@
           "pnl_pct": 0.0708,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -406,8 +420,8 @@
           "pnl_pct": -0.1529,
           "exit_reason": "stop_loss",
           "actual_hold": 1,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -420,8 +434,8 @@
           "pnl_pct": 0.0095,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -434,8 +448,8 @@
           "pnl_pct": 0.0033,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "MU",
@@ -448,8 +462,8 @@
           "pnl_pct": 0.0753,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -462,8 +476,8 @@
           "pnl_pct": -0.0053,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -476,8 +490,8 @@
           "pnl_pct": 0.0471,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -490,8 +504,8 @@
           "pnl_pct": -0.0886,
           "exit_reason": "stop_loss",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -504,8 +518,8 @@
           "pnl_pct": 0.0264,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -518,8 +532,8 @@
           "pnl_pct": -0.1094,
           "exit_reason": "stop_loss",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "MARA",
@@ -532,8 +546,8 @@
           "pnl_pct": -0.1577,
           "exit_reason": "stop_loss",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -546,8 +560,8 @@
           "pnl_pct": 0.0799,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -560,8 +574,8 @@
           "pnl_pct": 0.144,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -574,8 +588,8 @@
           "pnl_pct": 0.1062,
           "exit_reason": "take_profit",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -588,8 +602,8 @@
           "pnl_pct": 0.1009,
           "exit_reason": "take_profit",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -602,22 +616,22 @@
           "pnl_pct": -0.0985,
           "exit_reason": "stop_loss",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
           "entry_date": "2024-05-07",
           "exit_date": "2024-05-14",
           "entry_fill": 171.7254,
-          "exit_fill": 170.1718,
+          "exit_fill": 170.1717,
           "n_shares": 1,
           "cost": 171.73,
           "pnl_pct": -0.009,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "MARA",
@@ -630,8 +644,8 @@
           "pnl_pct": 0.1736,
           "exit_reason": "take_profit",
           "actual_hold": 3,
-          "entry_score": 0.005735,
-          "pred_5d": 0.006962
+          "entry_score": 0.006298,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -644,8 +658,8 @@
           "pnl_pct": 0.0085,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -658,8 +672,8 @@
           "pnl_pct": 0.12,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -672,22 +686,22 @@
           "pnl_pct": 0.0097,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
           "entry_date": "2024-05-28",
           "exit_date": "2024-06-04",
-          "entry_fill": 176.7288,
+          "entry_fill": 176.7289,
           "exit_fill": 173.339,
           "n_shares": 1,
           "cost": 176.73,
           "pnl_pct": -0.0192,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -700,22 +714,22 @@
           "pnl_pct": 0.0486,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
           "entry_date": "2024-06-03",
           "exit_date": "2024-06-10",
           "entry_fill": 192.6522,
-          "exit_fill": 191.1742,
+          "exit_fill": 191.1743,
           "n_shares": 1,
           "cost": 192.65,
           "pnl_pct": -0.0077,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -728,8 +742,8 @@
           "pnl_pct": -0.0226,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -742,8 +756,8 @@
           "pnl_pct": 0.0354,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -756,8 +770,8 @@
           "pnl_pct": 0.2243,
           "exit_reason": "take_profit",
           "actual_hold": 1,
-          "entry_score": 0.005735,
-          "pred_5d": 0.006962
+          "entry_score": 0.006357,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -770,8 +784,8 @@
           "pnl_pct": 0.0081,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -784,8 +798,8 @@
           "pnl_pct": -0.019,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -798,8 +812,8 @@
           "pnl_pct": -0.0127,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -812,8 +826,8 @@
           "pnl_pct": -0.008,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -826,8 +840,8 @@
           "pnl_pct": 0.0175,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -840,8 +854,8 @@
           "pnl_pct": -0.0742,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -854,8 +868,8 @@
           "pnl_pct": -0.0374,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -868,8 +882,8 @@
           "pnl_pct": -0.0518,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -882,8 +896,8 @@
           "pnl_pct": 0.0658,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -896,8 +910,8 @@
           "pnl_pct": -0.0301,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -910,8 +924,8 @@
           "pnl_pct": 0.0593,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -924,8 +938,8 @@
           "pnl_pct": 0.1391,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -938,8 +952,22 @@
           "pnl_pct": 0.0455,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
+        },
+        {
+          "ticker": "GME",
+          "entry_date": "2024-09-11",
+          "exit_date": "2024-09-18",
+          "entry_fill": 20.671,
+          "exit_fill": 19.6205,
+          "n_shares": 4,
+          "cost": 82.68,
+          "pnl_pct": -0.0508,
+          "exit_reason": "hold_expired",
+          "actual_hold": 5,
+          "entry_score": 0.006298,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -952,8 +980,8 @@
           "pnl_pct": 0.0144,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -966,8 +994,8 @@
           "pnl_pct": 0.1283,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -980,8 +1008,8 @@
           "pnl_pct": 0.1047,
           "exit_reason": "take_profit",
           "actual_hold": 1,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -994,22 +1022,22 @@
           "pnl_pct": 0.0206,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
-          "entry_date": "2024-10-15",
-          "exit_date": "2024-10-22",
-          "entry_fill": 166.0964,
-          "exit_fill": 165.5195,
+          "entry_date": "2024-10-17",
+          "exit_date": "2024-10-24",
+          "entry_fill": 163.7179,
+          "exit_fill": 163.2473,
           "n_shares": 1,
-          "cost": 166.1,
-          "pnl_pct": -0.0035,
+          "cost": 163.72,
+          "pnl_pct": -0.0029,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -1022,8 +1050,8 @@
           "pnl_pct": 0.0863,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -1037,7 +1065,7 @@
           "exit_reason": "hold_expired",
           "actual_hold": 5,
           "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -1050,8 +1078,8 @@
           "pnl_pct": 0.0392,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -1064,8 +1092,8 @@
           "pnl_pct": -0.1198,
           "exit_reason": "stop_loss",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -1078,8 +1106,8 @@
           "pnl_pct": 0.0178,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -1092,8 +1120,8 @@
           "pnl_pct": -0.04,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -1106,8 +1134,8 @@
           "pnl_pct": 0.1264,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -1120,8 +1148,8 @@
           "pnl_pct": 0.0143,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -1134,8 +1162,8 @@
           "pnl_pct": -0.0219,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -1148,8 +1176,8 @@
           "pnl_pct": -0.0655,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -1162,22 +1190,22 @@
           "pnl_pct": -0.0313,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
           "entry_date": "2025-01-03",
           "exit_date": "2025-01-13",
           "entry_fill": 144.4709,
-          "exit_fill": 132.8317,
+          "exit_fill": 132.8318,
           "n_shares": 1,
           "cost": 144.47,
           "pnl_pct": -0.0806,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -1190,8 +1218,8 @@
           "pnl_pct": -0.0454,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -1204,8 +1232,8 @@
           "pnl_pct": 0.0534,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -1218,8 +1246,8 @@
           "pnl_pct": 0.2903,
           "exit_reason": "take_profit",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -1232,8 +1260,8 @@
           "pnl_pct": 0.1925,
           "exit_reason": "take_profit",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -1246,8 +1274,8 @@
           "pnl_pct": 0.0333,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -1260,8 +1288,8 @@
           "pnl_pct": 0.1032,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -1274,8 +1302,8 @@
           "pnl_pct": -0.1127,
           "exit_reason": "stop_loss",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005048,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -1288,8 +1316,8 @@
           "pnl_pct": -0.1036,
           "exit_reason": "stop_loss",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -1302,8 +1330,8 @@
           "pnl_pct": -0.0506,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -1316,8 +1344,8 @@
           "pnl_pct": 0.0463,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -1330,8 +1358,8 @@
           "pnl_pct": 0.058,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -1344,8 +1372,8 @@
           "pnl_pct": 0.0012,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -1358,8 +1386,8 @@
           "pnl_pct": -0.0081,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -1372,8 +1400,8 @@
           "pnl_pct": -0.0035,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "MARA",
@@ -1386,8 +1414,8 @@
           "pnl_pct": 0.1127,
           "exit_reason": "take_profit",
           "actual_hold": 1,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -1400,8 +1428,8 @@
           "pnl_pct": 0.0209,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -1414,8 +1442,8 @@
           "pnl_pct": -0.007,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -1428,8 +1456,8 @@
           "pnl_pct": 0.0163,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -1442,8 +1470,8 @@
           "pnl_pct": -0.0184,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -1456,8 +1484,8 @@
           "pnl_pct": -0.001,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -1470,8 +1498,8 @@
           "pnl_pct": 0.0171,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -1484,8 +1512,8 @@
           "pnl_pct": 0.1276,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -1498,8 +1526,8 @@
           "pnl_pct": 0.1281,
           "exit_reason": "take_profit",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -1512,8 +1540,8 @@
           "pnl_pct": 0.0334,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -1526,8 +1554,8 @@
           "pnl_pct": 0.0343,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -1540,8 +1568,8 @@
           "pnl_pct": 0.0205,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -1555,7 +1583,7 @@
           "exit_reason": "hold_expired",
           "actual_hold": 5,
           "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -1568,8 +1596,8 @@
           "pnl_pct": 0.0663,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -1582,8 +1610,8 @@
           "pnl_pct": 0.0422,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -1596,8 +1624,8 @@
           "pnl_pct": 0.0512,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -1610,8 +1638,8 @@
           "pnl_pct": 0.0511,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005044,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -1624,8 +1652,8 @@
           "pnl_pct": 0.0159,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -1638,8 +1666,8 @@
           "pnl_pct": -0.0119,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -1652,8 +1680,8 @@
           "pnl_pct": 0.0076,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -1666,8 +1694,8 @@
           "pnl_pct": 0.0202,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -1680,8 +1708,8 @@
           "pnl_pct": 0.0279,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -1694,8 +1722,8 @@
           "pnl_pct": -0.0314,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -1708,8 +1736,8 @@
           "pnl_pct": -0.0854,
           "exit_reason": "stop_loss",
           "actual_hold": 1,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -1722,8 +1750,8 @@
           "pnl_pct": -0.0022,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -1736,8 +1764,8 @@
           "pnl_pct": -0.0217,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -1750,8 +1778,8 @@
           "pnl_pct": 0.1272,
           "exit_reason": "take_profit",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005044,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -1764,8 +1792,8 @@
           "pnl_pct": 0.0308,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -1778,8 +1806,8 @@
           "pnl_pct": -0.037,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -1792,8 +1820,8 @@
           "pnl_pct": 0.0058,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -1806,8 +1834,8 @@
           "pnl_pct": -0.0306,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -1820,8 +1848,8 @@
           "pnl_pct": 0.1077,
           "exit_reason": "take_profit",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -1834,8 +1862,8 @@
           "pnl_pct": -0.0576,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -1848,8 +1876,8 @@
           "pnl_pct": -0.0163,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -1862,8 +1890,8 @@
           "pnl_pct": 0.0383,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -1876,8 +1904,8 @@
           "pnl_pct": 0.0815,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -1890,8 +1918,8 @@
           "pnl_pct": 0.0635,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -1904,8 +1932,8 @@
           "pnl_pct": 0.0164,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -1918,8 +1946,8 @@
           "pnl_pct": -0.0093,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -1932,8 +1960,8 @@
           "pnl_pct": -0.0026,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -1946,8 +1974,8 @@
           "pnl_pct": -0.0611,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "MARA",
@@ -1960,8 +1988,8 @@
           "pnl_pct": -0.0913,
           "exit_reason": "stop_loss",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -1974,8 +2002,8 @@
           "pnl_pct": -0.1034,
           "exit_reason": "stop_loss",
           "actual_hold": 1,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -1988,8 +2016,8 @@
           "pnl_pct": 0.1,
           "exit_reason": "take_profit",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -2002,8 +2030,8 @@
           "pnl_pct": -0.0344,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -2016,48 +2044,48 @@
           "pnl_pct": -0.0837,
           "exit_reason": "stop_loss",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         }
       ],
-      "sharpe_ratio": 1.357,
-      "max_drawdown_pct": -14.06
+      "sharpe_ratio": 1.36,
+      "max_drawdown_pct": -14.05
     },
     "B_rank_fixed5d": {
       "final_core": 10333.46,
-      "final_satellite": 3310.43,
-      "final_total": 13643.89,
-      "satellite_return_pct": 10.35,
-      "total_return_pct": 36.44,
-      "alpha_vs_spy_pct": -11.4,
-      "n_trades": 139,
-      "win_rate": 0.5755,
+      "final_satellite": 3318.85,
+      "final_total": 13652.3,
+      "satellite_return_pct": 10.63,
+      "total_return_pct": 36.52,
+      "alpha_vs_spy_pct": -11.32,
+      "n_trades": 141,
+      "win_rate": 0.5745,
       "avg_hold_days": 4.4,
       "exit_reasons": {
+        "stop_loss": 16,
         "hold_expired": 101,
-        "stop_loss": 15,
-        "take_profit": 23
+        "take_profit": 24
       },
       "significance": {
-        "n_trades": 139,
-        "n_wins": 80,
-        "win_rate": 0.5755,
-        "pvalue": 0.0895,
-        "ci_low": 0.4924,
-        "ci_high": 0.6546,
+        "n_trades": 141,
+        "n_wins": 81,
+        "win_rate": 0.5745,
+        "pvalue": 0.0918,
+        "ci_low": 0.4919,
+        "ci_high": 0.653,
         "significant": false,
-        "n_needed_for_significance": 42
+        "n_needed_for_significance": 43
       },
       "monthly_returns": {
-        "2024-01": 1.46,
+        "2024-01": 1.59,
         "2024-02": 3.14,
         "2024-03": 1.55,
         "2024-04": -3.03,
-        "2024-05": 4.55,
+        "2024-05": 4.54,
         "2024-06": 2.85,
         "2024-07": 0.54,
-        "2024-08": 2.85,
-        "2024-09": 3.22,
+        "2024-08": 2.84,
+        "2024-09": 3.18,
         "2024-10": 0.19,
         "2024-11": 4.17,
         "2024-12": -1.84,
@@ -2065,7 +2093,7 @@
         "2025-02": -0.04,
         "2025-03": -2.97,
         "2025-04": -0.83,
-        "2025-05": 4.15,
+        "2025-05": 4.14,
         "2025-06": 3.77,
         "2025-07": 2.24,
         "2025-08": 3.01,
@@ -2075,6 +2103,20 @@
         "2025-12": 0.28
       },
       "trades": [
+        {
+          "ticker": "MARA",
+          "entry_date": "2024-01-04",
+          "exit_date": "2024-01-05",
+          "entry_fill": 26.3094,
+          "exit_fill": 24.0838,
+          "n_shares": 6,
+          "cost": 157.86,
+          "pnl_pct": -0.0846,
+          "exit_reason": "stop_loss",
+          "actual_hold": 1,
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
+        },
         {
           "ticker": "COIN",
           "entry_date": "2024-01-02",
@@ -2086,8 +2128,22 @@
           "pnl_pct": -0.0341,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005328,
-          "pred_5d": 0.006962
+          "entry_score": 0.00538,
+          "pred_5d": 0.006916
+        },
+        {
+          "ticker": "NVDA",
+          "entry_date": "2024-01-02",
+          "exit_date": "2024-01-09",
+          "entry_fill": 48.1547,
+          "exit_fill": 52.9662,
+          "n_shares": 3,
+          "cost": 144.46,
+          "pnl_pct": 0.0999,
+          "exit_reason": "take_profit",
+          "actual_hold": 5,
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -2100,36 +2156,8 @@
           "pnl_pct": 0.0174,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005735,
-          "pred_5d": 0.006962
-        },
-        {
-          "ticker": "AMD",
-          "entry_date": "2024-01-04",
-          "exit_date": "2024-01-11",
-          "entry_fill": 136.214,
-          "exit_fill": 147.798,
-          "n_shares": 1,
-          "cost": 136.21,
-          "pnl_pct": 0.085,
-          "exit_reason": "hold_expired",
-          "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
-        },
-        {
-          "ticker": "MARA",
-          "entry_date": "2024-01-11",
-          "exit_date": "2024-01-12",
-          "entry_fill": 22.4336,
-          "exit_fill": 18.9515,
-          "n_shares": 7,
-          "cost": 157.04,
-          "pnl_pct": -0.1552,
-          "exit_reason": "stop_loss",
-          "actual_hold": 1,
-          "entry_score": 0.005735,
-          "pred_5d": 0.006962
+          "entry_score": 0.006298,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -2142,8 +2170,8 @@
           "pnl_pct": -0.0008,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -2156,22 +2184,36 @@
           "pnl_pct": -0.0007,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
-          "ticker": "HOOD",
+          "ticker": "MARA",
           "entry_date": "2024-01-12",
-          "exit_date": "2024-01-22",
-          "entry_fill": 11.0365,
-          "exit_fill": 10.9735,
-          "n_shares": 15,
-          "cost": 165.55,
-          "pnl_pct": -0.0057,
+          "exit_date": "2024-01-17",
+          "entry_fill": 19.0085,
+          "exit_fill": 17.2341,
+          "n_shares": 9,
+          "cost": 171.08,
+          "pnl_pct": -0.0933,
+          "exit_reason": "stop_loss",
+          "actual_hold": 2,
+          "entry_score": 0.007537,
+          "pred_5d": 0.006916
+        },
+        {
+          "ticker": "AMD",
+          "entry_date": "2024-01-10",
+          "exit_date": "2024-01-18",
+          "entry_fill": 148.7628,
+          "exit_fill": 162.426,
+          "n_shares": 1,
+          "cost": 148.76,
+          "pnl_pct": 0.0918,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -2184,8 +2226,8 @@
           "pnl_pct": 0.1184,
           "exit_reason": "take_profit",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -2198,8 +2240,8 @@
           "pnl_pct": -0.0694,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -2212,8 +2254,8 @@
           "pnl_pct": 0.0089,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -2226,8 +2268,8 @@
           "pnl_pct": -0.0239,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -2240,8 +2282,8 @@
           "pnl_pct": 0.0541,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -2254,8 +2296,8 @@
           "pnl_pct": 0.1107,
           "exit_reason": "take_profit",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "COIN",
@@ -2268,8 +2310,8 @@
           "pnl_pct": 0.139,
           "exit_reason": "take_profit",
           "actual_hold": 1,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -2282,8 +2324,8 @@
           "pnl_pct": -0.0869,
           "exit_reason": "stop_loss",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "MARA",
@@ -2296,8 +2338,8 @@
           "pnl_pct": -0.0956,
           "exit_reason": "stop_loss",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005096,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -2310,8 +2352,8 @@
           "pnl_pct": 0.1274,
           "exit_reason": "take_profit",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -2324,8 +2366,8 @@
           "pnl_pct": 0.0095,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -2338,8 +2380,8 @@
           "pnl_pct": 0.0635,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -2352,8 +2394,8 @@
           "pnl_pct": 0.0684,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -2366,22 +2408,22 @@
           "pnl_pct": -0.0393,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
           "entry_date": "2024-03-18",
           "exit_date": "2024-03-25",
           "entry_fill": 147.4031,
-          "exit_fill": 149.6043,
+          "exit_fill": 149.6042,
           "n_shares": 1,
           "cost": 147.4,
           "pnl_pct": 0.0149,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -2394,8 +2436,8 @@
           "pnl_pct": 0.0708,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -2408,8 +2450,8 @@
           "pnl_pct": -0.1529,
           "exit_reason": "stop_loss",
           "actual_hold": 1,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -2422,8 +2464,8 @@
           "pnl_pct": 0.0095,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -2436,8 +2478,8 @@
           "pnl_pct": 0.0033,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "MU",
@@ -2450,8 +2492,8 @@
           "pnl_pct": 0.0753,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -2464,8 +2506,8 @@
           "pnl_pct": -0.0053,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -2478,8 +2520,8 @@
           "pnl_pct": 0.0471,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -2492,8 +2534,8 @@
           "pnl_pct": -0.0886,
           "exit_reason": "stop_loss",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -2506,8 +2548,8 @@
           "pnl_pct": 0.0264,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -2520,8 +2562,8 @@
           "pnl_pct": -0.1094,
           "exit_reason": "stop_loss",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "MARA",
@@ -2534,8 +2576,8 @@
           "pnl_pct": -0.1577,
           "exit_reason": "stop_loss",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -2548,8 +2590,8 @@
           "pnl_pct": 0.0799,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -2562,8 +2604,8 @@
           "pnl_pct": 0.144,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -2576,8 +2618,8 @@
           "pnl_pct": 0.1062,
           "exit_reason": "take_profit",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -2590,8 +2632,8 @@
           "pnl_pct": 0.1009,
           "exit_reason": "take_profit",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -2604,22 +2646,22 @@
           "pnl_pct": -0.0985,
           "exit_reason": "stop_loss",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
           "entry_date": "2024-05-07",
           "exit_date": "2024-05-14",
           "entry_fill": 171.7254,
-          "exit_fill": 170.1718,
+          "exit_fill": 170.1717,
           "n_shares": 1,
           "cost": 171.73,
           "pnl_pct": -0.009,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "MARA",
@@ -2632,8 +2674,8 @@
           "pnl_pct": 0.1736,
           "exit_reason": "take_profit",
           "actual_hold": 3,
-          "entry_score": 0.005735,
-          "pred_5d": 0.006962
+          "entry_score": 0.006298,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -2646,8 +2688,8 @@
           "pnl_pct": 0.0085,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -2660,8 +2702,8 @@
           "pnl_pct": 0.12,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -2674,22 +2716,22 @@
           "pnl_pct": 0.0097,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
           "entry_date": "2024-05-28",
           "exit_date": "2024-06-04",
-          "entry_fill": 176.7288,
+          "entry_fill": 176.7289,
           "exit_fill": 173.339,
           "n_shares": 1,
           "cost": 176.73,
           "pnl_pct": -0.0192,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -2702,22 +2744,22 @@
           "pnl_pct": 0.0486,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
           "entry_date": "2024-06-03",
           "exit_date": "2024-06-10",
           "entry_fill": 192.6522,
-          "exit_fill": 191.1742,
+          "exit_fill": 191.1743,
           "n_shares": 1,
           "cost": 192.65,
           "pnl_pct": -0.0077,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -2730,8 +2772,8 @@
           "pnl_pct": -0.0226,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -2744,8 +2786,8 @@
           "pnl_pct": 0.0354,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -2758,8 +2800,8 @@
           "pnl_pct": 0.2243,
           "exit_reason": "take_profit",
           "actual_hold": 1,
-          "entry_score": 0.005735,
-          "pred_5d": 0.006962
+          "entry_score": 0.006357,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -2772,8 +2814,8 @@
           "pnl_pct": 0.0081,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -2786,8 +2828,8 @@
           "pnl_pct": -0.019,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -2800,8 +2842,8 @@
           "pnl_pct": -0.0127,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -2814,8 +2856,8 @@
           "pnl_pct": -0.008,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -2828,8 +2870,8 @@
           "pnl_pct": 0.0175,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -2842,8 +2884,8 @@
           "pnl_pct": -0.0742,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -2856,8 +2898,8 @@
           "pnl_pct": -0.0374,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -2870,8 +2912,8 @@
           "pnl_pct": -0.0518,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -2884,8 +2926,8 @@
           "pnl_pct": 0.0658,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -2898,8 +2940,8 @@
           "pnl_pct": -0.0301,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -2912,8 +2954,8 @@
           "pnl_pct": 0.0593,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -2926,8 +2968,8 @@
           "pnl_pct": 0.1391,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -2940,8 +2982,22 @@
           "pnl_pct": 0.0455,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
+        },
+        {
+          "ticker": "GME",
+          "entry_date": "2024-09-11",
+          "exit_date": "2024-09-18",
+          "entry_fill": 20.671,
+          "exit_fill": 19.6205,
+          "n_shares": 4,
+          "cost": 82.68,
+          "pnl_pct": -0.0508,
+          "exit_reason": "hold_expired",
+          "actual_hold": 5,
+          "entry_score": 0.006298,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -2954,8 +3010,8 @@
           "pnl_pct": 0.0144,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -2968,8 +3024,8 @@
           "pnl_pct": 0.1283,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -2982,8 +3038,8 @@
           "pnl_pct": 0.1047,
           "exit_reason": "take_profit",
           "actual_hold": 1,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -2996,22 +3052,22 @@
           "pnl_pct": 0.0206,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
-          "entry_date": "2024-10-15",
-          "exit_date": "2024-10-22",
-          "entry_fill": 166.0964,
-          "exit_fill": 165.5195,
+          "entry_date": "2024-10-17",
+          "exit_date": "2024-10-24",
+          "entry_fill": 163.7179,
+          "exit_fill": 163.2473,
           "n_shares": 1,
-          "cost": 166.1,
-          "pnl_pct": -0.0035,
+          "cost": 163.72,
+          "pnl_pct": -0.0029,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -3024,8 +3080,8 @@
           "pnl_pct": 0.0863,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -3039,7 +3095,7 @@
           "exit_reason": "hold_expired",
           "actual_hold": 5,
           "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -3052,8 +3108,8 @@
           "pnl_pct": 0.0392,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -3066,8 +3122,8 @@
           "pnl_pct": -0.1198,
           "exit_reason": "stop_loss",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -3080,8 +3136,8 @@
           "pnl_pct": 0.0178,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -3094,8 +3150,8 @@
           "pnl_pct": -0.04,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -3108,8 +3164,8 @@
           "pnl_pct": 0.1264,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -3122,8 +3178,8 @@
           "pnl_pct": 0.0143,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -3136,8 +3192,8 @@
           "pnl_pct": -0.0219,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -3150,8 +3206,8 @@
           "pnl_pct": -0.0655,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -3164,22 +3220,22 @@
           "pnl_pct": -0.0313,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
           "entry_date": "2025-01-03",
           "exit_date": "2025-01-13",
           "entry_fill": 144.4709,
-          "exit_fill": 132.8317,
+          "exit_fill": 132.8318,
           "n_shares": 1,
           "cost": 144.47,
           "pnl_pct": -0.0806,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -3192,8 +3248,8 @@
           "pnl_pct": -0.0454,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -3206,8 +3262,8 @@
           "pnl_pct": 0.0534,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -3220,8 +3276,8 @@
           "pnl_pct": 0.2903,
           "exit_reason": "take_profit",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -3234,8 +3290,8 @@
           "pnl_pct": 0.1925,
           "exit_reason": "take_profit",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -3248,8 +3304,8 @@
           "pnl_pct": 0.0333,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -3262,8 +3318,8 @@
           "pnl_pct": 0.1032,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -3276,8 +3332,8 @@
           "pnl_pct": -0.1127,
           "exit_reason": "stop_loss",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005048,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -3290,8 +3346,8 @@
           "pnl_pct": -0.1036,
           "exit_reason": "stop_loss",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -3304,8 +3360,8 @@
           "pnl_pct": -0.0506,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -3318,8 +3374,8 @@
           "pnl_pct": 0.0463,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -3332,8 +3388,8 @@
           "pnl_pct": 0.058,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -3346,8 +3402,8 @@
           "pnl_pct": 0.0012,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -3360,8 +3416,8 @@
           "pnl_pct": -0.0081,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -3374,8 +3430,8 @@
           "pnl_pct": -0.0035,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "MARA",
@@ -3388,8 +3444,8 @@
           "pnl_pct": 0.1127,
           "exit_reason": "take_profit",
           "actual_hold": 1,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -3402,8 +3458,8 @@
           "pnl_pct": 0.0209,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -3416,8 +3472,8 @@
           "pnl_pct": -0.007,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -3430,8 +3486,8 @@
           "pnl_pct": 0.0163,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -3444,8 +3500,8 @@
           "pnl_pct": -0.0184,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -3458,8 +3514,8 @@
           "pnl_pct": -0.001,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -3472,8 +3528,8 @@
           "pnl_pct": 0.0171,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -3486,8 +3542,8 @@
           "pnl_pct": 0.1276,
           "exit_reason": "take_profit",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -3500,8 +3556,8 @@
           "pnl_pct": 0.1281,
           "exit_reason": "take_profit",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -3514,8 +3570,8 @@
           "pnl_pct": 0.0334,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -3528,8 +3584,8 @@
           "pnl_pct": 0.0343,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -3542,8 +3598,8 @@
           "pnl_pct": 0.0205,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -3557,7 +3613,7 @@
           "exit_reason": "hold_expired",
           "actual_hold": 5,
           "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -3570,8 +3626,8 @@
           "pnl_pct": 0.0663,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -3584,8 +3640,8 @@
           "pnl_pct": 0.0422,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -3598,8 +3654,8 @@
           "pnl_pct": 0.0512,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -3612,8 +3668,8 @@
           "pnl_pct": 0.0511,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005044,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -3626,8 +3682,8 @@
           "pnl_pct": 0.0159,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -3640,8 +3696,8 @@
           "pnl_pct": -0.0119,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -3654,8 +3710,8 @@
           "pnl_pct": 0.0076,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -3668,8 +3724,8 @@
           "pnl_pct": 0.0202,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -3682,8 +3738,8 @@
           "pnl_pct": 0.0279,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -3696,8 +3752,8 @@
           "pnl_pct": -0.0314,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -3710,8 +3766,8 @@
           "pnl_pct": -0.0854,
           "exit_reason": "stop_loss",
           "actual_hold": 1,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -3724,8 +3780,8 @@
           "pnl_pct": -0.0022,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -3738,8 +3794,8 @@
           "pnl_pct": -0.0217,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -3752,8 +3808,8 @@
           "pnl_pct": 0.1272,
           "exit_reason": "take_profit",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005044,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -3766,8 +3822,8 @@
           "pnl_pct": 0.0308,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -3780,8 +3836,8 @@
           "pnl_pct": -0.037,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GOOG",
@@ -3794,8 +3850,8 @@
           "pnl_pct": 0.0058,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -3808,8 +3864,8 @@
           "pnl_pct": -0.0306,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -3822,8 +3878,8 @@
           "pnl_pct": 0.1077,
           "exit_reason": "take_profit",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NVDA",
@@ -3836,8 +3892,8 @@
           "pnl_pct": -0.0576,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005073,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -3850,8 +3906,8 @@
           "pnl_pct": -0.0163,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "GME",
@@ -3864,8 +3920,8 @@
           "pnl_pct": 0.0383,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "HOOD",
@@ -3878,8 +3934,8 @@
           "pnl_pct": 0.0815,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "PLTR",
@@ -3892,8 +3948,8 @@
           "pnl_pct": 0.0635,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMD",
@@ -3906,8 +3962,8 @@
           "pnl_pct": 0.0164,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -3920,8 +3976,8 @@
           "pnl_pct": -0.0093,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -3934,8 +3990,8 @@
           "pnl_pct": -0.0026,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AMZN",
@@ -3948,8 +4004,8 @@
           "pnl_pct": -0.0611,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "MARA",
@@ -3962,8 +4018,8 @@
           "pnl_pct": -0.0913,
           "exit_reason": "stop_loss",
           "actual_hold": 2,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.005033,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "NFLX",
@@ -3976,8 +4032,8 @@
           "pnl_pct": -0.1034,
           "exit_reason": "stop_loss",
           "actual_hold": 1,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "SOFI",
@@ -3990,8 +4046,8 @@
           "pnl_pct": 0.1,
           "exit_reason": "take_profit",
           "actual_hold": 3,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "AAPL",
@@ -4004,8 +4060,8 @@
           "pnl_pct": -0.0344,
           "exit_reason": "hold_expired",
           "actual_hold": 5,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         },
         {
           "ticker": "UBER",
@@ -4018,12 +4074,12 @@
           "pnl_pct": -0.0837,
           "exit_reason": "stop_loss",
           "actual_hold": 4,
-          "entry_score": 0.005092,
-          "pred_5d": 0.006962
+          "entry_score": 0.004985,
+          "pred_5d": 0.006916
         }
       ],
-      "sharpe_ratio": 1.357,
-      "max_drawdown_pct": -14.06
+      "sharpe_ratio": 1.36,
+      "max_drawdown_pct": -14.05
     }
   }
 }

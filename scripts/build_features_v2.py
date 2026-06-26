@@ -86,6 +86,30 @@ def _rolling_vix_pct(vix_arr: np.ndarray, window: int = 252) -> np.ndarray:
     return out
 
 
+def _compute_pead_proxy(close_series: pd.Series,
+                        threshold: float = 0.05) -> pd.Series:
+    """
+    PEAD proxy using large price jumps.
+    Identifies earnings-like events (|return| > 5%)
+    and applies a decaying signal for 20 days after.
+    """
+    returns = close_series.pct_change()
+    jumps = returns[abs(returns) > threshold]
+    pead = pd.Series(0.0, index=close_series.index)
+    idx_map = {d: i for i, d in enumerate(close_series.index)}
+    for jump_date, jump_ret in jumps.items():
+        base_idx = idx_map.get(jump_date)
+        if base_idx is None:
+            continue
+        for i in range(1, 21):
+            future_idx = base_idx + i
+            if future_idx < len(close_series):
+                future_date = close_series.index[future_idx]
+                decay = 1.0 - i / 20.0
+                pead[future_date] += jump_ret * decay
+    return pead.clip(-0.1, 0.1)
+
+
 def build_market_data() -> dict[str, pd.DataFrame]:
     """
     Download OHLCV for ALL_TICKERS + VIX percentile via yfinance.
@@ -169,27 +193,36 @@ def build_market_data() -> dict[str, pd.DataFrame]:
             )
             regime_score_s = spy_above_s * 0.6 + (1.0 - vix_aligned) * 0.4
 
+            # ── New Phase 5 features ────────────────────────────────────────
+            # Distance from 20-day MA as percentage (scale-invariant momentum)
+            ma_20 = close.rolling(20, min_periods=10).mean()
+            dist_from_20ma_pct = ((close - ma_20) / ma_20).fillna(0.0)
+
             # ── Forward close prices for target computation ─────────────────
             close_fwd1 = close.shift(-1)
             close_fwd3 = close.shift(-3)
             close_fwd5 = close.shift(-5)
 
+            pead_proxy = _compute_pead_proxy(close)
+
             df = pd.DataFrame(
                 {
-                    "date":             close.index,
-                    "ticker":           ticker,
-                    "close":            close.values,
-                    "volume":           volume.values,
-                    "returns_1d":       returns_1d.values,
-                    "returns_20d":      returns_20d.values,
-                    "rsi_14":           rsi_14.values,
-                    "relative_volume":  rel_vol.values,
-                    "vix_percentile":   vix_aligned.values,
-                    "spy_above_200ma":  spy_above_s.values,
-                    "regime_score":     regime_score_s.values,
-                    "close_fwd1":       close_fwd1.values,
-                    "close_fwd3":       close_fwd3.values,
-                    "close_fwd5":       close_fwd5.values,
+                    "date":               close.index,
+                    "ticker":             ticker,
+                    "close":              close.values,
+                    "volume":             volume.values,
+                    "returns_1d":         returns_1d.values,
+                    "returns_20d":        returns_20d.values,
+                    "rsi_14":             rsi_14.values,
+                    "relative_volume":    rel_vol.values,
+                    "vix_percentile":     vix_aligned.values,
+                    "spy_above_200ma":    spy_above_s.values,
+                    "regime_score":       regime_score_s.values,
+                    "dist_from_20ma_pct": dist_from_20ma_pct.values,
+                    "pead_proxy":         pead_proxy.values,
+                    "close_fwd1":         close_fwd1.values,
+                    "close_fwd3":         close_fwd3.values,
+                    "close_fwd5":         close_fwd5.values,
                 }
             )
             df["date"] = pd.to_datetime(df["date"])
@@ -203,7 +236,8 @@ def build_market_data() -> dict[str, pd.DataFrame]:
             # Save per-ticker parquet (columns per spec)
             save_cols = ["date", "close", "volume", "returns_1d", "returns_20d",
                          "rsi_14", "relative_volume", "vix_percentile",
-                         "spy_above_200ma", "regime_score"]
+                         "spy_above_200ma", "regime_score",
+                         "dist_from_20ma_pct", "pead_proxy"]
             df[save_cols].to_parquet(MARKET_DIR / f"{ticker}_ohlcv.parquet", index=False)
 
             market_dfs[ticker] = df
@@ -571,6 +605,7 @@ def build_feature_grid(
     mkt_cols = ["ticker", "date", "close", "volume", "returns_1d", "returns_20d",
                 "rsi_14", "relative_volume", "vix_percentile",
                 "spy_above_200ma", "regime_score",
+                "dist_from_20ma_pct", "pead_proxy",
                 "close_fwd1", "close_fwd3", "close_fwd5"]
     grid = grid.merge(mkt_all[mkt_cols], on=["ticker", "date"], how="left")
 
@@ -650,7 +685,8 @@ def build_feature_grid(
     ATTENTION = ["post_count_1d", "abnormal_attention_1d", "total_comments_1d"]
     SENTIMENT = ["vader_sentiment_1d", "sentiment_extremity",
                  "sentiment_accel", "comment_sentiment_1d"]
-    MARKET    = ["volume", "relative_volume", "returns_1d", "returns_20d", "rsi_14"]
+    MARKET    = ["volume", "relative_volume", "returns_1d", "returns_20d", "rsi_14",
+                 "dist_from_20ma_pct", "pead_proxy"]
     NEWS      = ["news_sentiment_1d", "news_count_1d"]
     REGIME    = ["vix_percentile", "spy_above_200ma", "regime_score"]
     TARGETS   = ["target_return_1d", "target_return_3d", "target_return_5d"]
@@ -701,6 +737,7 @@ def validate(df: pd.DataFrame) -> None:
         "returns_1d", "returns_20d", "rsi_14",
         "news_sentiment_1d", "vix_percentile",
         "vix_x_volume", "spy_above_200ma", "regime_score",
+        "dist_from_20ma_pct", "pead_proxy",
     ]
 
     train = df[(df["split"] == "train") & df["target_return_5d"].notna()].copy()

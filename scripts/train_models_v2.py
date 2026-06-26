@@ -69,6 +69,7 @@ FEATURE_COLS = [
     "rsi_14",               "news_sentiment_1d",
     "vix_percentile",       "vix_x_volume",
     "spy_above_200ma",      "regime_score",
+    "dist_from_20ma_pct",   "pead_proxy",
 ]
 
 TARGETS = {
