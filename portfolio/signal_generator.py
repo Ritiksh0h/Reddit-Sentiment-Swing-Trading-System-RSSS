@@ -178,7 +178,7 @@ def compute_features_live(
     mention_history: dict = None,
 ) -> Optional[dict]:
     """
-    Compute 16-feature v2 vector for a single ticker from live OHLCV + sentiment data.
+    Compute 18-feature v2 vector for a single ticker from live OHLCV + sentiment data.
 
     Args:
         ticker:             ticker symbol (used for log messages only)
@@ -193,7 +193,7 @@ def compute_features_live(
         mention_history:    {ticker: {date_str: count}} from data/mention_history.json
 
     Returns:
-        dict of 16 v2 feature values + atr_14 and mention_growth_7d as extra fields
+        dict of 18 v2 feature values + atr_14 and mention_growth_7d as extra fields
         (extras are used for position sizing / slippage, not for model inference).
         Returns None if < 55 rows of market data.
     """
@@ -244,8 +244,27 @@ def compute_features_live(
     regime_score = 0.6 * float(spy_above_200ma) + 0.4 * (1.0 - float(vix_percentile))
     vix_x_volume = float(vix_percentile) * relative_vol
 
+    # dist_from_20ma_pct: (price - 20d MA) / 20d MA — positive = above MA (uptrend)
+    ma_20 = close.rolling(20, min_periods=10).mean()
+    dist_from_20ma_pct = float(
+        ((close - ma_20) / ma_20.replace(0, np.nan)).iloc[-1]
+    ) if not ma_20.isna().iloc[-1] else 0.0
+
+    # pead_proxy: decaying signal from earnings-like jumps (|ret| > 5%) in past 20 days
+    ret_series = close.pct_change()
+    pead_val = 0.0
+    for lookback in range(1, 21):
+        idx = -1 - lookback
+        if abs(len(close)) <= abs(idx):
+            break
+        jump = float(ret_series.iloc[idx])
+        if abs(jump) > 0.05:
+            decay = 1.0 - lookback / 20.0
+            pead_val += jump * decay
+    pead_val = max(-0.1, min(0.1, pead_val))
+
     return {
-        # ── 16 v2 model features (must match training_metadata_v2.json feature_cols) ──
+        # ── 18 v2 model features (must match training_metadata_v2.json feature_cols) ──
         'post_count_1d':         float(post_count_1d),
         'abnormal_attention_1d': round(abnormal_attention, 4),
         'total_comments_1d':     float(total_comments_1d),
@@ -262,6 +281,8 @@ def compute_features_live(
         'vix_x_volume':          round(vix_x_volume, 4),
         'spy_above_200ma':       float(spy_above_200ma),
         'regime_score':          round(regime_score, 4),
+        'dist_from_20ma_pct':    round(dist_from_20ma_pct, 6),
+        'pead_proxy':            round(pead_val, 6),
         # ── Extra fields: used for position sizing / slippage (not model features) ──
         'atr_14':                round(atr_14, 6),
         'mention_growth_7d':     float(mention_growth_7d),
