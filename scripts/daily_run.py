@@ -105,7 +105,7 @@ def run(
                                 key=lambda x: x[1].get('post_count_1d', 0),
                                 reverse=True)[:10]:
         count = data.get('post_count_1d', 0)
-        gate  = 'PASS' if count >= 10 else 'FAIL'
+        gate  = 'PASS' if count >= 5 else 'FAIL'
         logger.info(f'  [{gate}] {ticker:<6} posts={count}')
 
     # ── 5. Close expiring positions (ALWAYS — regardless of drift) ─────────
