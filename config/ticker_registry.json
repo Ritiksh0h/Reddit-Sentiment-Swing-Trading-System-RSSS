@@ -1,554 +1,501 @@
 {
   "tickers": {
     "NVDA": {
-      "company_names": [
-        "Nvidia",
-        "NVDA"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing",
-        "options"
-      ],
+      "company_names": ["Nvidia", "NVDA"],
+      "subreddits": ["wallstreetbets", "stocks", "investing", "options"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Semiconductors",
+      "market_cap_tier": "large"
     },
     "TSLA": {
-      "company_names": [
-        "Tesla",
-        "TSLA"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing",
-        "options"
-      ],
+      "company_names": ["Tesla", "TSLA"],
+      "subreddits": ["wallstreetbets", "stocks", "investing", "options"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "EV/Auto",
+      "market_cap_tier": "large"
     },
     "AAPL": {
-      "company_names": [
-        "Apple",
-        "Apple Inc",
-        "AAPL"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Apple", "Apple Inc", "AAPL"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Big Tech",
+      "market_cap_tier": "large"
     },
     "AMD": {
-      "company_names": [
-        "AMD",
-        "Advanced Micro Devices"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing",
-        "options"
-      ],
+      "company_names": ["AMD", "Advanced Micro Devices"],
+      "subreddits": ["wallstreetbets", "stocks", "investing", "options"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Semiconductors",
+      "market_cap_tier": "large"
     },
     "MSFT": {
-      "company_names": [
-        "Microsoft",
-        "MSFT"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Microsoft", "MSFT"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Big Tech",
+      "market_cap_tier": "large"
     },
     "META": {
-      "company_names": [
-        "Meta",
-        "Facebook",
-        "META"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Meta", "Facebook", "META"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Big Tech",
+      "market_cap_tier": "large"
     },
     "AMZN": {
-      "company_names": [
-        "Amazon",
-        "AMZN"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Amazon", "AMZN"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "E-commerce",
+      "market_cap_tier": "large"
     },
     "GOOG": {
-      "company_names": [
-        "Google",
-        "Alphabet",
-        "GOOG",
-        "GOOGL"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Google", "Alphabet", "GOOG", "GOOGL"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Big Tech",
+      "market_cap_tier": "large"
     },
     "COIN": {
-      "company_names": [
-        "Coinbase",
-        "COIN"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "options"
-      ],
+      "company_names": ["Coinbase", "COIN"],
+      "subreddits": ["wallstreetbets", "stocks", "options"],
       "active": true,
       "added_date": "2021-04-14",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Crypto/Fintech",
+      "market_cap_tier": "large"
     },
     "GME": {
-      "company_names": [
-        "GameStop",
-        "GME"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks"
-      ],
+      "company_names": ["GameStop", "GME"],
+      "subreddits": ["wallstreetbets", "stocks"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Retail/Meme",
+      "market_cap_tier": "mid"
     },
     "PLTR": {
-      "company_names": [
-        "Palantir",
-        "PLTR"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Palantir", "PLTR"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2020-09-30",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Enterprise Software",
+      "market_cap_tier": "large"
     },
     "MARA": {
-      "company_names": [
-        "Marathon Digital",
-        "MARA",
-        "Marathon Holdings"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "options"
-      ],
+      "company_names": ["Marathon Digital", "MARA", "Marathon Holdings"],
+      "subreddits": ["wallstreetbets", "stocks", "options"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Crypto/Fintech",
+      "market_cap_tier": "mid"
     },
     "SOFI": {
-      "company_names": [
-        "SoFi",
-        "SOFI",
-        "SoFi Technologies"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["SoFi", "SOFI", "SoFi Technologies"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2021-06-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Fintech",
+      "market_cap_tier": "mid"
     },
     "HOOD": {
-      "company_names": [
-        "Robinhood",
-        "HOOD"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Robinhood", "HOOD"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2021-07-29",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Fintech",
+      "market_cap_tier": "mid"
     },
     "MU": {
-      "company_names": [
-        "Micron",
-        "MU",
-        "Micron Technology"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing",
-        "options"
-      ],
+      "company_names": ["Micron", "MU", "Micron Technology"],
+      "subreddits": ["wallstreetbets", "stocks", "investing", "options"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Semiconductors",
+      "market_cap_tier": "large"
     },
     "NFLX": {
-      "company_names": [
-        "Netflix",
-        "NFLX"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Netflix", "NFLX"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Media/Entertainment",
+      "market_cap_tier": "large"
     },
     "UBER": {
-      "company_names": [
-        "Uber",
-        "UBER"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Uber", "UBER"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Transportation",
+      "market_cap_tier": "large"
     },
     "SPY": {
-      "company_names": [
-        "SPY",
-        "S&P 500",
-        "SP500"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing",
-        "options"
-      ],
+      "company_names": ["SPY", "S&P 500", "SP500"],
+      "subreddits": ["wallstreetbets", "stocks", "investing", "options"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Index",
+      "market_cap_tier": "large"
     },
     "QQQ": {
-      "company_names": [
-        "QQQ",
-        "Nasdaq",
-        "NASDAQ"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing",
-        "options"
-      ],
+      "company_names": ["QQQ", "Nasdaq", "NASDAQ"],
+      "subreddits": ["wallstreetbets", "stocks", "investing", "options"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "trade"
+      "tier": "trade",
+      "sector": "Index",
+      "market_cap_tier": "large"
+    },
+    "CRWD": {
+      "company_names": ["CrowdStrike", "CRWD"],
+      "subreddits": ["wallstreetbets", "stocks", "investing", "options"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "trade",
+      "sector": "Cybersecurity",
+      "market_cap_tier": "large"
+    },
+    "NET": {
+      "company_names": ["Cloudflare", "NET"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "trade",
+      "sector": "Networking",
+      "market_cap_tier": "large"
+    },
+    "SNOW": {
+      "company_names": ["Snowflake", "SNOW"],
+      "subreddits": ["wallstreetbets", "stocks", "investing", "options"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "trade",
+      "sector": "Enterprise Software",
+      "market_cap_tier": "large"
+    },
+    "CRM": {
+      "company_names": ["Salesforce", "CRM"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "trade",
+      "sector": "Enterprise Software",
+      "market_cap_tier": "large"
+    },
+    "DIS": {
+      "company_names": ["Disney", "Walt Disney", "DIS"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "trade",
+      "sector": "Media/Entertainment",
+      "market_cap_tier": "large"
+    },
+    "RBLX": {
+      "company_names": ["Roblox", "RBLX"],
+      "subreddits": ["wallstreetbets", "stocks"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "trade",
+      "sector": "Gaming",
+      "market_cap_tier": "mid"
+    },
+    "ABNB": {
+      "company_names": ["Airbnb", "ABNB"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "trade",
+      "sector": "Travel/Leisure",
+      "market_cap_tier": "large"
+    },
+    "LYFT": {
+      "company_names": ["Lyft", "LYFT"],
+      "subreddits": ["wallstreetbets", "stocks"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "trade",
+      "sector": "Transportation",
+      "market_cap_tier": "mid"
+    },
+    "SPOT": {
+      "company_names": ["Spotify", "SPOT"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "trade",
+      "sector": "Media/Entertainment",
+      "market_cap_tier": "large"
+    },
+    "IONQ": {
+      "company_names": ["IonQ", "IONQ"],
+      "subreddits": ["wallstreetbets", "stocks"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "trade",
+      "sector": "Quantum Computing",
+      "market_cap_tier": "mid"
+    },
+    "ORCL": {
+      "company_names": ["Oracle", "ORCL"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "trade",
+      "sector": "Enterprise Software",
+      "market_cap_tier": "large"
     },
     "SHOP": {
-      "company_names": [
-        "Shopify",
-        "SHOP"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Shopify", "SHOP"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "watch"
-    },
-    "ROKU": {
-      "company_names": [
-        "Roku",
-        "ROKU"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks"
-      ],
-      "active": true,
-      "added_date": "2019-01-01",
-      "tier": "watch"
-    },
-    "SNAP": {
-      "company_names": [
-        "Snap",
-        "Snapchat",
-        "SNAP"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks"
-      ],
-      "active": true,
-      "added_date": "2019-01-01",
-      "tier": "watch"
-    },
-    "HIMS": {
-      "company_names": [
-        "Hims",
-        "HIMS",
-        "Hims & Hers"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks"
-      ],
-      "active": true,
-      "added_date": "2021-01-22",
-      "tier": "watch"
-    },
-    "RKLB": {
-      "company_names": [
-        "Rocket Lab",
-        "RKLB"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks"
-      ],
-      "active": true,
-      "added_date": "2021-08-25",
-      "tier": "watch"
-    },
-    "RDDT": {
-      "company_names": [
-        "Reddit",
-        "RDDT"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
-      "active": true,
-      "added_date": "2024-03-21",
-      "tier": "watch"
-    },
-    "INTC": {
-      "company_names": [
-        "Intel",
-        "INTC"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
-      "active": true,
-      "added_date": "2019-01-01",
-      "tier": "watch"
-    },
-    "ARM": {
-      "company_names": [
-        "ARM",
-        "Arm Holdings"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks"
-      ],
-      "active": true,
-      "added_date": "2023-09-14",
-      "tier": "watch"
-    },
-    "BAC": {
-      "company_names": [
-        "Bank of America",
-        "BAC"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
-      "active": true,
-      "added_date": "2019-01-01",
-      "tier": "watch"
-    },
-    "JPM": {
-      "company_names": [
-        "JPMorgan",
-        "JPMorgan Chase",
-        "JPM"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
-      "active": true,
-      "added_date": "2019-01-01",
-      "tier": "watch"
-    },
-    "GS": {
-      "company_names": [
-        "Goldman Sachs",
-        "Goldman",
-        "GS"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
-      "active": true,
-      "added_date": "2019-01-01",
-      "tier": "watch"
-    },
-    "SCHW": {
-      "company_names": [
-        "Charles Schwab",
-        "Schwab",
-        "SCHW"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
-      "active": true,
-      "added_date": "2019-01-01",
-      "tier": "watch"
-    },
-    "WMT": {
-      "company_names": [
-        "Walmart",
-        "WMT"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
-      "active": true,
-      "added_date": "2019-01-01",
-      "tier": "watch"
-    },
-    "COST": {
-      "company_names": [
-        "Costco",
-        "COST"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
-      "active": true,
-      "added_date": "2019-01-01",
-      "tier": "watch"
-    },
-    "PYPL": {
-      "company_names": [
-        "PayPal",
-        "PYPL"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
-      "active": true,
-      "added_date": "2019-01-01",
-      "tier": "watch"
+      "tier": "trade",
+      "sector": "E-commerce",
+      "market_cap_tier": "large"
     },
     "SQ": {
-      "company_names": [
-        "Block",
-        "Square",
-        "SQ"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Block", "Square", "SQ"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "watch"
+      "tier": "trade",
+      "sector": "Fintech",
+      "market_cap_tier": "large"
+    },
+    "RKLB": {
+      "company_names": ["Rocket Lab", "RKLB"],
+      "subreddits": ["wallstreetbets", "stocks"],
+      "active": true,
+      "added_date": "2021-08-25",
+      "tier": "trade",
+      "sector": "Aerospace/Defense",
+      "market_cap_tier": "mid"
+    },
+    "ARM": {
+      "company_names": ["ARM", "Arm Holdings"],
+      "subreddits": ["wallstreetbets", "stocks"],
+      "active": true,
+      "added_date": "2023-09-14",
+      "tier": "trade",
+      "sector": "Semiconductors",
+      "market_cap_tier": "large"
+    },
+    "INTC": {
+      "company_names": ["Intel", "INTC"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "trade",
+      "sector": "Semiconductors",
+      "market_cap_tier": "large"
+    },
+    "ROKU": {
+      "company_names": ["Roku", "ROKU"],
+      "subreddits": ["wallstreetbets", "stocks"],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch",
+      "sector": "Media/Entertainment",
+      "market_cap_tier": "mid"
+    },
+    "SNAP": {
+      "company_names": ["Snap", "Snapchat", "SNAP"],
+      "subreddits": ["wallstreetbets", "stocks"],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch",
+      "sector": "Social Media",
+      "market_cap_tier": "mid"
+    },
+    "HIMS": {
+      "company_names": ["Hims", "HIMS", "Hims & Hers"],
+      "subreddits": ["wallstreetbets", "stocks"],
+      "active": true,
+      "added_date": "2021-01-22",
+      "tier": "watch",
+      "sector": "Healthcare",
+      "market_cap_tier": "mid"
+    },
+    "RDDT": {
+      "company_names": ["Reddit", "RDDT"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2024-03-21",
+      "tier": "watch",
+      "sector": "Social Media",
+      "market_cap_tier": "mid"
+    },
+    "BAC": {
+      "company_names": ["Bank of America", "BAC"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch",
+      "sector": "Banking",
+      "market_cap_tier": "large"
+    },
+    "JPM": {
+      "company_names": ["JPMorgan", "JPMorgan Chase", "JPM"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch",
+      "sector": "Banking",
+      "market_cap_tier": "large"
+    },
+    "GS": {
+      "company_names": ["Goldman Sachs", "Goldman", "GS"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch",
+      "sector": "Banking",
+      "market_cap_tier": "large"
+    },
+    "SCHW": {
+      "company_names": ["Charles Schwab", "Schwab", "SCHW"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch",
+      "sector": "Banking",
+      "market_cap_tier": "large"
+    },
+    "WMT": {
+      "company_names": ["Walmart", "WMT"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch",
+      "sector": "Retail",
+      "market_cap_tier": "large"
+    },
+    "COST": {
+      "company_names": ["Costco", "COST"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch",
+      "sector": "Retail",
+      "market_cap_tier": "large"
+    },
+    "PYPL": {
+      "company_names": ["PayPal", "PYPL"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2019-01-01",
+      "tier": "watch",
+      "sector": "Fintech",
+      "market_cap_tier": "large"
     },
     "ABBV": {
-      "company_names": [
-        "AbbVie",
-        "ABBV"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["AbbVie", "ABBV"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "watch"
+      "tier": "watch",
+      "sector": "Healthcare",
+      "market_cap_tier": "large"
     },
     "LLY": {
-      "company_names": [
-        "Eli Lilly",
-        "Lilly",
-        "LLY"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Eli Lilly", "Lilly", "LLY"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "watch"
+      "tier": "watch",
+      "sector": "Healthcare",
+      "market_cap_tier": "large"
     },
     "PFE": {
-      "company_names": [
-        "Pfizer",
-        "PFE"
-      ],
-      "subreddits": [
-        "wallstreetbets",
-        "stocks",
-        "investing"
-      ],
+      "company_names": ["Pfizer", "PFE"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
       "active": true,
       "added_date": "2019-01-01",
-      "tier": "watch"
+      "tier": "watch",
+      "sector": "Healthcare",
+      "market_cap_tier": "large"
+    },
+    "XOM": {
+      "company_names": ["ExxonMobil", "Exxon", "XOM"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "watch",
+      "sector": "Energy",
+      "market_cap_tier": "large"
+    },
+    "CVX": {
+      "company_names": ["Chevron", "CVX"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "watch",
+      "sector": "Energy",
+      "market_cap_tier": "large"
+    },
+    "WFC": {
+      "company_names": ["Wells Fargo", "WFC"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "watch",
+      "sector": "Banking",
+      "market_cap_tier": "large"
+    },
+    "MRNA": {
+      "company_names": ["Moderna", "MRNA"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "watch",
+      "sector": "Healthcare",
+      "market_cap_tier": "large"
+    },
+    "LMT": {
+      "company_names": ["Lockheed Martin", "LMT"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "watch",
+      "sector": "Aerospace/Defense",
+      "market_cap_tier": "large"
+    },
+    "RTX": {
+      "company_names": ["Raytheon", "RTX"],
+      "subreddits": ["wallstreetbets", "stocks", "investing"],
+      "active": true,
+      "added_date": "2026-06-26",
+      "tier": "watch",
+      "sector": "Aerospace/Defense",
+      "market_cap_tier": "large"
     }
   },
-  "version": "1.0",
-  "last_updated": "2026-06-21"
+  "version": "2.0",
+  "last_updated": "2026-06-26"
 }

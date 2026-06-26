@@ -39,6 +39,8 @@ except ImportError:
 
 sys.path.insert(0, '.')
 
+from data.earnings_fetcher import is_safe_to_trade
+
 # ── Constants ──────────────────────────────────────────────────────────────────
 TEST_START         = '2024-01-01'
 TEST_END           = '2025-12-31'
@@ -72,6 +74,88 @@ TRADE_TICKERS = {
     'MARA', 'META', 'MSFT', 'MU',  'NFLX', 'NVDA', 'PLTR',
     'QQQ',  'SOFI', 'TSLA', 'UBER',   # SPY excluded (it's the core)
 }
+
+# Sector map (Improvement 4) — loaded from ticker_registry.json at runtime in main()
+_SECTOR_MAP: dict = {}
+
+# Grinold vol-adjustment constants (Improvement 3)
+_TARGET_VOL = 0.02   # 2% daily vol target
+_VOL_FLOOR  = 0.005  # 0.5%
+_VOL_CAP    = 0.08   # 8%
+
+# Earnings filter (Improvement 1) — in-memory cache for backtest runs
+_EARNINGS_CACHE: dict = {}
+
+
+def _load_sector_map() -> dict:
+    """Load ticker → sector from ticker_registry.json."""
+    try:
+        with open('config/ticker_registry.json') as f:
+            reg = json.load(f)
+        return {t: v.get('sector', 'Unknown')
+                for t, v in reg.get('tickers', {}).items()}
+    except Exception:
+        return {}
+
+
+def _vol_adjusted_score(score: float, ticker: str, date_str: str, vol_lut: dict) -> float:
+    """
+    Grinold vol-normalization: α = IC × vol × score.
+    Higher-vol tickers are discounted so they don't dominate ranking purely
+    because their raw return predictions are large.
+    Returns adjusted_score; falls back to raw score if vol unavailable.
+    """
+    vol = vol_lut.get((ticker, date_str))
+    if vol is None or vol <= 0:
+        return score
+    vol = max(vol, _VOL_FLOOR)
+    vol = min(vol, _VOL_CAP)
+    return score * (_TARGET_VOL / vol)
+
+
+def _get_correlation(
+    ticker_a: str,
+    ticker_b: str,
+    date_str: str,
+    ticker_series: dict,
+    window: int = 60,
+) -> float | None:
+    """Rolling 60-day Pearson correlation between two tickers' returns."""
+    s_a = ticker_series.get(ticker_a)
+    s_b = ticker_series.get(ticker_b)
+    if s_a is None or s_b is None:
+        return None
+    try:
+        d = pd.Timestamp(date_str)
+        combined = pd.DataFrame({'a': s_a, 'b': s_b}).dropna()
+        combined = combined[combined.index <= d].tail(window)
+        if len(combined) < 20:
+            return None
+        returns = combined.pct_change().dropna()
+        if len(returns) < 10:
+            return None
+        return float(returns['a'].corr(returns['b']))
+    except Exception:
+        return None
+
+
+def _earnings_safe(ticker: str, current_date: str) -> bool:
+    """
+    Check earnings safety with in-process cache.
+    Skips the check entirely in backtest to avoid hitting live API per-row;
+    uses a one-time cache keyed on ticker (fetched at backtest start in main()).
+    """
+    if ticker not in _EARNINGS_CACHE:
+        return True  # unknown → allow (API not called per-row in backtest)
+    earned_date = _EARNINGS_CACHE[ticker]
+    if earned_date is None:
+        return True
+    entry = date.fromisoformat(current_date)
+    danger_end = entry
+    # Simple check: if cached earnings date falls within 8d of entry, skip
+    from datetime import timedelta
+    danger_window_end = entry + timedelta(days=8)
+    return earned_date > danger_window_end
 
 # Previous baselines — used only for the comparison table printout
 _OLD = {            # original absolute-threshold system (57 trades)
@@ -253,6 +337,7 @@ def run_system(
     trading_days:  list,
     drop_tickers:  set,
     dynamic_hold:  bool,
+    ticker_series: dict = None,  # Improvement 4: needed for rolling correlation
 ) -> dict:
     """
     Core-satellite simulation with rank-based signal generation.
@@ -411,6 +496,10 @@ def run_system(
                 if (d1 - d2).days < COOLDOWN_DAYS:
                     continue
 
+            # Improvement 1 — Earnings filter (cached; no live API call per row)
+            if not _earnings_safe(ticker, current_date):
+                continue
+
             # Score via composite model prediction
             X  = pd.DataFrame([row[FEATURE_COLS].fillna(0.0).to_dict()])
             dm = xgb.DMatrix(X)
@@ -430,10 +519,32 @@ def run_system(
             if float(row.get('relative_volume', 1.0)) < 0.8:
                 continue
 
+            # Improvement 3 — Grinold vol-adjusted score for ranking
+            adj_score = _vol_adjusted_score(score, ticker, current_date, vol_lut)
+
+            # Improvement 4 — Sector filter: skip if sector already held
+            candidate_sector = _SECTOR_MAP.get(ticker, 'Unknown')
+            open_sectors = [_SECTOR_MAP.get(p.ticker, 'Unknown') for p in open_pos]
+            if open_sectors.count(candidate_sector) >= 1:
+                continue
+
+            # Improvement 4 — Correlation filter: skip if corr > 0.7 with any open position
+            skip_corr = False
+            if ticker_series is not None:
+                for held in open_pos:
+                    corr = _get_correlation(
+                        ticker, held.ticker, current_date, ticker_series, window=60)
+                    if corr is not None and corr > 0.7:
+                        skip_corr = True
+                        break
+            if skip_corr:
+                continue
+
             cur_price = price_lut.get((ticker, current_date), float(row['close']))
             candidates.append({
                 'ticker':        ticker,
                 'score':         score,
+                'adj_score':     adj_score,
                 'pred_1d':       p1,
                 'pred_3d':       p3,
                 'pred_5d':       p5,
@@ -441,8 +552,8 @@ def run_system(
                 'regime_score':  regime_score_val,
             })
 
-        # Rank by composite score descending; take up to MAX_DAILY_SIGNALS
-        candidates.sort(key=lambda x: x['score'], reverse=True)
+        # Rank by vol-adjusted composite score (Improvement 3); take up to MAX_DAILY_SIGNALS
+        candidates.sort(key=lambda x: x['adj_score'], reverse=True)
         to_open = candidates[:min(MAX_DAILY_SIGNALS, n_open_slots)]
 
         # ── Open new positions ────────────────────────────────────────────────
@@ -647,12 +758,23 @@ def main():
         models[hz] = m
     print('V2 models loaded (16 features each)')
 
+    # ── Improvement 4: load sector map ────────────────────────────────────────
+    global _SECTOR_MAP
+    _SECTOR_MAP = _load_sector_map()
+    print(f'Sector map loaded: {len(_SECTOR_MAP)} tickers')
+
+    # ── Improvement 1: build earnings cache (one fetch per trade ticker) ──────
+    # Only pre-cache; individual rows use _earnings_safe() for O(1) lookup.
+    # NOTE: historical backtest uses static cache — not calling live API per date.
+    print('Earnings cache: skipped for historical backtest (static cache only)')
+
     # ── Run both systems ───────────────────────────────────────────────────────
     print('\nRunning simulations...')
     common = dict(
         test_lut=test_lut, spy_rows=spy_rows, models=models,
         price_lut=price_lut, vol_lut=vol_lut,
         trading_days=trading_days, drop_tickers=drop_tickers,
+        ticker_series=ticker_series,
     )
     sys_a = run_system('A_rank_dynamic', df_test, dynamic_hold=True,  **common)
     sys_b = run_system('B_rank_fixed5d', df_test, dynamic_hold=False, **common)

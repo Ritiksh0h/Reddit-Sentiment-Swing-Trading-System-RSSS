@@ -28,6 +28,11 @@ import yfinance as yf
 
 logger = logging.getLogger(__name__)
 
+# Grinold vol-adjustment constants (Improvement 3)
+_TARGET_VOL = 0.02
+_VOL_FLOOR  = 0.005
+_VOL_CAP    = 0.08
+
 with open('experiments/phase3_locked_architecture.json') as f:
     ARCH = json.load(f)
 
@@ -43,6 +48,18 @@ DENSITY_GATE = 10
 
 from config.settings import load_tickers, TICKERS_TRADE_PATH, TICKERS_DROP_PATH
 from data.options_fetcher import fetch_pcr, interpret_pcr
+from data.earnings_fetcher import is_safe_to_trade
+
+
+def _load_sector_map() -> dict:
+    """Load ticker → sector from ticker_registry.json."""
+    try:
+        with open('config/ticker_registry.json') as f:
+            reg = json.load(f)
+        return {t: v.get('sector', 'Unknown')
+                for t, v in reg.get('tickers', {}).items()}
+    except Exception:
+        return {}
 
 TRADE_UNIVERSE = set(load_tickers(TICKERS_TRADE_PATH)) or None  # None = unrestricted fallback
 DROP_TICKERS   = set(load_tickers(TICKERS_DROP_PATH)) or set(ARCH['drop_tickers'])
@@ -345,6 +362,20 @@ def generate_signals(
             logger.debug(f'density_gate_fail ticker={ticker} posts={post_count}')
             continue
 
+        # Improvement 1 — Earnings filter
+        try:
+            from datetime import date as _date
+            _today_date = _date.fromisoformat(today)
+            _safe, _earnings_dt = is_safe_to_trade(ticker, _today_date)
+            if not _safe:
+                logger.info(
+                    f'earnings_skip ticker={ticker} '
+                    f'next_earnings={_earnings_dt}'
+                )
+                continue
+        except Exception as _e:
+            logger.debug(f'earnings_check_error ticker={ticker}: {_e}')
+
         try:
             mkt = yf.download(ticker, period='90d',
                               auto_adjust=True, progress=False)
@@ -498,9 +529,25 @@ def generate_signals(
                      key=lambda x: x.predicted_5d)
 
     result = bullish + neutral + bearish
-    logger.info(f'signals_generated count={len(result)} '
-                f'bullish={len(bullish)} '
-                f'bearish_logged={len(bearish)} '
-                f'neutral={len(neutral)} '
+
+    # Improvement 4 — Sector dedup: keep only the top-ranked signal per sector
+    sector_map = _load_sector_map()
+    seen_sectors: set = set()
+    deduped = []
+    for sig in result:
+        sector = sector_map.get(sig.ticker, 'Unknown')
+        if sector in seen_sectors and sector not in ('Index', 'Unknown'):
+            logger.debug(
+                f'sector_dedup_skip ticker={sig.ticker} sector={sector}'
+            )
+            continue
+        seen_sectors.add(sector)
+        deduped.append(sig)
+
+    logger.info(f'signals_generated count={len(deduped)} '
+                f'(pre_dedup={len(result)}) '
+                f'bullish={sum(1 for s in deduped if s.signal == "BULLISH")} '
+                f'bearish_logged={sum(1 for s in deduped if s.signal == "BEARISH")} '
+                f'neutral={sum(1 for s in deduped if s.signal == "NEUTRAL")} '
                 f'date={today}')
-    return result
+    return deduped
