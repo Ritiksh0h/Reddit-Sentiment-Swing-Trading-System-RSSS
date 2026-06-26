@@ -31,26 +31,26 @@ def record_daily_snapshot(
         date = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
     try:
-        spy = yf.download('SPY', period='5d', auto_adjust=True, progress=False)
+        spy = yf.download('SPY', period='2d', auto_adjust=True, progress=False)
         if isinstance(spy.columns, pd.MultiIndex):
             spy.columns = spy.columns.get_level_values(0)
-        spy_return_5d = float(
+        spy_return_today = float(
             (spy['Close'].iloc[-1] - spy['Close'].iloc[0]) / spy['Close'].iloc[0]
         )
     except Exception as e:
         logger.warning(f'spy_fetch_failed error={e}')
-        spy_return_5d = None
+        spy_return_today = None
 
     portfolio_return = (portfolio_value - starting_capital) / starting_capital
 
     snapshot = {
-        'date':             date,
-        'portfolio_value':  round(portfolio_value, 2),
-        'starting_capital': round(starting_capital, 2),
-        'portfolio_return': round(portfolio_return, 4),
-        'spy_return_5d':    round(spy_return_5d, 4) if spy_return_5d is not None else None,
-        'alpha':            round(portfolio_return - spy_return_5d, 4)
-                            if spy_return_5d is not None else None,
+        'date':              date,
+        'portfolio_value':   round(portfolio_value, 2),
+        'starting_capital':  round(starting_capital, 2),
+        'portfolio_return':  round(portfolio_return, 4),
+        'spy_return_today':  round(spy_return_today, 4) if spy_return_today is not None else None,
+        'alpha':             round(portfolio_return - spy_return_today, 4)
+                             if spy_return_today is not None else None,
         'n_trades_today':   n_trades_today,
         'actions':          actions,
         'timestamp':        datetime.now(timezone.utc).isoformat(),
@@ -60,8 +60,25 @@ def record_daily_snapshot(
     with open(PERF_JSONL, 'a') as f:
         f.write(json.dumps(snapshot) + '\n')
 
+    # Persist to PostgreSQL portfolio_snapshots (non-blocking)
+    try:
+        from api.db import insert_portfolio_snapshot  # noqa: PLC0415
+        insert_portfolio_snapshot({
+            'snapshot_date':    date,
+            'equity':           round(portfolio_value, 2),
+            'cash':             None,
+            'position_value':   None,
+            'total_return_pct': round(portfolio_return * 100, 4),
+            'spy_return_today': round(spy_return_today, 4) if spy_return_today is not None else None,
+            'alpha':            snapshot.get('alpha'),
+            'n_positions':      n_trades_today,
+            'regime_label':     None,
+        })
+    except Exception as _db_exc:
+        logger.debug(f'db_snapshot_skipped: {_db_exc}')
+
     logger.info(f'daily_snapshot_recorded portfolio_return={portfolio_return:.4f} '
-                f'spy_return={spy_return_5d}')
+                f'spy_return={spy_return_today}')
     return snapshot
 
 

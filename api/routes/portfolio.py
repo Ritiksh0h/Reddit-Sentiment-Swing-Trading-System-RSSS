@@ -66,6 +66,42 @@ def get_portfolio():
     _REGIME_SIZING = {'POSITIVE': 100, 'NEUTRAL': 75, 'NEGATIVE': 50}
     sizing_pct     = _REGIME_SIZING.get(regime_label, 75)
 
+    # ── daily_pnl from PostgreSQL portfolio_snapshots (fallback: JSONL) ─────
+    daily_pnl = {}
+    try:
+        from api.db import _get_engine
+        from sqlalchemy import text as _text
+        engine = _get_engine()
+        if engine:
+            with engine.connect() as conn:
+                rows = conn.execute(_text(
+                    'SELECT snapshot_date, total_return_pct '
+                    'FROM portfolio_snapshots ORDER BY snapshot_date'
+                )).fetchall()
+            for row in rows:
+                d = str(row[0])[:10]
+                daily_pnl[d] = (row[1] or 0.0) / 100.0
+    except Exception:
+        pass
+
+    # Fallback: build daily_pnl from paper_performance.jsonl
+    if not daily_pnl:
+        import json as _json
+        from pathlib import Path as _Path
+        perf_path = _Path('data/live/paper_performance.jsonl')
+        if perf_path.exists():
+            for line in perf_path.read_text().splitlines():
+                if not line.strip():
+                    continue
+                try:
+                    snap = _json.loads(line)
+                    d    = snap.get('date', '')[:10]
+                    r    = snap.get('portfolio_return')
+                    if d and r is not None:
+                        daily_pnl[d] = float(r)
+                except Exception:
+                    pass
+
     return {
         **portfolio,
         'equity':           round(equity, 2),
@@ -73,6 +109,7 @@ def get_portfolio():
         'positions_count':  len(positions),
         'regime_label':     regime_label,
         'sizing_pct':       sizing_pct,
+        'daily_pnl':        daily_pnl,
     }
 
 
@@ -124,9 +161,36 @@ def get_recent_signals(n: int = 20):
 
 @router.get('/trades/history')
 def get_trade_history():
-    """Return all closed trades with computed PnL dollar amounts."""
-    state  = _load_portfolio()
-    closed = state.get('closed_trades', [])
+    """
+    Return all closed trades with computed PnL dollar amounts.
+    Tries PostgreSQL trades table first; falls back to paper_portfolio.json.
+    """
+    # ── Try PostgreSQL trades table ───────────────────────────────────────
+    closed = []
+    try:
+        from api.db import _get_engine
+        from sqlalchemy import text as _text
+        engine = _get_engine()
+        if engine:
+            with engine.connect() as conn:
+                rows = conn.execute(_text(
+                    "SELECT ticker, entry_date, exit_date, entry_price, exit_price, "
+                    "n_shares, cost_basis, pnl_pct, pnl_dollars, exit_reason, hold_days, is_real "
+                    "FROM trades WHERE exit_date IS NOT NULL "
+                    "ORDER BY exit_date DESC"
+                )).fetchall()
+            if rows:
+                keys = ['ticker','entry_date','exit_date','entry_price','exit_price',
+                        'n_shares','cost_basis','pnl_pct','pnl_dollars','exit_reason',
+                        'hold_days','is_real']
+                closed = [dict(zip(keys, r)) for r in rows]
+    except Exception:
+        pass
+
+    # ── Fallback: paper_portfolio.json ────────────────────────────────────
+    if not closed:
+        state  = _load_portfolio()
+        closed = state.get('closed_trades', [])
 
     enriched = []
     for t in closed:

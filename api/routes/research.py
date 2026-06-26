@@ -65,7 +65,7 @@ def get_backtest():
             'pooled_sharpe':    0.84,
             'pct_profitable':   74,
             'bear_2022_return': -3.9,
-            'wfe':              1.21,
+            'wfe':              1.25,
             'gates_passed':     '4/5',
         },
     }
@@ -76,28 +76,82 @@ def get_backtest_full(system: str = 'A'):
     """
     Backtest v2 results for 2024-2025 out-of-sample period (HISTORICAL SIMULATION).
     system: A | B | C
-        A = Long-only, dynamic hold (1D/3D/5D)   [default — best Sharpe]
-        B = Long+Short, dynamic hold
-        C = Long+Short, fixed 5D only             [control]
-    Returns selected system's trades + metrics, plus comparison summary for all three.
-    Source: experiments/backtest_v2_results.json
+    Source priority: MongoDB backtest_results → JSON file → hardcoded fallback.
     """
-    path = Path('experiments/backtest_v2_results.json')
-    if not path.exists():
-        return {
-            'error':   'Backtest v2 results not found',
-            'message': 'Run: python scripts/run_backtest_v2.py',
-        }
+    # ── Try MongoDB first; populate `_mongo_data` for use below ─────────────
+    _mongo_data = None
+    try:
+        from api.db import get_mongo_db
+        from pymongo import DESCENDING
+        mdb = get_mongo_db()
+        if mdb is not None:
+            doc = mdb['backtest_results'].find_one(
+                {'version': 'v2'}, {'_id': 0},
+                sort=[('created_at', DESCENDING)],
+            )
+            if doc and doc.get('systems'):
+                doc.pop('created_at', None)
+                doc.pop('version', None)
+                _mongo_data = doc
+    except Exception:
+        pass
 
-    with open(path) as f:
-        data = json.load(f)
+    path = Path('experiments/backtest_v2_results.json')
+    if not path.exists() and _mongo_data is None:
+        # Fall back to hardcoded numbers from /backtest
+        bt = get_backtest()
+        sys_key = (system or 'A').upper()
+        sys_data = bt['systems'].get(sys_key, bt['systems']['A'])
+        return _sanitize({
+            'simulation':      True,
+            'note':            'Fallback to hardcoded backtest summary (backtest_v2_results.json not found)',
+            'period':          bt['period'],
+            'spy_return_pct':  bt['spy_return'],
+            'recommendation':  f'System A — {sys_data["name"]} (best Sharpe {sys_data["sharpe"]:.2f})',
+            'selected_system': sys_key,
+            'system':          sys_key,
+            'selected_data': {
+                'n_trades':         sys_data['trades'],
+                'win_rate':         sys_data['win_rate'] / 100,
+                'total_return_pct': sys_data['return_pct'],
+                'alpha_pct':        sys_data['alpha'],
+                'sharpe_ratio':     sys_data['sharpe'],
+                'max_drawdown_pct': sys_data['max_dd'],
+                'monthly_returns':  {},
+            },
+            'comparison': {
+                k: {
+                    'description':      v['name'],
+                    'total_return_pct': v['return_pct'],
+                    'alpha_pct':        v['alpha'],
+                    'sharpe_ratio':     v['sharpe'],
+                    'max_drawdown_pct': v['max_dd'],
+                    'win_rate':         v['win_rate'] / 100,
+                    'n_trades':         v['trades'],
+                }
+                for k, v in bt['systems'].items()
+            },
+            'trades':           [],
+            'n_trades':         sys_data['trades'],
+            'win_rate':         sys_data['win_rate'] / 100,
+            'total_return_pct': sys_data['return_pct'],
+            'alpha_pct':        sys_data['alpha'],
+            'sharpe_ratio':     sys_data['sharpe'],
+            'max_drawdown_pct': sys_data['max_dd'],
+            'monthly_returns':  {},
+        })
+
+    if _mongo_data is not None:
+        data = _mongo_data
+    else:
+        with open(path) as f:
+            data = json.load(f)
 
     sys_map = {
-        'A': 'A_long_dynamic',
-        'B': 'B_long_short_dynamic',
-        'C': 'C_long_short_fixed5d',
+        'A': 'A_rank_dynamic',
+        'B': 'B_rank_fixed5d',
     }
-    sys_key = sys_map.get((system or 'A').upper(), 'A_long_dynamic')
+    sys_key = sys_map.get((system or 'A').upper(), 'A_rank_dynamic')
 
     if sys_key not in data.get('systems', {}):
         return {
@@ -107,36 +161,34 @@ def get_backtest_full(system: str = 'A'):
 
     selected = data['systems'][sys_key]
 
-    # Compact comparison summary for all three systems
+    # Compact comparison summary for available systems
     comparison = {}
     labels = {
-        'A_long_dynamic':       'A',
-        'B_long_short_dynamic': 'B',
-        'C_long_short_fixed5d': 'C',
+        'A_rank_dynamic':  'A',
+        'B_rank_fixed5d':  'B',
     }
     descriptions = {
-        'A': 'Long+Dynamic',
-        'B': 'Long+Short+Dynamic',
-        'C': 'Long+Short+Fixed5D',
+        'A': 'Long+Dynamic (Rank-Based)',
+        'B': 'Long+Fixed Threshold',
     }
     for k, v in data['systems'].items():
         lbl = labels.get(k, k)
         comparison[lbl] = {
             'description':      descriptions.get(lbl, lbl),
             'total_return_pct': v['total_return_pct'],
-            'alpha_pct':        v['alpha_pct'],
+            'alpha_pct':        v.get('alpha_vs_spy_pct', v.get('alpha_pct', 0)),
             'sharpe_ratio':     v['sharpe_ratio'],
-            'sortino_ratio':    v['sortino_ratio'],
+            'sortino_ratio':    v.get('sortino_ratio', 0),
             'max_drawdown_pct': v['max_drawdown_pct'],
             'win_rate':         v['win_rate'],
             'n_trades':         v['n_trades'],
-            'profit_factor':    v['profit_factor'],
+            'profit_factor':    v.get('profit_factor', 0),
         }
 
     # Best system by Sharpe ratio
     best_lbl  = max(comparison, key=lambda k: comparison[k]['sharpe_ratio'])
     best_s    = comparison[best_lbl]
-    sys_names = {'A': 'Long+Dynamic', 'B': 'Long+Short+Dynamic', 'C': 'Long+Short+Fixed5D'}
+    sys_names = {'A': 'Long+Dynamic (Rank-Based)', 'B': 'Long+Fixed Threshold'}
     recommendation = (
         f'System {best_lbl} — {sys_names.get(best_lbl, best_lbl)} '
         f'(best Sharpe {best_s["sharpe_ratio"]:.2f})'
@@ -145,25 +197,25 @@ def get_backtest_full(system: str = 'A'):
     sel_lbl = (system or 'A').upper()
     selected_data = {
         'n_trades':         selected['n_trades'],
-        'n_long':           selected['n_long'],
-        'n_short':          selected['n_short'],
+        'n_long':           selected.get('n_long', selected['n_trades']),
+        'n_short':          selected.get('n_short', 0),
         'n_1d_trades':      selected.get('n_1d_trades', 0),
         'n_3d_trades':      selected.get('n_3d_trades', 0),
-        'n_5d_trades':      selected.get('n_5d_trades', 0),
+        'n_5d_trades':      selected.get('n_5d_trades', selected['n_trades']),
         'win_rate':         selected['win_rate'],
-        'win_rate_1d':      selected['win_rate_1d'],
-        'win_rate_3d':      selected['win_rate_3d'],
-        'win_rate_5d':      selected['win_rate_5d'],
-        'long_win_rate':    selected['long_win_rate'],
-        'short_win_rate':   selected['short_win_rate'],
+        'win_rate_1d':      selected.get('win_rate_1d', 0),
+        'win_rate_3d':      selected.get('win_rate_3d', 0),
+        'win_rate_5d':      selected.get('win_rate_5d', selected['win_rate']),
+        'long_win_rate':    selected.get('long_win_rate', selected['win_rate']),
+        'short_win_rate':   selected.get('short_win_rate', 0),
         'long_avg_return_pct':  selected.get('long_avg_return_pct', 0),
         'short_avg_return_pct': selected.get('short_avg_return_pct', 0),
         'total_return_pct': selected['total_return_pct'],
-        'alpha_pct':        selected['alpha_pct'],
+        'alpha_pct':        selected.get('alpha_vs_spy_pct', selected.get('alpha_pct', 0)),
         'sharpe_ratio':     selected['sharpe_ratio'],
-        'sortino_ratio':    selected['sortino_ratio'],
+        'sortino_ratio':    selected.get('sortino_ratio', 0),
         'max_drawdown_pct': selected['max_drawdown_pct'],
-        'profit_factor':    selected['profit_factor'],
+        'profit_factor':    selected.get('profit_factor', 0),
         'monthly_returns':  selected.get('monthly_returns', {}),
     }
 

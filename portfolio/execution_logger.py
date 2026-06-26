@@ -95,13 +95,40 @@ def log_signal(
     with open(LOG_FILE, 'a') as f:
         f.write(json.dumps(record) + '\n')
 
-    # Dual-write to PostgreSQL when DB_URL is set (Railway / CI).
-    # Lazy import avoids a circular-import at load time (api imports portfolio).
+    # Dual-write to PostgreSQL when DB is configured.
+    # Lazy import avoids circular-import at load time (api imports portfolio).
     try:
         from api.db import insert_trade  # noqa: PLC0415
         insert_trade(record)
     except Exception as _db_exc:
         logger.debug(f'db_write_skipped: {_db_exc}')
+
+    # Structured trades table — OPEN actions only (CLOSEs are handled separately)
+    if action == 'OPEN':
+        try:
+            from api.db import _exec  # noqa: PLC0415
+            _exec(
+                """
+                INSERT INTO trades
+                  (ticker, action, entry_date, entry_price, n_shares,
+                   cost_basis, pred_5d, confidence)
+                VALUES
+                  (:ticker, :action, :entry_date, :entry_price, :n_shares,
+                   :cost_basis, :pred_5d, :confidence)
+                """,
+                {
+                    'ticker':       ticker,
+                    'action':       action,
+                    'entry_date':   date,
+                    'entry_price':  fill_price,
+                    'n_shares':     int(position_size_dollars / fill_price) if fill_price else 0,
+                    'cost_basis':   position_size_dollars,
+                    'pred_5d':      predicted_return_5d,
+                    'confidence':   confidence,
+                },
+            )
+        except Exception as _db_exc:
+            logger.debug(f'db_trades_open_skipped: {_db_exc}')
 
     logger.info(f'signal_logged ticker={ticker} action={action} '
                 f'predicted_return={predicted_return_5d:.4f}')

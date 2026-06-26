@@ -121,7 +121,7 @@ def get_predictions(ticker: str = None, n: int = 30):
                 '1D': {'pred': round(pred_1d, 2), 'conf': max(int(conf_5d * 0.85), 40)},
                 '3D': {'pred': round(pred_3d, 2), 'conf': max(int(conf_5d * 0.92), 45)},
                 '5D': {'pred': round(pred_5d, 2), 'conf': conf_5d},
-                'density_passed': post_count >= 10,
+                'density_passed': post_count >= 5,
                 'post_count_1d':  post_count,
                 'signal':         match.get('signal', 'NEUTRAL'),
                 'ticker':         ticker,

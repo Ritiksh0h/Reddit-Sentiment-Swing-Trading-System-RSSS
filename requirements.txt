@@ -28,8 +28,9 @@ fastapi>=0.111
 uvicorn>=0.29
 sqlalchemy>=2.0
 
-# Database
+# Database — PostgreSQL + MongoDB
 psycopg2-binary>=2.9
+pymongo>=4.6
 
 # Scheduling (Railway container + local)
 schedule>=1.2

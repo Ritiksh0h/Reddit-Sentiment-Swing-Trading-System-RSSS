@@ -312,7 +312,139 @@ def main():
     except Exception as e:
         logger.warning(f'target_fill_error: {e}')
 
+    # ── Persist run metadata to databases ────────────────────────────────
+    save_run_to_db(summary, today, reddit_counts)
+
     print(json.dumps(summary, indent=2))
+
+
+def save_run_to_db(summary: dict, today: str, reddit_counts: dict) -> None:
+    """
+    Write run metadata, signals, and Reddit aggregates to PostgreSQL + MongoDB.
+    Wrapped entirely in try/except — DB failure must never stop trading.
+    """
+    source = 'github_actions' if os.getenv('CI') == 'true' else 'launchd'
+
+    # ── PostgreSQL: daily_runs row ────────────────────────────────────────
+    try:
+        from api.db import insert_daily_run, insert_signal, insert_reddit_daily
+        total_posts = sum(
+            v.get('post_count_1d', 0) for v in reddit_counts.values()
+        )
+        all_signals = summary.get('all_signals', []) or summary.get('signals', [])
+        insert_daily_run({
+            'run_date':               today,
+            'run_time':               datetime.now(timezone.utc),
+            'total_posts':            total_posts,
+            'tickers_found':          len(reddit_counts),
+            'tickers_passed_density': sum(
+                1 for v in reddit_counts.values() if v.get('post_count_1d', 0) >= 5
+            ),
+            'signals_generated':      len(all_signals),
+            'trades_executed':        len([a for a in summary.get('actions', [])
+                                          if isinstance(a, dict) and a.get('action') == 'OPEN']),
+            'regime_label':           summary.get('regime', {}).get('label') if isinstance(summary.get('regime'), dict) else summary.get('regime'),
+            'source':                 source,
+        })
+        logger.info('db_daily_run_saved')
+    except Exception as exc:
+        logger.warning('db_daily_run_failed: %s', exc)
+
+    # ── PostgreSQL: signals rows ──────────────────────────────────────────
+    try:
+        from api.db import insert_signal
+        all_signals = summary.get('all_signals', []) or summary.get('signals', [])
+        for s in all_signals:
+            if not s:
+                continue
+            # s may be a dataclass or dict
+            d = s if isinstance(s, dict) else vars(s) if hasattr(s, '__dict__') else {}
+            insert_signal({
+                'run_date':        today,
+                'ticker':          d.get('ticker'),
+                'signal':          d.get('signal'),
+                'pred_1d':         d.get('predicted_1d') or d.get('pred_1d'),
+                'pred_3d':         d.get('predicted_3d') or d.get('pred_3d'),
+                'pred_5d':         d.get('predicted_5d') or d.get('predicted_return_5d') or d.get('pred_5d'),
+                'confidence':      d.get('confidence'),
+                'post_count':      d.get('post_count_1d') or d.get('post_count'),
+                'sentiment':       d.get('avg_sentiment_1d') or d.get('sentiment'),
+                'composite_score': d.get('composite_score'),
+                'passed_density':  (d.get('post_count_1d', 0) or 0) >= 5,
+            })
+        if all_signals:
+            logger.info('db_signals_saved count=%d', len(all_signals))
+    except Exception as exc:
+        logger.warning('db_signals_failed: %s', exc)
+
+    # ── PostgreSQL: reddit_daily rows ─────────────────────────────────────
+    try:
+        from api.db import insert_reddit_daily
+        for ticker, vals in reddit_counts.items():
+            sub = vals.get('subreddit_breakdown', {}) or {}
+            insert_reddit_daily({
+                'fetch_date':     today,
+                'ticker':         ticker,
+                'post_count_1d':  vals.get('post_count_1d', 0),
+                'avg_sentiment':  vals.get('avg_sentiment_1d'),
+                'wallstreetbets': sub.get('wallstreetbets'),
+                'stocks':         sub.get('stocks'),
+                'investing':      sub.get('investing'),
+                'options':        sub.get('options'),
+            })
+    except Exception as exc:
+        logger.warning('db_reddit_daily_failed: %s', exc)
+
+    # ── MongoDB: full daily_run_reports document ──────────────────────────
+    try:
+        from api.db import get_mongo_db
+        mdb = get_mongo_db()
+        if mdb is not None:
+            all_signals = summary.get('all_signals', []) or summary.get('signals', [])
+            sig_dicts = []
+            for s in all_signals:
+                if isinstance(s, dict):
+                    sig_dicts.append(s)
+                elif hasattr(s, '__dict__'):
+                    sig_dicts.append(vars(s))
+            mdb['daily_run_reports'].replace_one(
+                {'date': today},
+                {
+                    'date':       today,
+                    'source':     source,
+                    'reddit': {
+                        'total_posts': sum(v.get('post_count_1d', 0) for v in reddit_counts.values()),
+                        'tickers':     {k: {kk: vv for kk, vv in v.items() if not isinstance(vv, float) or not (vv != vv)}
+                                        for k, v in reddit_counts.items()},
+                    },
+                    'signals':    sig_dicts,
+                    'actions':    [a if isinstance(a, dict) else str(a) for a in summary.get('actions', [])],
+                    'regime':     summary.get('regime', {}),
+                    'created_at': datetime.now(timezone.utc),
+                },
+                upsert=True,
+            )
+            logger.info('mongodb_daily_run_saved')
+    except Exception as exc:
+        logger.warning('mongodb_daily_run_failed: %s', exc)
+
+    # ── MongoDB: raw Reddit post aggregates ───────────────────────────────
+    try:
+        from api.db import get_mongo_db
+        mdb = get_mongo_db()
+        if mdb is not None:
+            for ticker, vals in reddit_counts.items():
+                if vals.get('post_count_1d', 0) > 0:
+                    mdb['reddit_posts'].insert_one({
+                        'ticker':     ticker,
+                        'date':       today,
+                        'post_count': vals.get('post_count_1d'),
+                        'sentiment':  vals.get('avg_sentiment_1d'),
+                        'source':     'arctic_shift',
+                        'created_at': datetime.now(timezone.utc),
+                    })
+    except Exception as exc:
+        logger.warning('mongodb_reddit_posts_failed: %s', exc)
 
 
 if __name__ == '__main__':

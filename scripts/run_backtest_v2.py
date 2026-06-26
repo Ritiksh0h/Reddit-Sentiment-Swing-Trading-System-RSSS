@@ -22,7 +22,7 @@ import json
 import math
 import sys
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import numpy as np
@@ -838,6 +838,35 @@ def main():
     with open(out_path, 'w') as f:
         json.dump(out, f, indent=2)
     print(f'\nResults saved → {out_path}')
+
+    # ── Persist to MongoDB (non-blocking) ─────────────────────────────────────
+    try:
+        import sys as _sys
+        _sys.path.insert(0, '.')
+        from api.db import get_mongo_db
+        mdb = get_mongo_db()
+        if mdb is not None:
+            import copy
+            mongo_doc = copy.deepcopy(out)
+            mongo_doc['version']    = 'v2'
+            mongo_doc['created_at'] = datetime.utcnow()
+            mdb['backtest_results'].replace_one(
+                {'version': 'v2', 'period': out.get('period', '2024-2025')},
+                mongo_doc,
+                upsert=True,
+            )
+            print('MongoDB backtest_results saved ✓')
+        # Model metadata
+        meta_path = Path('models/training_metadata_v2.json')
+        if mdb is not None and meta_path.exists():
+            with open(meta_path) as mf:
+                meta = json.load(mf)
+            meta['version']    = 'v2'
+            meta['created_at'] = datetime.utcnow()
+            mdb['model_metadata'].replace_one({'version': 'v2'}, meta, upsert=True)
+            print('MongoDB model_metadata saved ✓')
+    except Exception as _exc:
+        print(f'MongoDB save skipped: {_exc}')
 
     # ── Print detailed per-system results ──────────────────────────────────────
     W = 78
