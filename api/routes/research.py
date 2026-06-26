@@ -23,18 +23,19 @@ def get_backtest():
         'period':          '2024-2025 Out-of-Sample',
         'version':         'v2',
         'ticker_universe': 'RSSS 29-ticker universe (NVDA/AAPL/TSLA etc.)',
-        'spy_return':      47.8,
+        'spy_return':      49.7,
         'systems': {
             'A': {
-                'name':        'Long+Dynamic (Rank-Based)',
-                'return_pct':  35.6,
-                'alpha':       -12.2,
-                'sharpe':      1.32,
+                'name':        'Long+Dynamic (Rank-Based, Phase 5)',
+                'return_pct':  36.5,
+                'alpha':       -11.3,
+                'sharpe':      1.36,
                 'max_dd':      -14.1,
                 'win_rate':    57.5,
-                'trades':      167,
+                'trades':      141,
                 'description': 'Core-satellite 70/30, rank-based signals, vol-targeted sizing, '
-                               'regime filter, long-only',
+                               '20-day MA filter, earnings filter, regime filter, long-only. '
+                               '18 features (Phase 5): dist_from_20ma_pct + pead_proxy added.',
             },
             'B': {
                 'name':        'Long+Dynamic (Fixed Threshold)',
@@ -61,10 +62,10 @@ def get_backtest():
         },
         'walk_forward': {
             'folds':            23,
-            'pooled_sharpe':    0.86,
+            'pooled_sharpe':    0.84,
             'pct_profitable':   74,
             'bear_2022_return': -3.9,
-            'wfe':              1.25,
+            'wfe':              1.21,
             'gates_passed':     '4/5',
         },
     }
