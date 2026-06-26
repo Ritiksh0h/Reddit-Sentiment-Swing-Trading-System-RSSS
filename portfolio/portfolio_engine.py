@@ -20,7 +20,7 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 STATE_FILE         = 'data/live/paper_portfolio.json'
-MAX_POSITIONS      = 3
+MAX_POSITIONS      = 4
 TAKE_PROFIT_CAP    = 0.15
 STOP_LOSS_PCT      = -0.08
 TICKER_COOLDOWN    = 7

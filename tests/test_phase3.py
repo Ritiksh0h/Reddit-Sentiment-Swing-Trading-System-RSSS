@@ -226,11 +226,12 @@ def test_execution_log_schema(tmp_path, monkeypatch):
 # ── 9. Max 3 positions enforced ───────────────────────────────────────────────
 
 def test_max_3_positions_enforced():
-    """Portfolio state with 3 positions reports max_positions_reached."""
+    """Portfolio state with 4 positions reports max_positions_reached."""
     state = PortfolioState(positions=[
         _make_position('TSLA'),
         _make_position('PLTR'),
         _make_position('COIN'),
+        _make_position('NVDA'),
     ])
     limits = check_risk_limits(state, '2024-06-01')
     assert limits['max_positions_reached'] is True

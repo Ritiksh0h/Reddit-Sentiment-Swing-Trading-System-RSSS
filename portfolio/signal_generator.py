@@ -44,7 +44,7 @@ try:
 except Exception:
     FEATURES = ARCH['features']
 
-DENSITY_GATE = 10
+DENSITY_GATE = 5
 
 from config.settings import load_tickers, TICKERS_TRADE_PATH, TICKERS_DROP_PATH
 from data.options_fetcher import fetch_pcr, interpret_pcr
@@ -376,6 +376,22 @@ def generate_signals(
         except Exception as _e:
             logger.debug(f'earnings_check_error ticker={ticker}: {_e}')
 
+        # Fix 4 — 20-day MA trend filter: only trade tickers above their 20d MA
+        try:
+            import yfinance as _yf_ma
+            _hist_ma = _yf_ma.Ticker(ticker).history(period='30d')
+            if len(_hist_ma) >= 20:
+                _ma20 = _hist_ma['Close'].tail(20).mean()
+                _price_now = _hist_ma['Close'].iloc[-1]
+                if _price_now < _ma20:
+                    logger.info(
+                        f'ma_filter_skip ticker={ticker} '
+                        f'price={_price_now:.2f} ma20={_ma20:.2f}')
+                    continue
+        except Exception as _e:
+            logger.warning(f'ma_filter_error ticker={ticker}: {_e}')
+            # fail open — do not skip on error
+
         try:
             mkt = yf.download(ticker, period='90d',
                               auto_adjust=True, progress=False)
@@ -532,16 +548,17 @@ def generate_signals(
 
     # Improvement 4 — Sector dedup: keep only the top-ranked signal per sector
     sector_map = _load_sector_map()
-    seen_sectors: set = set()
+    sector_counts: dict = {}
     deduped = []
     for sig in result:
         sector = sector_map.get(sig.ticker, 'Unknown')
-        if sector in seen_sectors and sector not in ('Index', 'Unknown'):
+        count = sector_counts.get(sector, 0)
+        if count >= 3 and sector not in ('Index', 'Unknown'):
             logger.debug(
                 f'sector_dedup_skip ticker={sig.ticker} sector={sector}'
             )
             continue
-        seen_sectors.add(sector)
+        sector_counts[sector] = count + 1
         deduped.append(sig)
 
     logger.info(f'signals_generated count={len(deduped)} '

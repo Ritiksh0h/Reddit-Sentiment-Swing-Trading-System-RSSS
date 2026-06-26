@@ -157,6 +157,24 @@ def _earnings_safe(ticker: str, current_date: str) -> bool:
     danger_window_end = entry + timedelta(days=8)
     return earned_date > danger_window_end
 
+def _above_20ma(ticker: str, current_date: str, ticker_series: dict) -> bool:
+    """Fix 4 — 20-day MA trend filter. Returns True (allow) if price > 20d MA.
+    Fails open on missing data so it never blocks when prices are unavailable."""
+    try:
+        if not ticker_series or ticker not in ticker_series:
+            return True
+        prices = ticker_series[ticker]
+        idx = prices.index.get_indexer([pd.Timestamp(current_date)], method='ffill')[0]
+        if idx < 20:
+            return True
+        past_20 = prices.iloc[max(0, idx - 20):idx]
+        if len(past_20) < 15:
+            return True
+        return float(prices.iloc[idx - 1]) > float(past_20.mean())
+    except Exception:
+        return True
+
+
 # Previous baselines — used only for the comparison table printout
 _OLD = {            # original absolute-threshold system (57 trades)
     'total_return_pct': 23.18,
@@ -174,6 +192,25 @@ _FIXED = {          # core-satellite with absolute 0.7% threshold (19 trades)
     'win_rate':         0.5789,
     'n_trades':         19,
     'max_drawdown_pct': -14.1,
+    'significant':      False,
+}
+_RANK167 = {        # rank-based before sector/correlation filters (167 trades)
+    'total_return_pct': 35.64,
+    'alpha_pct':       -12.2,
+    'sharpe_ratio':     1.32,
+    'win_rate':         0.5749,
+    'n_trades':         167,
+    'max_drawdown_pct': -14.1,
+    'significant':      False,
+}
+_SECTOR2_CORR = {   # sector cap=2 + correlation filter (140 trades)
+    'total_return_pct': 36.7,
+    'alpha_pct':       -11.2,
+    'sharpe_ratio':     1.37,
+    'win_rate':         0.557,
+    'n_trades':         140,
+    'max_drawdown_pct': -14.1,
+    'pvalue':           0.205,
     'significant':      False,
 }
 
@@ -500,6 +537,10 @@ def run_system(
             if not _earnings_safe(ticker, current_date):
                 continue
 
+            # Fix 4 — 20-day MA trend filter
+            if not _above_20ma(ticker, current_date, ticker_series):
+                continue
+
             # Score via composite model prediction
             X  = pd.DataFrame([row[FEATURE_COLS].fillna(0.0).to_dict()])
             dm = xgb.DMatrix(X)
@@ -525,20 +566,11 @@ def run_system(
             # Improvement 4 — Sector filter: skip if sector already held
             candidate_sector = _SECTOR_MAP.get(ticker, 'Unknown')
             open_sectors = [_SECTOR_MAP.get(p.ticker, 'Unknown') for p in open_pos]
-            if open_sectors.count(candidate_sector) >= 1:
+            if open_sectors.count(candidate_sector) >= 3:
                 continue
 
-            # Improvement 4 — Correlation filter: skip if corr > 0.7 with any open position
-            skip_corr = False
-            if ticker_series is not None:
-                for held in open_pos:
-                    corr = _get_correlation(
-                        ticker, held.ticker, current_date, ticker_series, window=60)
-                    if corr is not None and corr > 0.7:
-                        skip_corr = True
-                        break
-            if skip_corr:
-                continue
+            # Correlation filter removed — sector cap (>=3) provides sufficient
+            # diversification during statistical accumulation phase (<200 trades).
 
             cur_price = price_lut.get((ticker, current_date), float(row['close']))
             candidates.append({
@@ -842,49 +874,58 @@ def main():
     sig_b = sys_b.get('significance', {})
 
     print()
-    print(f'  {"Metric":<22} {"Old (57T)":>10} {"Fixed (19T)":>12} '
-          f'{"RankA":>8} {"RankB":>8}')
-    print('  ' + '─' * 64)
+    print(f'  {"Metric":<22} {"Old(57T)":>9} {"Fixed(19T)":>11} '
+          f'{"Rank(167T)":>11} {"S2+Corr(140T)":>14} {"NoCorrF(?T)":>12}')
+    print('  ' + '─' * 83)
 
     rows = [
         ('Total return',
          f'{_OLD["total_return_pct"]:+.1f}%',
          f'{_FIXED["total_return_pct"]:+.1f}%',
-         f'{sys_a["total_return_pct"]:+.1f}%',
-         f'{sys_b["total_return_pct"]:+.1f}%'),
+         f'{_RANK167["total_return_pct"]:+.1f}%',
+         f'{_SECTOR2_CORR["total_return_pct"]:+.1f}%',
+         f'{sys_a["total_return_pct"]:+.1f}%'),
         ('Alpha vs SPY',
          f'{_OLD["alpha_pct"]:+.1f}%',
          f'{_FIXED["alpha_pct"]:+.1f}%',
-         f'{sys_a["alpha_vs_spy_pct"]:+.1f}%',
-         f'{sys_b["alpha_vs_spy_pct"]:+.1f}%'),
+         f'{_RANK167["alpha_pct"]:+.1f}%',
+         f'{_SECTOR2_CORR["alpha_pct"]:+.1f}%',
+         f'{sys_a["alpha_vs_spy_pct"]:+.1f}%'),
         ('Sharpe',
          f'{_OLD["sharpe_ratio"]:.2f}',
          f'{_FIXED["sharpe_ratio"]:.2f}',
-         f'{sys_a["sharpe_ratio"]:.2f}',
-         f'{sys_b["sharpe_ratio"]:.2f}'),
+         f'{_RANK167["sharpe_ratio"]:.2f}',
+         f'{_SECTOR2_CORR["sharpe_ratio"]:.2f}',
+         f'{sys_a["sharpe_ratio"]:.2f}'),
         ('Win rate',
          f'{_OLD["win_rate"]:.1%}',
          f'{_FIXED["win_rate"]:.1%}',
-         f'{sig_a.get("win_rate", sys_a["win_rate"]):.1%}',
-         f'{sig_b.get("win_rate", sys_b["win_rate"]):.1%}'),
+         f'{_RANK167["win_rate"]:.1%}',
+         f'{_SECTOR2_CORR["win_rate"]:.1%}',
+         f'{sig_a.get("win_rate", sys_a["win_rate"]):.1%}'),
         ('Trades',
          str(_OLD['n_trades']),
          str(_FIXED['n_trades']),
-         str(sys_a['n_trades']),
-         str(sys_b['n_trades'])),
+         str(_RANK167['n_trades']),
+         str(_SECTOR2_CORR['n_trades']),
+         str(sys_a['n_trades'])),
         ('Max drawdown',
          f'{_OLD["max_drawdown_pct"]:.1f}%',
          f'{_FIXED["max_drawdown_pct"]:.1f}%',
-         f'{sys_a["max_drawdown_pct"]:.1f}%',
-         f'{sys_b["max_drawdown_pct"]:.1f}%'),
+         f'{_RANK167["max_drawdown_pct"]:.1f}%',
+         f'{_SECTOR2_CORR["max_drawdown_pct"]:.1f}%',
+         f'{sys_a["max_drawdown_pct"]:.1f}%'),
+        ('p-value',
+         '—', '—', '0.063',
+         f'{_SECTOR2_CORR["pvalue"]:.3f}',
+         f'{sig_a.get("pvalue", 1.0):.3f}'),
         ('Stat significant',
-         'NO', 'NO',
-         'YES ✓' if sig_a.get('significant') else 'NO',
-         'YES ✓' if sig_b.get('significant') else 'NO'),
+         'NO', 'NO', 'NO', 'NO',
+         'YES ✓' if sig_a.get('significant') else 'NO'),
     ]
 
-    for metric, c1, c2, c3, c4 in rows:
-        print(f'  {metric:<22} {c1:>10} {c2:>12} {c3:>8} {c4:>8}')
+    for metric, c1, c2, c3, c4, c5 in rows:
+        print(f'  {metric:<22} {c1:>9} {c2:>11} {c3:>11} {c4:>14} {c5:>12}')
 
     a_vs_b = sys_a['total_return_pct'] - sys_b['total_return_pct']
     print()
