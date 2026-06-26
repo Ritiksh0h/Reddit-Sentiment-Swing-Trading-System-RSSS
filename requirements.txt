@@ -17,6 +17,7 @@ vaderSentiment>=3.3
 
 # ML — inference only
 xgboost>=2.0
+scikit-learn>=1.4
 shap>=0.45
 
 # Environment

@@ -26,6 +26,18 @@ def _load_portfolio() -> dict:
 
 
 def _load_trade_log(last_n: int = 50) -> list:
+    """
+    Read trade log. DB-first when DB_URL is set (Railway), JSONL fallback for local dev.
+    If DB has no rows yet (fresh Railway deploy), tries JSONL as a backstop.
+    """
+    try:
+        from api.db import load_trades
+        db_records = load_trades(last_n)
+        if db_records:
+            return db_records
+    except Exception:
+        pass
+
     path = Path('logs/paper_trades.jsonl')
     if not path.exists():
         return []

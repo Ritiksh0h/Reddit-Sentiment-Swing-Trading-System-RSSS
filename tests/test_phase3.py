@@ -214,7 +214,7 @@ def test_execution_log_schema(tmp_path, monkeypatch):
 
     record = json.loads(log_file.read_text().strip())
     required = [
-        'ticker', 'date', 'feature_vector_11', 'regime_state',
+        'ticker', 'date', 'feature_vector', 'regime_state',
         'regime_multiplier', 'predicted_return_5d', 'atr_14',
         'position_size_dollars', 'slippage_applied', 'fill_price',
         'signal_timestamp', 'action',

@@ -6,11 +6,14 @@ Every signal (not just executed trades) is logged.
 This lets you reconstruct exactly what the system saw on any given day.
 
 Fields logged per signal (from phase3_locked_architecture.json):
-    ticker, date, feature_vector_11, regime_state, regime_multiplier,
+    ticker, date, feature_vector, regime_state, regime_multiplier,
     predicted_return_5d, atr_14, position_size_dollars, slippage_applied,
     fill_price, signal_timestamp, action
     + multi-horizon: predicted_1d/3d, signal, price_target_1d/3d/5d,
       confidence, news_count_1d, st_count_1d
+
+Dual-write: when DB_URL env var is set, records are also written to PostgreSQL
+(Railway production). JSONL is always written as the local source of truth.
 """
 import json
 import logging
@@ -60,7 +63,7 @@ def log_signal(
         'ticker':                ticker,
         'date':                  date,
         'action':                action,
-        'feature_vector_11':     feature_vector,
+        'feature_vector':        feature_vector,
         'raw_finbert_scores':    raw_finbert_scores,
         'regime_state':          regime_state,
         'regime_multiplier':     regime_multiplier,
@@ -91,6 +94,14 @@ def log_signal(
 
     with open(LOG_FILE, 'a') as f:
         f.write(json.dumps(record) + '\n')
+
+    # Dual-write to PostgreSQL when DB_URL is set (Railway / CI).
+    # Lazy import avoids a circular-import at load time (api imports portfolio).
+    try:
+        from api.db import insert_trade  # noqa: PLC0415
+        insert_trade(record)
+    except Exception as _db_exc:
+        logger.debug(f'db_write_skipped: {_db_exc}')
 
     logger.info(f'signal_logged ticker={ticker} action={action} '
                 f'predicted_return={predicted_return_5d:.4f}')

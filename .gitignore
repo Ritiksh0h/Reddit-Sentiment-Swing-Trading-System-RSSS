@@ -73,6 +73,10 @@ htmlcov/
 .ipynb_checkpoints/
 *.ipynb
 
+# --- Live portfolio state (ephemeral — rebuilt from trade log on each deploy) ---
+data/live/paper_portfolio.json
+data/live/paper_performance.jsonl
+
 # --- Database (local dev) ---
 *.db
 *.sqlite

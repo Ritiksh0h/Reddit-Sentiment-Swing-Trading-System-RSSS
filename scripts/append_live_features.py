@@ -2,7 +2,7 @@
 Append today's live feature vectors to the live feature store.
 
 Called after each daily_run to persist computed features for
-future retraining. Saves (ticker, date, 14 features, close_price)
+future retraining. Saves (ticker, date, 16 v2 features, close_price)
 so that target returns can be computed later when t+5 prices are available.
 
 Usage:
@@ -11,7 +11,7 @@ Usage:
     python scripts/append_live_features.py --fill-targets-only
 
 Output:
-    data/features/features_live_2026.parquet (appended daily)
+    data/features/features_live_v2.parquet (appended daily)
     data/features/features_target_pending.json (awaiting t+5 prices)
 """
 import json
@@ -29,15 +29,19 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
 logger = logging.getLogger(__name__)
 
-LIVE_FEATURES_PATH   = Path('data/features/features_live_2026.parquet')
+LIVE_FEATURES_PATH   = Path('data/features/features_live_v2.parquet')
 PENDING_TARGETS_PATH = Path('data/processed/features_target_pending.json')
 TARGET_HORIZON       = 5   # trading days
 
 FEATURE_COLS = [
-    'returns_1d', 'returns_5d', 'returns_20d', 'rsi_14', 'atr_14',
-    'relative_volume', 'dist_from_20ma', 'dist_from_50ma',
-    'post_count_1d', 'mention_growth_1d', 'mention_growth_7d',
-    'news_sentiment_1d', 'st_sentiment_1d', 'st_bull_pct',
+    'post_count_1d',       'abnormal_attention_1d',
+    'total_comments_1d',   'vader_sentiment_1d',
+    'sentiment_extremity', 'sentiment_accel',
+    'volume',              'relative_volume',
+    'returns_1d',          'returns_20d',
+    'rsi_14',              'news_sentiment_1d',
+    'vix_percentile',      'vix_x_volume',
+    'spy_above_200ma',     'regime_score',
 ]
 
 
@@ -76,9 +80,9 @@ def load_today_feature_vectors(today: str) -> list[dict]:
             if not ticker:
                 continue
 
-            fv = (record.get('feature_vector_11')
+            fv = (record.get('feature_vector')
                   or record.get('feature_vector_14')
-                  or record.get('feature_vector')
+                  or record.get('feature_vector_11')
                   or {})
 
             if not fv:
@@ -100,9 +104,10 @@ def load_today_feature_vectors(today: str) -> list[dict]:
             rows.append(row)
             logger.info(
                 f'feature_row ticker={ticker} '
+                f'post_count={row["post_count_1d"]:.0f} '
                 f'news={row["news_sentiment_1d"]:.3f} '
-                f'st={row["st_sentiment_1d"]:.3f} '
-                f'post_count={row["post_count_1d"]:.0f}'
+                f'vix_pct={row["vix_percentile"]:.3f} '
+                f'regime={row["regime_score"]:.3f}'
             )
 
     return rows
@@ -115,7 +120,7 @@ def fill_pending_targets() -> int:
     Reads data/processed/features_target_pending.json. A row becomes eligible
     after 7+ calendar days (ensures 5 trading days have passed). Fetches the
     t+5 close price via yfinance and computes (close_t5 - close_t0) / close_t0.
-    Filled rows are appended to data/features/features_live_2026.parquet; rows
+    Filled rows are appended to data/features/features_live_v2.parquet; rows
     still awaiting prices are written back to the pending file.
 
     Returns:
@@ -241,13 +246,13 @@ def main():
     )
 
     if LIVE_FEATURES_PATH.exists():
-        df = pd.read_parquet(LIVE_FEATURES_PATH)
-        news_real = (df['news_sentiment_1d'] != 0.0).mean() * 100
-        st_real   = (df['st_sentiment_1d']   != 0.0).mean() * 100
+        df       = pd.read_parquet(LIVE_FEATURES_PATH)
+        news_ok  = (df['news_sentiment_1d'] != 0.0).mean() * 100
+        vix_ok   = (df['vix_percentile']    != 0.0).mean() * 100
         logger.info(
             f'Live feature store: {len(df)} rows, '
-            f'news_real={news_real:.1f}%, '
-            f'st_real={st_real:.1f}%'
+            f'news_ok={news_ok:.1f}%, '
+            f'vix_ok={vix_ok:.1f}%'
         )
 
 

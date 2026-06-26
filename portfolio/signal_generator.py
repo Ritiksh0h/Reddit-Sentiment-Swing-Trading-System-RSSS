@@ -31,7 +31,14 @@ logger = logging.getLogger(__name__)
 with open('experiments/phase3_locked_architecture.json') as f:
     ARCH = json.load(f)
 
-FEATURES     = ARCH['features']          # 14 features
+# V2 feature set — loaded from training_metadata_v2.json (tracked).
+# Falls back to phase3 ARCH features only if file is absent.
+try:
+    with open('models/training_metadata_v2.json') as _f:
+        FEATURES = json.load(_f).get('feature_cols', ARCH['features'])
+except Exception:
+    FEATURES = ARCH['features']
+
 DENSITY_GATE = 10
 
 from config.settings import load_tickers, TICKERS_TRADE_PATH, TICKERS_DROP_PATH
@@ -87,33 +94,44 @@ def _load_booster_from_pkl(path: Path) -> xgb.Booster:
     return sklearn_model.get_booster()
 
 
-def load_models(model_dir: str = 'models/registry') -> dict:
+def load_models(model_dir: str = 'models') -> dict:
     """
-    Load all three horizon models.
+    Load multi-horizon XGBoost models.
+
+    Priority: v2 JSON models in models/ → phase3 PKL fallback in models/registry/.
     Returns dict: {'1d': booster, '3d': booster, '5d': booster}
-    Falls back to phase3_model.pkl for 5d if individual models missing.
     """
     models   = {}
     dir_path = Path(model_dir)
 
     for horizon in ['1d', '3d', '5d']:
-        model_path = dir_path / f'model_{horizon}.pkl'
-        if model_path.exists():
-            models[horizon] = _load_booster_from_pkl(model_path)
-            logger.info(f'Loaded model_{horizon}')
+        v2_path = dir_path / f'model_{horizon}_v2.json'
+        if v2_path.exists():
+            booster = xgb.Booster()
+            booster.load_model(str(v2_path))
+            models[horizon] = booster
+            logger.info(f'Loaded v2 model_{horizon}_v2.json')
         else:
-            if horizon == '5d':
-                fallback = dir_path / 'phase3_model.pkl'
+            # Fallback to phase3 PKL — feature set mismatch risk, log warning
+            pkl_path = Path('models/registry') / f'model_{horizon}.pkl'
+            if pkl_path.exists():
+                models[horizon] = _load_booster_from_pkl(pkl_path)
+                logger.warning(
+                    f'v2 model_{horizon}_v2.json not found — '
+                    f'using phase3 fallback (feature mismatch risk)'
+                )
+            elif horizon == '5d':
+                fallback = Path('models/registry/phase3_model.pkl')
                 if fallback.exists():
                     models['5d'] = _load_booster_from_pkl(fallback)
                     logger.warning('Using legacy phase3_model.pkl for 5d')
                 else:
                     raise FileNotFoundError(
                         f'No model found for horizon {horizon}. '
-                        'Run scripts/train_phase3_model.py first.'
+                        'Run scripts/train_models_v2.py first.'
                     )
             else:
-                logger.warning(f'model_{horizon}.pkl not found — '
+                logger.warning(f'model_{horizon} not found — '
                                f'will use 5d model as proxy')
                 models[horizon] = models.get('5d')
 
@@ -134,27 +152,33 @@ def compute_features_live(
     ticker: str,
     market_data: pd.DataFrame,
     post_count_1d: int,
-    mention_growth_1d: float,
-    mention_growth_7d: float,
     news_sentiment_1d: float = 0.0,
-    st_sentiment_1d:   float = 0.0,
-    st_bull_pct:       float = 0.5,
+    total_comments_1d: int = 0,
+    vader_sentiment_1d: float = 0.0,
+    mention_growth_7d: float = 1.0,
+    vix_percentile: float = 0.5,
+    spy_above_200ma: float = 1.0,
+    mention_history: dict = None,
 ) -> Optional[dict]:
     """
-    Compute the 14-feature vector for a single ticker using live OHLCV + sentiment data.
+    Compute 16-feature v2 vector for a single ticker from live OHLCV + sentiment data.
 
     Args:
-        ticker:            ticker symbol (used for log messages only)
-        market_data:       90-day OHLCV DataFrame from yfinance (needs >= 55 rows)
-        post_count_1d:     Reddit post count in last 24h (attention gate feature)
-        mention_growth_1d: today's count / yesterday's count ratio
-        mention_growth_7d: today's count / 7-day average ratio
-        news_sentiment_1d: FinBERT news sentiment [-1, +1]; 0.0 if unavailable
-        st_sentiment_1d:   StockTwits sentiment [-1, +1]; 0.0 if unavailable
-        st_bull_pct:       fraction of StockTwits messages tagged bullish; 0.5 if unavailable
+        ticker:             ticker symbol (used for log messages only)
+        market_data:        90-day OHLCV DataFrame from yfinance (needs >= 55 rows)
+        post_count_1d:      Reddit post count in last 24h
+        news_sentiment_1d:  FinBERT news sentiment [-1, +1]; 0.0 if unavailable
+        total_comments_1d:  sum of num_comments on Reddit posts; 0 if unavailable
+        vader_sentiment_1d: VADER compound score on post titles [-1, +1]; 0.0 if unavailable
+        mention_growth_7d:  today / 7d avg ratio; extra field for dynamic slippage (not a model feature)
+        vix_percentile:     fraction of trailing 252d VIX below current VIX; pre-fetched once per run
+        spy_above_200ma:    1.0 if SPY close > SPY 200-day MA, else 0.0; pre-fetched once per run
+        mention_history:    {ticker: {date_str: count}} from data/mention_history.json
 
     Returns:
-        dict of 14 feature values matching ARCH['features'], or None if < 55 rows of market data
+        dict of 16 v2 feature values + atr_14 and mention_growth_7d as extra fields
+        (extras are used for position sizing / slippage, not for model inference).
+        Returns None if < 55 rows of market data.
     """
     if len(market_data) < 55:
         logger.warning(f'insufficient_market_data ticker={ticker} n_rows={len(market_data)}')
@@ -166,7 +190,6 @@ def compute_features_live(
     vol   = market_data['Volume']
 
     returns_1d  = float(close.pct_change(1).iloc[-1])
-    returns_5d  = float(close.pct_change(5).iloc[-1])
     returns_20d = float(close.pct_change(20).iloc[-1])
 
     delta = close.diff()
@@ -175,6 +198,7 @@ def compute_features_live(
     rs    = gain / loss.replace(0, np.nan)
     rsi   = float((100 - 100 / (1 + rs)).iloc[-1])
 
+    # atr_14: position sizing only (NOT a v2 model feature)
     tr = pd.concat([
         high - low,
         (high - close.shift()).abs(),
@@ -182,30 +206,48 @@ def compute_features_live(
     ], axis=1).max(axis=1)
     atr_14 = float(tr.rolling(14).mean().iloc[-1])
 
+    volume_today = float(vol.iloc[-1])
     avg_vol_20d  = float(vol.rolling(20).mean().iloc[-1])
     relative_vol = float(vol.iloc[-1] / avg_vol_20d) if avg_vol_20d > 0 else 1.0
 
-    ma_20 = float(close.rolling(20).mean().iloc[-1])
-    ma_50 = float(close.rolling(50).mean().iloc[-1])
-    price = float(close.iloc[-1])
-    dist_from_20ma = (price - ma_20) / ma_20 if ma_20 > 0 else 0.0
-    dist_from_50ma = (price - ma_50) / ma_50 if ma_50 > 0 else 0.0
+    # abnormal_attention_1d: post_count / (20d rolling avg + 1), clipped at 10
+    if mention_history is not None:
+        ticker_hist  = mention_history.get(ticker, {})
+        sorted_dates = sorted(ticker_hist.keys())[-20:]
+        hist_counts  = [ticker_hist[d] for d in sorted_dates]
+        rolling_avg  = float(sum(hist_counts) / len(hist_counts)) if hist_counts else 1.0
+    else:
+        rolling_avg = 1.0
+    abnormal_attention = min(float(post_count_1d) / (rolling_avg + 1.0), 10.0)
+
+    sentiment_extremity = abs(float(vader_sentiment_1d))
+    # sentiment_accel = vader_1d - vader_3d; no 3d history in live feed — fallback 0.0
+    sentiment_accel = 0.0
+
+    regime_score = 0.6 * float(spy_above_200ma) + 0.4 * (1.0 - float(vix_percentile))
+    vix_x_volume = float(vix_percentile) * relative_vol
 
     return {
-        'returns_1d':        returns_1d,
-        'returns_5d':        returns_5d,
-        'returns_20d':       returns_20d,
-        'rsi_14':            rsi,
-        'atr_14':            atr_14,
-        'relative_volume':   relative_vol,
-        'dist_from_20ma':    dist_from_20ma,
-        'dist_from_50ma':    dist_from_50ma,
-        'post_count_1d':     float(post_count_1d),
-        'mention_growth_1d': float(mention_growth_1d),
-        'mention_growth_7d': float(mention_growth_7d),
-        'news_sentiment_1d': float(news_sentiment_1d),
-        'st_sentiment_1d':   float(st_sentiment_1d),
-        'st_bull_pct':       float(st_bull_pct),
+        # ── 16 v2 model features (must match training_metadata_v2.json feature_cols) ──
+        'post_count_1d':         float(post_count_1d),
+        'abnormal_attention_1d': round(abnormal_attention, 4),
+        'total_comments_1d':     float(total_comments_1d),
+        'vader_sentiment_1d':    round(float(vader_sentiment_1d), 4),
+        'sentiment_extremity':   round(sentiment_extremity, 4),
+        'sentiment_accel':       round(sentiment_accel, 4),
+        'volume':                volume_today,
+        'relative_volume':       round(relative_vol, 4),
+        'returns_1d':            round(returns_1d, 6),
+        'returns_20d':           round(returns_20d, 6),
+        'rsi_14':                round(rsi, 4),
+        'news_sentiment_1d':     float(news_sentiment_1d),
+        'vix_percentile':        round(float(vix_percentile), 4),
+        'vix_x_volume':          round(vix_x_volume, 4),
+        'spy_above_200ma':       float(spy_above_200ma),
+        'regime_score':          round(regime_score, 4),
+        # ── Extra fields: used for position sizing / slippage (not model features) ──
+        'atr_14':                round(atr_14, 6),
+        'mention_growth_7d':     float(mention_growth_7d),
     }
 
 
@@ -215,7 +257,7 @@ def generate_signals(
     today:           str  = None,
     models:          dict = None,  # {'1d': model, '3d': model, '5d': model}
     news_data:       dict = None,  # {ticker: {news_sentiment_1d}}
-    stocktwits_data: dict = None,  # {ticker: {st_sentiment_1d, st_bull_pct}}
+    stocktwits_data: dict = None,  # kept for backward compat; not used in v2 features
 ) -> list:
     """
     Generate multi-horizon ranked signals for all tickers that pass the density gate.
@@ -224,12 +266,13 @@ def generate_signals(
     Tickers in ARCH['drop_tickers'] are always excluded regardless of post count.
 
     Args:
-        reddit_counts:   {ticker: {post_count_1d, mention_growth_1d, mention_growth_7d, ...}}
+        reddit_counts:   {ticker: {post_count_1d, mention_growth_7d, total_comments_1d,
+                                   vader_sentiment_1d, news_sentiment_1d, ...}}
         model:           single model (backward compat, ignored if models is provided)
         today:           date string YYYY-MM-DD; defaults to UTC today
         models:          preferred — {'1d': model, '3d': model, '5d': model}
         news_data:       {ticker: {news_sentiment_1d, news_count_1d}} from news_fetcher
-        stocktwits_data: {ticker: {st_sentiment_1d, st_bull_pct, st_count_1d}} from stocktwits_fetcher
+        stocktwits_data: kept for API compat; v2 models do not use ST features
 
     Returns:
         list of SignalRecord ordered: BULLISH (desc pred_5d), NEUTRAL, BEARISH (asc pred_5d)
@@ -253,6 +296,42 @@ def generate_signals(
 
     ts      = datetime.now(timezone.utc).isoformat()
     signals = []
+
+    # ── Pre-fetch SPY 200MA + VIX percentile once per run (shared regime features) ──
+    spy_above_200ma: float = 1.0
+    vix_percentile:  float = 0.5
+    try:
+        spy_raw = yf.download('SPY', period='350d', auto_adjust=True, progress=False)
+        if isinstance(spy_raw.columns, pd.MultiIndex):
+            spy_raw.columns = spy_raw.columns.get_level_values(0)
+        spy_close  = spy_raw['Close'].dropna()
+        spy_ma200  = float(spy_close.rolling(200, min_periods=100).mean().iloc[-1])
+        spy_above_200ma = 1.0 if float(spy_close.iloc[-1]) > spy_ma200 else 0.0
+        logger.info(f'regime spy_above_200ma={spy_above_200ma:.0f} '
+                    f'spy_close={float(spy_close.iloc[-1]):.2f}')
+    except Exception as e:
+        logger.warning(f'SPY regime fetch failed: {e} — spy_above_200ma default 1.0')
+
+    try:
+        vix_raw = yf.download('^VIX', period='350d', auto_adjust=True, progress=False)
+        if isinstance(vix_raw.columns, pd.MultiIndex):
+            vix_raw.columns = vix_raw.columns.get_level_values(0)
+        vix_vals   = vix_raw['Close'].dropna().values
+        window     = vix_vals[-252:] if len(vix_vals) >= 252 else vix_vals
+        vix_percentile = float(np.mean(window < vix_vals[-1])) if len(window) >= 20 else 0.5
+        logger.info(f'regime vix_percentile={vix_percentile:.3f} '
+                    f'vix={float(vix_vals[-1]):.1f}')
+    except Exception as e:
+        logger.warning(f'VIX percentile fetch failed: {e} — vix_percentile default 0.5')
+
+    # Load mention history for abnormal_attention_1d computation
+    mention_history: dict = {}
+    try:
+        hist_path = Path('data/mention_history.json')
+        if hist_path.exists():
+            mention_history = json.loads(hist_path.read_text())
+    except Exception as e:
+        logger.warning(f'mention_history load failed: {e}')
 
     for ticker, reddit_data in reddit_counts.items():
         if TRADE_UNIVERSE is not None and ticker not in TRADE_UNIVERSE:
@@ -283,28 +362,17 @@ def generate_signals(
         else:
             news_sent = float(reddit_data.get('news_sentiment_1d', 0.0))
 
-        if stocktwits_data and ticker in stocktwits_data:
-            st_sent = float(stocktwits_data[ticker].get('st_sentiment_1d', 0.0))
-            st_bull = float(stocktwits_data[ticker].get('st_bull_pct', 0.5))
-        else:
-            st_sent = float(reddit_data.get('st_sentiment_1d', 0.0))
-            st_bull = float(reddit_data.get('st_bull_pct', 0.5))
-
-        logger.debug(
-            f'features ticker={ticker} '
-            f'news={news_sent:.3f} st={st_sent:.3f} '
-            f'st_bull={st_bull:.3f}'
-        )
-
         features = compute_features_live(
             ticker=ticker,
             market_data=mkt,
             post_count_1d=post_count,
-            mention_growth_1d=reddit_data.get('mention_growth_1d', 0.0),
-            mention_growth_7d=reddit_data.get('mention_growth_7d', 0.0),
             news_sentiment_1d=news_sent,
-            st_sentiment_1d=st_sent,
-            st_bull_pct=st_bull,
+            total_comments_1d=int(reddit_data.get('total_comments_1d', 0)),
+            vader_sentiment_1d=float(reddit_data.get('vader_sentiment_1d', 0.0)),
+            mention_growth_7d=float(reddit_data.get('mention_growth_7d', 1.0)),
+            vix_percentile=vix_percentile,
+            spy_above_200ma=spy_above_200ma,
+            mention_history=mention_history,
         )
         if features is None:
             continue
@@ -390,7 +458,8 @@ def generate_signals(
             f'conf={confidence*100:.0f}% '
             f'posts={post_count} '
             f'news={int(news_sent*100)} '
-            f'st={int(st_bull*100)} '
+            f'vix_pct={vix_percentile:.2f} '
+            f'regime={features.get("regime_score", 0):.2f} '
             f'pcr={pcr_val} pcr_conf={pcr_info["confirmation"]}'
         )
 

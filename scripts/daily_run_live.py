@@ -103,6 +103,9 @@ def main():
     logger.info('Fetching live Reddit data...')
     try:
         from data.reddit_live_fetcher import fetch_recent_posts, compute_mention_growth
+        from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer as _VaderSIA
+
+        _vader = _VaderSIA()
 
         reddit_counts_raw = fetch_recent_posts()
 
@@ -112,14 +115,27 @@ def main():
         else:
             reddit_counts = {}
             for ticker, data in reddit_counts_raw.items():
+                posts  = data.get('posts', [])
                 growth = compute_mention_growth(
                     ticker=ticker,
                     current_count=data['post_count_1d'],
                 )
+
+                total_comments = sum(p.get('num_comments', 0) for p in posts)
+                vader_scores   = [
+                    _vader.polarity_scores(p.get('title', ''))['compound']
+                    for p in posts if p.get('title', '').strip()
+                ]
+                vader_mean = round(
+                    float(sum(vader_scores) / len(vader_scores)), 4
+                ) if vader_scores else 0.0
+
                 reddit_counts[ticker] = {
-                    'post_count_1d':     data['post_count_1d'],
-                    'mention_growth_1d': growth['mention_growth_1d'],
-                    'mention_growth_7d': growth['mention_growth_7d'],
+                    'post_count_1d':      data['post_count_1d'],
+                    'mention_growth_1d':  growth['mention_growth_1d'],
+                    'mention_growth_7d':  growth['mention_growth_7d'],
+                    'total_comments_1d':  total_comments,
+                    'vader_sentiment_1d': vader_mean,
                 }
 
             logger.info(f'Reddit data ready: {len(reddit_counts)} tickers')

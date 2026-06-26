@@ -58,7 +58,10 @@ def get_top_bullish(n: int = 5):
 def get_top_predictions():
     trades = _load_trade_log(200)
     opens  = [t for t in trades if t.get('action') == 'OPEN']
-    opens.sort(key=lambda x: x.get('predicted_return_5d', 0), reverse=True)
+    opens.sort(
+        key=lambda x: float(x.get('predicted_return_5d') or x.get('predicted_5d') or 0),
+        reverse=True,
+    )
     return opens[:10]
 
 

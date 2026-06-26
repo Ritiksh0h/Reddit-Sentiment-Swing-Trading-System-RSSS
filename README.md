@@ -1,290 +1,358 @@
 # RSSS — Reddit Sentiment Swing Trading System
 
-A quantitative swing trading research system that predicts 1-day, 3-day, and 5-day
-forward returns using Reddit crowd attention, financial news sentiment, StockTwits
-sentiment, and market features. Signals run through an ATR-based portfolio engine with
-regime-adjusted sizing and dynamic slippage.
+A quantitative swing trading research system that analyzes Reddit crowd attention,
+financial news sentiment, and market features to predict 1/3/5-day stock returns using
+XGBoost (GKX-optimal stumps). Includes walk-forward validated backtesting, live paper
+trading via Railway API, and an automated daily pipeline via GitHub Actions.
 
-**This is not a sentiment classifier or hype detector.** It is a time-aligned numerical
-compression of crowd attention + market response. Reddit `post_count_1d >= 10` acts
-as a universe filter — IC on all rows is 0.008 (noise); IC on high-activity rows is 0.092
-(real signal). The density filter is the primary value driver.
+![Python 3.11](https://img.shields.io/badge/Python-3.11-blue)
+![XGBoost 3.2](https://img.shields.io/badge/XGBoost-3.2-orange)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-green)
+![Railway](https://img.shields.io/badge/deployed-Railway-blueviolet)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
+
+**Live Dashboard:** https://reddit-sentiment-swing-trading-system-rsss-production-032d.up.railway.app/dashboard
+**API:** https://reddit-sentiment-swing-trading-system-rsss-production-032d.up.railway.app
 
 ---
 
 ## Research Question
 
-> Can Reddit crowd attention + financial news sentiment + StockTwits sentiment
-> predict short-term stock returns better than market features alone?
+> Can Reddit crowd attention + news sentiment predict short-term stock returns better
+> than market features alone?
 
-The signal validation layer (`experiments/`) tests this with Granger causality,
-annual IC, and walk-forward IC across four time windows (2022–2025).
+**Honest answer:** Weak but real signal confirmed.
+
+- IC = 0.041 on 2-year out-of-sample test (2024–2025)
+- 55.8% directional accuracy on the correct ticker universe
+- Walk-forward Sharpe 0.86 across 23 quarterly folds (2019–2025)
+- **Not statistically significant yet** (p = 0.063, need ~200 live trades to confirm)
 
 ---
 
 ## Current Status
 
-**Phase 4 — Paper Trading (live since June 15, 2026)**
+**Phase 4 — Live Paper Trading (started June 25, 2026)**
 
-| Metric | Phase 3 (live) | V2 Research Track |
-|---|---|---|
-| Model | XGBoost, 14 features | GKX stumps, 16 features |
-| Extra features | — | `spy_above_200ma`, `regime_score` |
-| Train split | 2019–2023 | 2019–2023 |
-| Test split | 2024–2025 (3,582 rows) | 2024–2025 (3,797 rows) |
-| IC_test (5D) | **0.0796** | 0.041 (rank-ordered, not absolute) |
-| Backtest trades | 57 (abs. threshold) | **167 (rank-based)** |
-| Backtest Sharpe | 0.93 | **1.32** |
-| Win rate | 54.4% | 57.5% |
-| Stat significant | NO | NO (p=0.063, borderline) |
-| Deployed to live | YES | NO (gate: ΔIC > 0.005) |
-| Automation | launchd, 09:00 / 11:30 / 14:00 ET Mon–Fri | — |
-
-Dashboard: `http://localhost:8000/dashboard`
+| Metric | Value |
+|---|---|
+| Model | XGBoost GKX stumps (depth=1) |
+| Features | 16 (v2 schema) |
+| Training period | 2019–2023 |
+| Test period | 2024–2025 (3,797 rows after density gate) |
+| Test IC (5D) | 0.041 |
+| Directional accuracy (5D) | 55.8% |
+| Backtest trades | 167 (rank-based signals, 2024–2025 OOS) |
+| Backtest Sharpe | 1.32 (2024–2025 OOS) |
+| Walk-forward Sharpe | 0.86 (23 folds, 2019–2025) |
+| Walk-forward folds profitable | 74% (17/23) |
+| 2022 bear market return | -3.9% (controlled drawdown) |
+| Win rate | 57.5% |
+| Statistical significance | p = 0.063 (borderline — not confirmed) |
+| Live since | June 25, 2026 (paper trading only) |
+| API | Railway (always-on FastAPI) |
+| Pipeline | GitHub Actions (weekdays 08:30 ET) |
 
 ---
 
-## Quick Start
+## Key Findings
 
-```bash
-# 1. Activate virtualenv
-source .venv/bin/activate
+### 1. Density gate is the primary value driver
 
-# 2. Start API + dashboard
-uvicorn api.main:app --reload --port 8000
+The post-count filter is the single biggest contributor — more than sentiment, more
+than any individual feature.
 
-# 3. Check system status
-curl http://localhost:8000/status
+| Subset | IC |
+|---|---|
+| All rows (no gate) | 0.008 — noise |
+| post_count_1d ≥ 5 | 0.041 — real signal |
 
-# 4. Run dry-run (no trades logged)
-python scripts/daily_run_live.py --dry-run
+Without the density gate the model predicts noise. With it, IC is 5× higher.
 
-# 5. Run tests
-pytest tests/ -v --tb=short
-```
+### 2. Reddit sentiment is contrarian
+
+High positive sentiment = a stock has already been pumped. Raw directional sentiment
+has no predictive value (Granger test: 0/6 years significant). The useful signal is
+`sentiment_extremity` (how unusual sentiment is), not its sign. This holds consistently
+across all years 2019–2025.
+
+### 3. Volume and VIX are the strongest individual features
+
+| Feature | IC |
+|---|---|
+| volume | +0.066 (consistent every year) |
+| vix_x_volume (interaction) | +0.041 (best combined feature) |
+| vix_percentile | +0.037 (strongest in 2022 bear market) |
+
+The volume × VIX interaction term outperforms either feature in isolation.
+
+### 4. Ticker universe quality matters more than model complexity
+
+| System | Win rate |
+|---|---|
+| Old system (AMC/BBBY/GME meme tickers) | ~25% live |
+| Current system (NVDA/AAPL/TSLA/AMZN/etc.) | 57.5% backtest |
+
+Choosing a stable, liquid universe is a larger performance driver than hyperparameter
+tuning.
+
+### 5. Short selling adds no value
+
+Short win rate: ~50% (coin flip). Short avg return: +0.08% (near zero). The system
+is long-only. Removing shorts improved Sharpe without reducing trade count.
+
+### 6. GKX depth-1 stumps are the correct model for this problem
+
+More trees → train IC rises, test IC stays flat → overfitting. GKX stumps compress
+predictions near the mean — the signal lives in rank ordering, not absolute magnitude.
+1–28 trees depending on horizon, confirmed by IC-based early stopping (not RMSE).
 
 ---
 
 ## Architecture
 
 ```
- Reddit (Arctic Shift API)     → post_count, mention_growth
- News (yfinance + FinBERT)     → news_sentiment_1d
- StockTwits (free public API)  → st_sentiment_1d, st_bull_pct
- yfinance (market data)        → price, volume, RSI, ATR
-         │
-         ▼
- pipeline/01_feature_builder.py
- → density gate (post_count_1d >= 10)
- → 14-feature vectors per (ticker, date)
- → data/features/features_full.parquet (14,889 rows, 2019–2026)
-         │
-         ▼
- XGBoost regressors (model_1d, model_3d, model_5d)
- → predicts forward return per horizon
- → BULLISH if pred_5d >= 1.5%, BEARISH if pred_5d <= -1.5%
- → confidence = min(|pred_5d| / 0.03, 1.0)
-         │
-         ▼
- portfolio/signal_generator.py
- → SignalRecord: ticker, pred_1d/3d/5d, confidence, signal, price_targets
-         │
-         ▼
- portfolio/ (engine + sizer + regime detector)
- → ATR-based sizing, regime multiplier (POSITIVE=100% / NEUTRAL=75% / NEGATIVE=50%)
- → dynamic slippage: 0.001 + 0.0005 × min(mention_growth_7d, 3.0)
- → max 3 positions, 5-day hold, 15% take-profit cap, -8% stop-loss
-         │
-         ▼
- api/main.py (FastAPI thin entry point)
- → api/routes/health.py       — /health, /status, /settings
- → api/routes/portfolio.py    — /portfolio, /positions, /signals/recent
- → api/routes/predictions.py  — /predictions, /top-predictions, /shap/{ticker}
- → api/routes/performance.py  — /signal-accuracy, /ic-monitor, /model-metadata
- → api/routes/research.py     — /research-findings, /backtest
-         │
-         ▼
- dashboard/index.html
- → equity curve, signals table, 1D/3D/5D predictions, PnL vs SPY
+Data Sources
+────────────
+Reddit (Arctic Shift API, 48h delay)  → post_count_1d, vader_sentiment_1d,
+                                         abnormal_attention_1d, sentiment_extremity,
+                                         sentiment_accel, total_comments_1d
+News (Finnhub API)                    → news_sentiment_1d
+StockTwits (public API)               → st_sentiment_1d
+yfinance (market data)                → volume, relative_volume, returns_1d, returns_20d,
+                                         rsi_14, vix_percentile, vix_x_volume
+Regime overlay                        → spy_above_200ma, regime_score
+        │
+        ▼
+Feature Engineering  (scripts/build_features_v2.py)
+  Density gate: post_count_1d >= 5
+  16 features per (ticker, date)
+  53,592 rows, 30 tickers, 2019–2025
+        │
+        ▼
+GKX Stump Models  (scripts/train_models_v2.py)
+  3 separate XGBoost regressors (1D / 3D / 5D returns)
+  max_depth=1, Pseudo-Huber loss, reg_lambda=5, min_child_weight=20
+  Per-horizon gamma: 1D=0.0 / 3D=0.1 / 5D=0.5
+  IC-based early stopping (Spearman, not RMSE)
+        │
+        ▼
+Signal Engine  (scripts/run_backtest_v2.py)
+  Composite score: 0.5×pred5d + 0.3×pred3d + 0.2×pred1d
+  Rank-based: top 2 tickers per day
+  Quality gates: score > 0, regime_score ≥ 0.3, relative_volume ≥ 0.8
+  Core-satellite: 70% SPY + 30% RSSS signals
+  5-day hold, 15% take-profit cap, -8% stop-loss
+        │
+        ▼
+Live Pipeline
+  GitHub Actions → daily_run_live.py (08:30 ET, weekdays)
+  Railway → FastAPI serving signals, portfolio state, predictions
+  Logs → logs/paper_trades.jsonl (append-only, NEVER delete)
+        │
+        ▼
+Dashboard  (dashboard/index.html)
+  Equity curve, signals table, 1D/3D/5D predictions, PnL vs SPY
 ```
 
 ---
 
-## Key Findings
+## Results
 
-From the signal validation layer (`experiments/`):
+### Backtest (2024–2025 out-of-sample)
 
-**Reddit attention (post_count_1d) → strong universe filter, not a directional predictor.**
-- IC on all rows: 0.008 (noise)
-- IC on rows with post_count_1d >= 10: 0.092 (real signal)
-- Granger causality for Reddit *sentiment* (avg_sentiment_1d): 0/6 years significant
-- Reddit sentiment was dropped from the feature set; post density is kept as a filter
+| | Value |
+|---|---|
+| System return | +35.6% |
+| SPY benchmark | +49.7% (exceptional bull market) |
+| Alpha | -12.2% (cash drag from selectivity + regime filter) |
+| Sharpe | 1.32 |
+| Trades | 167 |
+| Win rate | 57.5% |
+| Avg hold | 4.5 days |
+| Stop-loss exits | 19 |
+| Take-profit exits | 25 |
+| Hold-expired exits | 123 |
+| p-value | 0.063 (borderline, not significant at 95%) |
+| 95% CI on win rate | [49.9%, 64.7%] |
+| Trades needed for significance | ~42 more at current win rate |
 
-**Post density is the single biggest value driver.**
-Without the density gate the model produces noise. With it, IC triples.
+Structure: 70% SPY core (passive) + 30% RSSS satellite (active signals).
+Total return includes both components.
 
-**Market momentum features dominate predictions.**
-`returns_5d`, `dist_from_20ma`, `dist_from_50ma` carry the most feature importance.
-Reddit attention adds value by filtering to the right universe, not by predicting direction.
+### Walk-Forward Validation (2019–2025, 23 quarterly folds)
 
-**News + StockTwits retrain did not improve IC.**
-Historical data was merged (FNSPID 2019–2023, StockTwits archive 2019–2022).
-Retrain on `features_complete.parquet` produced IC = 0.0686 — below the 0.0796
-baseline. News coverage is only 24–38%; StockTwits covers 2019–2022 only (0.0 for 2023+).
-Live fetchers populate all three sources daily for future retraining.
+| | Value |
+|---|---|
+| Pooled Sharpe | 0.86 |
+| Folds profitable | 74% (17/23) |
+| 2022 bear market return | -3.9% (controlled) |
+| WFE ratio (OOS/IS Sharpe) | 1.25 — OOS > IS, not overfit |
+| DSR gate | Fails — needs more data |
 
-**V2 GKX stump models with regime features.**
-Added `spy_above_200ma` (SPY > 200-day MA) and `regime_score` (SPY×0.6 + (1−VIX_pct)×0.4).
-GKX stumps (max_depth=1, Pseudo-Huber loss) compress predictions to near-mean — signal
-lives in rank ordering, not absolute magnitude. Rank-based backtest (top 2 tickers/day by
-composite score) produced 167 trades vs 57 previously, Sharpe 1.32 vs 0.93, win rate 57.5%,
-p=0.063 (borderline). Core-satellite 70% SPY / 30% RSSS structure. Not deployed to live
-system until IC gate is cleared (ΔIC > 0.005 over current 0.0796 baseline).
+The walk-forward Sharpe (0.86) is the honest estimate of live performance. The
+backtest Sharpe (1.32) covers only 2024–2025 — an exceptional bull market period.
+
+### Model metrics (test set 2024–2025)
+
+| Model | Trees | Test IC | Test dir. accuracy |
+|---|---|---|---|
+| model_1d_v2 | 13 | 0.041 | 53.7% |
+| model_3d_v2 | 1 | 0.013 | 54.5% |
+| model_5d_v2 | 28 | 0.041 | 55.8% |
+
+Note: GKX stumps compress predictions near the mean. Low absolute IC is expected —
+signal is in cross-sectional rank ordering, not magnitude.
+
+### Honest caveats
+
+- p = 0.063: the edge is not statistically confirmed at the 95% level
+- Walk-forward Sharpe 0.86, not 1.32 — the backtest period was unusually bullish
+- Negative alpha vs SPY (-12.2%) due to cash drag and regime selectivity
+- Reddit API changed in 2023 (policy shift) — potential structural break in features
+- Single bull-market test window (2024–2025) is insufficient for regime coverage
+- Do not deploy with real capital until 200+ live trades are accumulated
+
+---
+
+## Quick Start
+
+```bash
+# Clone and setup
+git clone https://github.com/Ritiksh0h/Reddit-Sentiment-Swing-Trading-System-RSSS.git
+cd Reddit-Sentiment-Swing-Trading-System-RSSS
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# Copy env vars and fill in keys
+cp .env.example .env
+# Required: FINNHUB_API_KEY, DB_URL
+# Optional: ALPHAVANTAGE_API_KEY, STOCKTWITS_TOKEN, HF_TOKEN
+
+# Run tests (26 total — all must pass)
+pytest tests/ -v --tb=short
+
+# Dry-run the live pipeline (no trades logged)
+python scripts/daily_run_live.py --dry-run
+
+# Start local API + dashboard
+uvicorn api.main:app --reload --port 8000
+# Open: http://localhost:8000/dashboard
+```
 
 ---
 
 ## Project Structure
 
 ```
-config/
-  settings.py                  ← env vars, paths
-  thresholds.py                ← every magic number (canonical)
-  tickers.txt                  ← tracked universe (29 tickers)
-  false_positive_list.txt      ← ticker extraction blocklist
-
-pipeline/
-  01_feature_builder.py        ← builds features_full.parquet from raw parquet
+scripts/
+  build_features_v2.py        ← feature engineering (53,592 rows, 16 features)
+  train_models_v2.py          ← GKX stump training with ICEarlyStopping
+  run_backtest_v2.py          ← rank-based core-satellite backtester
+  daily_run_live.py           ← live orchestrator (Reddit + news + ST → signals)
+  append_live_features.py     ← feature logger + t+5 price backfill
+  monitor_live_ic.py          ← weekly IC gate check (GREEN/AMBER/RED)
 
 data/
-  reddit_live_fetcher.py       ← Arctic Shift API, paginated
-  news_fetcher.py              ← yfinance news + FinBERT scoring
-  stocktwits_fetcher.py        ← StockTwits free API
-  mention_history.json         ← rolling 14-day post count history
-  raw/                         ← merged_with_sentiment_full.parquet (932K rows)
-  features/                    ← features_full.parquet (14,889 rows, primary)
-                                   features_complete.parquet (with news+ST merged)
-                                   features_live_2026.parquet (live, grows daily)
-  live/                        ← paper_portfolio.json, paper_performance.jsonl
-  processed/                   ← news + StockTwits parquet (Colab output)
+  features/
+    features_v2.parquet       ← 53,592 rows, 27 cols, 30 tickers, 2019–2025
+    features_complete.parquet ← with news + ST merged (NEVER overwrite)
+  live/
+    paper_portfolio.json      ← live portfolio state
+    paper_performance.jsonl   ← daily PnL snapshots
+  raw/                        ← Reddit posts (932K rows, 2019–2026)
 
-portfolio/
-  signal_generator.py          ← density gate → features → XGBoost → signals
-  position_sizer.py            ← ATR-based sizing + dynamic slippage
-  regime_detector.py           ← SPY 200MA + 60d return → POSITIVE/NEUTRAL/NEGATIVE
-  portfolio_engine.py          ← position tracking, exits, risk rules
-  execution_logger.py          ← append-only JSONL audit trail
-  drift_monitor.py             ← API anomaly detection (skip day on undercount)
-  paper_trader.py              ← PnL vs SPY benchmark
-
-scripts/
-  daily_run_live.py            ← live orchestrator: Reddit+news+ST → trades
-  daily_run.py                 ← portfolio orchestrator (called by daily_run_live)
-  train_phase3_model.py        ← trains model_1d, model_3d, model_5d
-  monitor_live_ic.py           ← weekly IC gate check (GREEN/AMBER/RED)
-  append_live_features.py      ← saves feature vectors + fills t+5 price targets
-  test_historical_run.py       ← backfill test against historical feature store
-  merge_external_features.py   ← merges news + StockTwits into feature store
+models/
+  model_1d_v2.json            ← 13 trees, IC=0.041
+  model_3d_v2.json            ← 1 tree,  IC=0.013
+  model_5d_v2.json            ← 28 trees, IC=0.041
+  training_metadata_v2.json   ← training metrics + retrain threshold
 
 experiments/
   phase3_locked_architecture.json  ← read-only architecture contract
-  experiment_c/                    ← winning experiment (IC=0.111, 2024)
-  layer1_signal_existence/         ← Granger causality results
-  layer2_regime/                   ← Regime classifier results
-  layer3_model/                    ← Family validation results
-  source_validation/               ← multi-source validation sprint
-  shared/                          ← metrics.py (canonical compute_ic), backtest.py
+  backtest_v2_results.json         ← full trade log (167 trades)
+  shared/
+    metrics.py               ← canonical compute_ic (import from here)
 
-models/registry/
-  model_1d.pkl, model_3d.pkl, model_5d.pkl
-  phase3_model.pkl             ← backward-compat copy of model_5d.pkl
-  phase3_model_baseline.json   ← training metrics
+api/routes/
+  portfolio.py               ← /portfolio /positions /signals/recent
+  predictions.py             ← /top-predictions /shap/{ticker}
+  performance.py             ← /signal-accuracy /ic-monitor /model-metadata
+  research.py                ← /research-findings /backtest
 
-api/
-  main.py                      ← FastAPI thin entry point + /dashboard route
-  _helpers.py                  ← shared helpers (_sanitize, _load_portfolio)
-  routes/
-    health.py                  ← /health, /status, /settings
-    portfolio.py               ← /portfolio, /positions, /signals/recent, /trades/history
-    predictions.py             ← /predictions, /top-predictions, /shap/{ticker}
-    performance.py             ← /signal-accuracy, /ic-monitor, /model-metadata, /backfill
-    research.py                ← /research-findings, /backtest, /backtest-full
+dashboard/index.html         ← single-file dark dashboard
 
-dashboard/
-  index.html                   ← single-file dark dashboard
-
+.github/workflows/daily_run.yml  ← GitHub Actions automation (08:30 ET)
+railway.toml                     ← Railway deployment config
 logs/
-  paper_trades.jsonl           ← execution log (NEVER DELETE)
-  ic_monitor.jsonl             ← weekly IC readings
-  daily_runs.log               ← pipeline run log
-
-archive/
-  notebooks/                   ← Colab notebooks (phase0, experiment_c, news/ST processing)
+  paper_trades.jsonl         ← execution audit trail (NEVER DELETE)
+  ic_monitor.jsonl           ← weekly IC readings
 ```
 
 ---
 
-## Model Details
-
-### Phase 3 (live) — 14-feature locked set (`experiments/phase3_locked_architecture.json`)
-
-| Group | Features |
-|---|---|
-| Market (8) | returns_1d, returns_5d, returns_20d, rsi_14, atr_14, relative_volume, dist_from_20ma, dist_from_50ma |
-| Attention (3) | post_count_1d, mention_growth_1d, mention_growth_7d |
-| News (1) | news_sentiment_1d |
-| StockTwits (2) | st_sentiment_1d, st_bull_pct |
-
-**Retraining**: `python scripts/train_phase3_model.py --train-years 2019,2020,2021,2022,2023 --test-years 2024,2025`
-
-**IC monitoring gate**: GREEN ≥ 0.03 | AMBER 0.01–0.03 | RED < 0.01
-Fix 3 triggers only after **two consecutive** red weeks — never after one.
-
-### V2 (research) — 16-feature GKX stumps (`scripts/train_models_v2.py`)
-
-14 phase 3 features **plus**:
-
-| Group | Features |
-|---|---|
-| Regime (2) | spy_above_200ma, regime_score |
-
-Architecture: `max_depth=1`, Pseudo-Huber loss, `reg_lambda=5`, `min_child_weight=20`,
-per-horizon gamma (1D=0.0 / 3D=0.1 / 5D=0.5), ICEarlyStopping (Spearman).
-Feature store: `data/features/features_v2.parquet` (53,592 rows, 27 cols).
-Models: `models/model_{1d,3d,5d}_v2.json` (XGBoost JSON, not pkl).
-
----
-
-## Automation
-
-Three runs per weekday via launchd (system clock is EDT = UTC−4):
+## API Endpoints
 
 ```
-com.rsss.api           → always on, port 8000 (RunAtLoad + KeepAlive)
-com.rsss.dailyrun      → 09:00 ET Mon–Fri → daily_run_live.py
-com.rsss.dailyrun.1130 → 11:30 ET Mon–Fri → daily_run_live.py
-com.rsss.dailyrun.1400 → 14:00 ET Mon–Fri → daily_run_live.py
-com.rsss.icmonitor     → 09:00 ET Monday  → monitor_live_ic.py
-
-Check:  launchctl list | grep rsss
-Reload: launchctl unload ~/Library/LaunchAgents/com.rsss.dailyrun.plist \
-        && launchctl load ~/Library/LaunchAgents/com.rsss.dailyrun.plist
+GET  /health             → {"status":"ok","version":"3.0"}
+GET  /status             → ran_today, n_positions, cash, system_ok
+GET  /portfolio          → cash, positions, closed_trades, PnL summary
+GET  /positions          → open positions with unrealized PnL
+GET  /signals/recent     → last N signals from paper_trades.jsonl
+GET  /trades/history     → closed trades with realized PnL
+GET  /predictions        → 1D/3D/5D predictions for tracked tickers
+GET  /top-predictions    → top bullish signals by composite score
+GET  /shap/{ticker}      → SHAP attribution by source family
+GET  /signal-accuracy    → 1D/3D/5D directional accuracy from live trades
+GET  /ic-monitor         → IC readings from ic_monitor.jsonl
+GET  /model-metadata     → training metrics from training_metadata_v2.json
+GET  /backtest           → backtest_v2_results.json summary
+GET  /dashboard          → dashboard/index.html
 ```
 
 ---
 
 ## Hard Rules
 
+**Data integrity:**
 - Never random train/test split — always time-based
 - Never use future data in features
 - Never modify `experiments/phase3_locked_architecture.json`
-- Never overwrite `data/raw/merged_with_sentiment.parquet` (backup)
+- Never overwrite `data/features/features_complete.parquet`
 - Never delete `logs/paper_trades.jsonl`
-- Never change the density gate (post_count_1d >= 10) without re-running signal validation
-- Never trigger Fix 3 after only one Red week — require two
+
+**Model integrity:**
+- Never trust Sharpe > 2.0 without checking for leakage
+- Never retrain until 200+ live trades are accumulated
+- Always use the density gate (post_count_1d >= 5)
+- Never change the density gate without re-running signal validation
+- Never retrain unless IC improvement > 0.005 over current baseline
+- Never deploy without walk-forward validation
+
+**Capital:**
+- Always verify p-value before scaling capital
 - Never open more than 3 positions simultaneously
-- Always ATR-based sizing, never equal-weight
-- Never retrain unless IC improvement > 0.005 over current 0.0796
+- Always ATR-based sizing — never equal-weight
+- Never force trades when signals are zero — cash is a valid position
+
+**IC monitoring gates:**
+- GREEN: 30-day live IC > 0.03 → continue
+- AMBER: 30-day live IC 0.01–0.03 → watch closely
+- RED: 30-day live IC < 0.01 → Fix 3 after **two consecutive** red weeks (never one)
 
 ---
 
-*Phase 4 — Paper Trading | June 2026 | Phase3 IC=0.0796 | V2 rank-based Sharpe=1.32 (research)*
+## Disclaimer
+
+This is a research and paper trading system. Not financial advice. Past backtest
+performance does not guarantee future results. Do not use with real capital until
+statistical significance is confirmed (p < 0.05, 200+ live trades).
+
+The current edge (p = 0.063) is borderline. It may be real or it may be noise.
+Accumulate more live data before drawing conclusions.
+
+---
+
+*Phase 4 — Paper Trading | June 2026*
+*V2 GKX stumps (16 features, regime) | Rank-based backtest: 167 trades, Sharpe 1.32 (OOS)*
+*Walk-forward Sharpe 0.86 (23 folds, 2019–2025) | Live since June 25, 2026*

@@ -3,6 +3,7 @@ RSSS FastAPI application — entry point.
 Routes are in api/routes/*.py
 Run: uvicorn api.main:app --reload --port 8000
 """
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -15,7 +16,15 @@ from api.routes.predictions import router as predictions_router
 from api.routes.performance import router as performance_router
 from api.routes.research    import router as research_router
 
-app = FastAPI(title='RSSS Paper Trading API', version='3.0')
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from api.db import ensure_tables
+    ensure_tables()
+    yield
+
+
+app = FastAPI(title='RSSS Paper Trading API', version='3.0', lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
