@@ -21,6 +21,13 @@ from pathlib import Path
 
 sys.path.insert(0, '.')
 
+# Load .env before any api.db import so SUPABASE_URL / MONGODB_URL are visible
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 logging.basicConfig(level=logging.INFO, format='%(levelname)s %(message)s')
 log = logging.getLogger('migrate')
 

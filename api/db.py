@@ -36,6 +36,12 @@ import logging
 import os
 from datetime import date, datetime, timezone
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 logger = logging.getLogger(__name__)
 
 # ── PostgreSQL / SQLite ──────────────────────────────────────────────────────
@@ -509,7 +515,7 @@ def get_mongo_db():
 
     try:
         from pymongo import MongoClient
-        _mongo_client = MongoClient(url, serverSelectionTimeoutMS=5000)
+        _mongo_client = MongoClient(url, serverSelectionTimeoutMS=5000, tls=True, tlsAllowInvalidCertificates=False)
         _mongo_client.admin.command('ping')       # fast connectivity check
         db_name  = os.getenv('MONGODB_DB', 'rsss')
         _mongo_db = _mongo_client[db_name]
