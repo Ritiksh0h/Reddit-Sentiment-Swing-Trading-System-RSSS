@@ -15,6 +15,7 @@ praw>=7.7
 # NLP / Sentiment
 vaderSentiment>=3.3
 transformers>=4.35
+torch>=2.0 --index-url https://download.pytorch.org/whl/cpu
 
 # ML — inference only
 xgboost>=2.0
