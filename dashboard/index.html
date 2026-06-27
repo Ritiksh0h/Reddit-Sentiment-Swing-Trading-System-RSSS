@@ -504,6 +504,31 @@
                                     <span id="acc-warning-text"></span>
                                 </div>
                             </div>
+                            <!-- C1: SHAP attribution panel — populated by /shap/{ticker} on ticker select -->
+                            <div id="live-shap-panel" class="hidden">
+                                <h4 class="text-[11px] font-bold text-zinc-400 uppercase flex items-center gap-1.5 mb-2">
+                                    <i data-lucide="pie-chart" class="w-4 h-4 text-accentBlue"></i> Signal Attribution (SHAP)
+                                </h4>
+                                <div class="space-y-2 text-xs">
+                                    <div>
+                                        <div class="flex justify-between text-zinc-400 text-[10px] mb-1"><span>Reddit Attention</span><span id="shap-reddit-val" class="font-bold font-mono">—</span></div>
+                                        <div class="w-full bg-zinc-800 h-1.5 rounded"><div id="shap-reddit-bar" class="bg-bullish h-full rounded" style="width:0%"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-zinc-400 text-[10px] mb-1"><span>News Sentiment</span><span id="shap-news-val" class="font-bold font-mono">—</span></div>
+                                        <div class="w-full bg-zinc-800 h-1.5 rounded"><div id="shap-news-bar" class="bg-accentBlue h-full rounded" style="width:0%"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-zinc-400 text-[10px] mb-1"><span>StockTwits</span><span id="shap-st-val" class="font-bold font-mono">—</span></div>
+                                        <div class="w-full bg-zinc-800 h-1.5 rounded"><div id="shap-st-bar" class="bg-neutralGold h-full rounded" style="width:0%"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-zinc-400 text-[10px] mb-1"><span>Market Technical</span><span id="shap-mkt-val" class="font-bold font-mono">—</span></div>
+                                        <div class="w-full bg-zinc-800 h-1.5 rounded"><div id="shap-mkt-bar" class="bg-zinc-400 h-full rounded" style="width:0%"></div></div>
+                                    </div>
+                                </div>
+                                <p id="shap-attribution-text" class="text-[10px] text-zinc-500 mt-2 leading-relaxed"></p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -531,17 +556,16 @@
                             <div class="bg-zinc-950 p-4 rounded-lg border border-cardBorder text-xs space-y-2 font-mono">
                                 <div class="flex justify-between text-zinc-500 border-b border-zinc-800 pb-2 text-[10px] font-sans font-bold">
                                     <span>CALENDAR YEAR REGIME ERA</span>
-                                    <span>FORUM SIGNALS</span>
-                                    <span>NEWS SIGNALS</span>
+                                    <span>REDDIT IC</span>
+                                    <span>NEWS IC</span>
                                 </div>
-                                <div class="flex justify-between"><span>2019 (Strong Market Upswing)</span><span class="text-zinc-400">Predictive</span><span class="text-bullish font-bold">Highly Useful</span></div>
-                                <div class="flex justify-between"><span>2020 (Severe Economic Shakeup)</span><span class="text-bullish font-bold">Highly Useful</span><span class="text-bearish">Weak Signal</span></div>
-                                <div class="flex justify-between"><span>2021 (Retail Forum Breakout Mania)</span><span class="text-bullish font-bold">Extremely Strong</span><span class="text-zinc-400">Predictive</span></div>
-                                <div class="flex justify-between"><span>2022 (Severe Bear Downmarket)</span><span class="text-zinc-400">Weak Signal</span><span class="text-bullish font-bold">Highly Useful</span></div>
+                                <div id="research-ic-body">
+                                    <div class="flex justify-between text-zinc-600 text-[10px]"><span>Loading…</span><span>—</span><span>—</span></div>
+                                </div>
                                 <div class="flex justify-between border-t border-zinc-800 pt-2 text-zinc-400 font-sans font-bold text-[11px]">
-                                    <span>Reliability Score Average</span>
-                                    <span class="text-zinc-300">Stable Edge</span>
-                                    <span class="text-bullish font-bold">Highly Reliable</span>
+                                    <span>Best Combination</span>
+                                    <span id="research-best-combo" class="text-bullish">—</span>
+                                    <span id="research-best-ic" class="text-bullish">—</span>
                                 </div>
                             </div>
                         </div>
@@ -560,9 +584,10 @@
                             </div>
 
                             <div class="p-3 bg-zinc-900 border border-cardBorder rounded-lg text-xs space-y-1">
-                                <span class="text-[10px] text-zinc-400 font-bold uppercase block">System Testing Configurations Outperformance Score</span>
-                                <div class="flex justify-between text-zinc-400 text-[11px]"><span>Standard Market Data Framework Only (Baseline):</span><span class="font-mono">Normal Baseline</span></div>
-                                <div class="flex justify-between text-white font-semibold"><span>Ensemble Stack (Market + Reddit Buzz Data):</span><span class="text-bullish font-mono">37% More Effective</span></div>
+                                <span class="text-[10px] text-zinc-400 font-bold uppercase block">Walk-Forward IC by Feature Combination</span>
+                                <div id="research-wf-body" class="space-y-1">
+                                    <div class="flex justify-between text-zinc-600 text-[10px]"><span>Loading…</span><span>—</span></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -675,6 +700,10 @@
             startCountdown();
             updateSimulation();
             loadAllLiveData();
+            loadBacktestData();
+            // Retry after 2s and 5s in case API wasn't ready at boot
+            setTimeout(loadBacktestData, 2000);
+            setTimeout(loadBacktestData, 5000);
             setInterval(loadAllLiveData, 60000);
         };
 
@@ -682,9 +711,12 @@
             await Promise.all([
                 loadPortfolioKPIs(),
                 loadTradeHistory(),
-                loadBacktestData(),
                 loadAccuracyData(),
             ]);
+            // Reload backtest data if not yet loaded
+            if (!window._backtestData) {
+                loadBacktestData();
+            }
             document.getElementById('sync-timestamp').innerText = new Date().toLocaleTimeString();
         }
 
@@ -928,6 +960,60 @@
             if (descEl)  descEl.innerText   = sys.description ?? '';
         }
 
+        // ── C3: Research findings — wired to /research-findings (results.json) ──
+        async function loadResearchData() {
+            const data = await fetchAPI('/research-findings');
+            if (!data || data.status === 'not_run') return;
+
+            // Layer 1: annual IC for post_count_1d (Reddit) and news_sentiment_1d
+            const l1 = data.layer1_annual_ic ?? {};
+            const redditIC = l1['post_count_1d']?.ic_by_year ?? {};
+            const newsIC   = l1['news_sentiment_1d']?.ic_by_year ?? {};
+            const regimes  = l1['post_count_1d']?.regime_labels ?? {};
+
+            const icColor = v => v > 0.05 ? 'text-bullish font-bold' : v > 0 ? 'text-zinc-300' : 'text-bearish';
+            const icLabel = v => v > 0.08 ? 'Strong' : v > 0.04 ? 'Moderate' : v > 0 ? 'Weak' : 'Negative';
+
+            const body = document.getElementById('research-ic-body');
+            if (body) {
+                const years = Object.keys(redditIC).sort();
+                body.innerHTML = years.map(yr => {
+                    const regime = (regimes[yr] ?? yr).split(' (')[0]; // short label
+                    const fullLabel = `${yr} (${(regimes[yr] ?? '').replace(/^[A-Z]+ \(/, '').replace(')', '') || yr})`;
+                    const rv = redditIC[yr] ?? 0;
+                    const nv = newsIC[yr]   ?? 0;
+                    return `<div class="flex justify-between text-[10px]">
+                        <span class="text-zinc-400 truncate max-w-[180px]">${fullLabel}</span>
+                        <span class="${icColor(rv)}">${rv > 0 ? '+' : ''}${rv.toFixed(3)}</span>
+                        <span class="${icColor(nv)}">${nv > 0 ? '+' : ''}${nv.toFixed(3)}</span>
+                    </div>`;
+                }).join('');
+            }
+
+            // Conclusion: best combo + IC
+            const conc = data.conclusion ?? {};
+            const comboEl = document.getElementById('research-best-combo');
+            const icEl    = document.getElementById('research-best-ic');
+            if (comboEl) comboEl.innerText = conc.best_combination ?? '—';
+            if (icEl)    icEl.innerText    = conc.best_mean_ic != null ? `IC ${conc.best_mean_ic.toFixed(4)}` : '—';
+
+            // Walk-forward table
+            const wf = data.layer3_walkforward ?? {};
+            const wfBody = document.getElementById('research-wf-body');
+            if (wfBody && Object.keys(wf).length) {
+                wfBody.innerHTML = Object.entries(wf)
+                    .sort((a, b) => (b[1].mean_ic ?? 0) - (a[1].mean_ic ?? 0))
+                    .map(([combo, v]) => {
+                        const ic = v.mean_ic ?? 0;
+                        const cls = ic > 0.07 ? 'text-bullish font-bold' : ic > 0.04 ? 'text-zinc-300' : 'text-zinc-500';
+                        return `<div class="flex justify-between text-[10px]">
+                            <span class="text-zinc-400 truncate max-w-[160px]">${combo}</span>
+                            <span class="${cls} font-mono">${ic > 0 ? '+' : ''}${ic.toFixed(4)}</span>
+                        </div>`;
+                    }).join('');
+            }
+        }
+
         // ── FIX 6: Signal accuracy ───────────────────────────────────────────────
         async function loadAccuracyData() {
             const acc = await fetchAPI('/signal-accuracy');
@@ -982,7 +1068,10 @@
 
             // Fetch both signals cache and per-ticker prediction in parallel
             if (Object.keys(_liveSignals).length === 0) await prefetchSignals();
-            const pData = await fetchAPI(`/predictions?ticker=${sym}`);
+            const [pData, shapData] = await Promise.all([
+                fetchAPI(`/predictions?ticker=${sym}`),
+                fetchAPI(`/shap/${sym}`),
+            ]);
 
             if (pData && !pData.message) {
                 // Real live predictions
@@ -1001,6 +1090,24 @@
                 setP(pred1D, pData['1D']?.pred ?? 0, conf1D, pData['1D']?.conf ?? 50);
                 setP(pred3D, pData['3D']?.pred ?? 0, conf3D, pData['3D']?.conf ?? 50);
                 setP(pred5D, pData['5D']?.pred ?? 0, conf5D, pData['5D']?.conf ?? 50);
+
+                // C1: Populate SHAP attribution panel
+                if (shapData && shapData.reddit_attention !== undefined) {
+                    const sp = document.getElementById('live-shap-panel');
+                    if (sp) sp.classList.remove('hidden');
+                    const setBar = (valId, barId, pct) => {
+                        const el = document.getElementById(valId);
+                        const br = document.getElementById(barId);
+                        if (el) el.innerText = `${pct}%`;
+                        if (br) br.style.width = `${pct}%`;
+                    };
+                    setBar('shap-reddit-val', 'shap-reddit-bar', shapData.reddit_attention ?? 0);
+                    setBar('shap-news-val',   'shap-news-bar',   shapData.news_sentiment   ?? 0);
+                    setBar('shap-st-val',     'shap-st-bar',     shapData.st_sentiment     ?? 0);
+                    setBar('shap-mkt-val',    'shap-mkt-bar',    shapData.market_technical ?? 0);
+                    const attrEl = document.getElementById('shap-attribution-text');
+                    if (attrEl && shapData.attribution_text) attrEl.innerText = shapData.attribution_text;
+                }
             } else {
                 // No live signal today — show message + sim fallback
                 const msg = pData?.message ?? `No live signal today for ${sym}`;
@@ -1094,6 +1201,8 @@
 
             if (tabId === 'dashboard' && equityChart) setTimeout(() => equityChart.resize(), 50);
             if (tabId === 'live-rsss') { prefetchSignals(); onLiveTickerChange(); }
+            if (tabId === 'backtest')  { loadBacktestData(); }
+            if (tabId === 'research')  { loadResearchData(); }
         }
 
         // ── Simulator (unchanged logic, density gate corrected to 5) ────────────

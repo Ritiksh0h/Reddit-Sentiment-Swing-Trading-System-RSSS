@@ -12,8 +12,9 @@ requests>=2.31
 # Reddit (pending API approval)
 praw>=7.7
 
-# NLP / Sentiment (lightweight — FinBERT disabled in CI via SKIP_FINBERT=1)
+# NLP / Sentiment
 vaderSentiment>=3.3
+transformers>=4.35
 
 # ML — inference only
 xgboost>=2.0
