@@ -265,6 +265,12 @@ def main():
                 )
         except Exception as e:
             logger.error(f'Dry run signal generation failed: {e}')
+            signals = []
+        save_run_to_db(
+            {'actions': [], 'signals': signals, 'skipped': False, 'dry_run': True},
+            today,
+            reddit_counts,
+        )
         return
 
     # ── Step 2b: Full run ─────────────────────────────────────────────────

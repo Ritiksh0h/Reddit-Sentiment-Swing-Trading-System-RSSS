@@ -26,6 +26,16 @@ def get_next_earnings_date(
     Get next earnings date for ticker.
     Returns None if unavailable.
     """
+    # ETFs and indices have no earnings dates
+    # yfinance returns 404 for these — skip early
+    _NO_EARNINGS = {
+        'SPY', 'QQQ', 'IWM', 'DIA',
+        'GLD', 'TLT', 'VXX', 'UVXY',
+        'SQQQ', 'SPXS', 'SH', 'PSQ',
+    }
+    if ticker in _NO_EARNINGS:
+        return None
+
     if from_date is None:
         from_date = date.today()
 

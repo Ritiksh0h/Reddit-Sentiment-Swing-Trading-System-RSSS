@@ -123,88 +123,6 @@ def fetch_native_sentiment(ticker: str, api_key: str) -> float | None:
         return None
 
 
-def fetch_finnhub_sentiment_scores(
-    tickers: list[str],
-    finnhub_key: str,
-) -> dict[str, dict]:
-    """
-    Fetch Finnhub pre-computed sentiment scores for all tickers.
-    Uses /news-sentiment endpoint — financial-grade NLP, no model loading.
-
-    Score: bullishPercent - bearishPercent
-        +1.0 = fully bullish
-         0.0 = neutral
-        -1.0 = fully bearish
-
-    Returns {ticker: {news_sentiment_1d, news_count_1d,
-                       finnhub_bullish_pct, company_news_score}}
-    Tickers with no data or errors return neutral defaults.
-    """
-    results: dict[str, dict] = {}
-    url = f"{FINNHUB_BASE}/news-sentiment"
-
-    for ticker in tickers:
-        try:
-            resp = requests.get(
-                url,
-                params={"symbol": ticker, "token": finnhub_key},
-                timeout=10,
-            )
-
-            if resp.status_code == 429:
-                logger.warning(
-                    f"finnhub_429 ticker={ticker} — sleeping {RETRY_SLEEP_429}s"
-                )
-                time.sleep(RETRY_SLEEP_429)
-                resp = requests.get(
-                    url,
-                    params={"symbol": ticker, "token": finnhub_key},
-                    timeout=10,
-                )
-
-            if resp.status_code == 200:
-                data = resp.json()
-                sentiment = data.get("sentiment", {})
-                bullish   = float(sentiment.get("bullishPercent", 0.5))
-                bearish   = float(sentiment.get("bearishPercent", 0.5))
-                score     = bullish - bearish
-
-                buzz     = data.get("buzz", {})
-                articles = int(buzz.get("articlesInLastWeek", 0))
-
-                results[ticker] = {
-                    "news_sentiment_1d":  round(score, 4),
-                    "news_count_1d":      articles,
-                    "finnhub_bullish_pct": round(bullish, 4),
-                    "company_news_score": float(
-                        data.get("companyNewsScore", 0.5)
-                    ),
-                }
-            else:
-                logger.warning(
-                    f"finnhub_sentiment_error status={resp.status_code} "
-                    f"ticker={ticker}"
-                )
-                results[ticker] = {
-                    "news_sentiment_1d": 0.0,
-                    "news_count_1d":     0,
-                }
-
-        except Exception as e:
-            logger.warning(f"finnhub_sentiment_failed ticker={ticker}: {e}")
-            results[ticker] = {
-                "news_sentiment_1d": 0.0,
-                "news_count_1d":     0,
-            }
-
-        time.sleep(0.5)  # free tier: 60 calls/min
-
-    logger.info(
-        f"finnhub_sentiment_scores fetched={len(results)} tickers"
-    )
-    return results
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Step 1C — FinBERT scoring with VADER fallback
 # ─────────────────────────────────────────────────────────────────────────────
@@ -331,84 +249,58 @@ def fetch_live_news_sentiment(
     api_key: str,
 ) -> dict[str, dict]:
     """
-    Fetch today's news sentiment for all tickers via Finnhub.
-
-    Strategy (in order):
-      1. Finnhub /news-sentiment (financial-grade NLP, no model loading)
-         → use when available; includes article count from buzz.articlesInLastWeek
-      2. Finnhub /company-news headlines scored with VADER
-         → fallback for tickers where /news-sentiment returns no data
-      Never uses FinBERT in live system (SKIP_FINBERT=1 in CI).
+    Fetch today's news for all tickers via Finnhub.
 
     Returns {ticker: {'news_count_1d': int,
                        'news_sentiment_1d': float,
                        'news_titles': list[str]}}
-    Same format as fetch_yfinance_news() — drop-in replacement.
+    — same format as fetch_yfinance_news() for drop-in use.
+
+    Missing tickers default to neutral (not included in output).
     """
+    # NOTE: Finnhub /news-sentiment endpoint
+    # requires paid tier (returns 403 on free).
+    # This function uses /company-news articles
+    # + VADER sentiment scoring instead.
+    # Do NOT add /news-sentiment calls here.
+
     today     = date.today().strftime("%Y-%m-%d")
     yesterday = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
 
-    # ── Step 1: Finnhub /news-sentiment for all tickers at once ──────────────
-    native_scores = fetch_finnhub_sentiment_scores(tickers, api_key)
-
     results: dict[str, dict] = {}
-    needs_fallback: list[str] = []
 
     for ticker in tickers:
-        native = native_scores.get(ticker, {})
-        # Use native sentiment when Finnhub has real data (news_count > 0)
-        if native.get("news_count_1d", 0) > 0:
+        # Primary path: Finnhub native sentiment — no model loading
+        native_score = fetch_native_sentiment(ticker, api_key)
+        if native_score is not None:
             results[ticker] = {
-                "news_count_1d":      native["news_count_1d"],
-                "news_sentiment_1d":  native["news_sentiment_1d"],
-                "finnhub_bullish_pct": native.get("finnhub_bullish_pct", 0.5),
-                "company_news_score": native.get("company_news_score", 0.5),
-                "news_titles":        [],
+                "news_count_1d":     1,
+                "news_sentiment_1d": round(native_score, 4),
+                "news_titles":       [],
             }
-        else:
-            needs_fallback.append(ticker)
-
-    logger.info(
-        f"finnhub_native_sentiment: {len(results)} tickers with data, "
-        f"{len(needs_fallback)} need VADER fallback"
-    )
-
-    # ── Step 2: VADER fallback for tickers with no native sentiment ───────────
-    if needs_fallback:
-        try:
-            from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-            _vader = SentimentIntensityAnalyzer()
-        except Exception as e:
-            logger.warning(f"vader_init_failed: {e} — VADER fallback unavailable")
-            _vader = None
-
-        for ticker in needs_fallback:
-            articles = fetch_ticker_news(ticker, yesterday, today, api_key)
-            if articles and _vader is not None:
-                texts  = [
-                    ((a.get("headline") or "") + ". " +
-                     (a.get("summary") or "")).strip()
-                    for a in articles
-                ]
-                scores = [
-                    float(_vader.polarity_scores(t)["compound"])
-                    for t in texts if t
-                ]
-                titles = [
-                    (a.get("headline") or "").strip()
-                    for a in articles[:3]
-                    if a.get("headline")
-                ]
-                results[ticker] = {
-                    "news_count_1d":     len(articles),
-                    "news_sentiment_1d": round(
-                        float(np.mean(scores)) if scores else 0.0, 4
-                    ),
-                    "news_titles": titles,
-                }
             time.sleep(RATE_LIMIT_SLEEP)
+            continue
 
-    logger.info(f"finnhub_live_fetched total={len(results)} tickers")
+        # Fallback: score article headlines with FinBERT/VADER
+        articles = fetch_ticker_news(ticker, yesterday, today, api_key)
+        if articles:
+            scores = score_articles(articles)
+            titles = [
+                (a.get("headline") or "").strip()
+                for a in articles[:3]
+                if a.get("headline")
+            ]
+            results[ticker] = {
+                "news_count_1d":     len(articles),
+                "news_sentiment_1d": round(
+                    float(np.mean(scores)) if scores else 0.0, 4
+                ),
+                "news_titles": titles,
+            }
+
+        time.sleep(RATE_LIMIT_SLEEP)
+
+    logger.info(f"finnhub_live_fetched tickers={len(results)}")
     return results
 
 
