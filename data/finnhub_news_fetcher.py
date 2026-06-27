@@ -27,9 +27,6 @@ FINNHUB_BASE    = "https://finnhub.io/api/v1"
 RATE_LIMIT_SLEEP = 1.1   # free tier: 60 calls/min
 RETRY_SLEEP_429  = 60    # sleep on 429 before one retry
 
-SKIP_FINBERT = os.getenv('SKIP_FINBERT', '0') == '1'
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Step 1A — Single ticker fetch
 # ─────────────────────────────────────────────────────────────────────────────
@@ -145,36 +142,38 @@ def score_articles(articles: list[dict]) -> list[float]:
         combined = (headline + ". " + summary).strip()
         texts.append(combined[:512])
 
-    # ── Try FinBERT (skip in CI) ─────────────────────────────────────────────
-    try:
-        if SKIP_FINBERT:
-            raise RuntimeError('SKIP_FINBERT=1')
-        from transformers import pipeline as hf_pipeline
-        import torch
+    # ── Try FinBERT (skip only when SKIP_FINBERT=1) ──────────────────────────
+    if os.getenv('SKIP_FINBERT') == '1':
+        logger.debug('finbert_skipped: SKIP_FINBERT=1')
+    else:
+        try:
+            if not hasattr(score_articles, "_model"):
+                from transformers import pipeline as hf_pipeline
+                import torch
+                device = 0 if torch.cuda.is_available() else -1
+                score_articles._model = hf_pipeline(
+                    "text-classification",
+                    model="ProsusAI/finbert",
+                    device=device,
+                    truncation=True,
+                    max_length=128,
+                )
+                logger.info('finbert_loaded ok')
 
-        if not hasattr(score_articles, "_model"):
-            device = 0 if torch.cuda.is_available() else -1
-            score_articles._model = hf_pipeline(
-                "text-classification",
-                model="ProsusAI/finbert",
-                device=device,
-                truncation=True,
-                max_length=128,
-            )
+            results = score_articles._model([t[:128] for t in texts])
+            scores  = []
+            for r in results:
+                if r["label"] == "positive":
+                    scores.append(float(r["score"]))
+                elif r["label"] == "negative":
+                    scores.append(-float(r["score"]))
+                else:
+                    scores.append(0.0)
+            return scores
 
-        results = score_articles._model([t[:128] for t in texts])
-        scores  = []
-        for r in results:
-            if r["label"] == "positive":
-                scores.append(float(r["score"]))
-            elif r["label"] == "negative":
-                scores.append(-float(r["score"]))
-            else:
-                scores.append(0.0)
-        return scores
-
-    except Exception as e:
-        logger.warning(f"finbert_failed: {e} — trying VADER")
+        except Exception as e:
+            logger.warning(f"finbert_load_failed: {e} — falling back to VADER")
+            score_articles._model = None  # don't retry a broken load
 
     # ── Try VADER ────────────────────────────────────────────────────────────
     try:

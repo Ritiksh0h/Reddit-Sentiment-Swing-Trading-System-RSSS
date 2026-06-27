@@ -35,6 +35,14 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Cache HuggingFace models
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/huggingface
+          key: hf-finbert-${{ runner.os }}-v1
+          restore-keys: |
+            hf-finbert-${{ runner.os }}-
+
       - name: Run daily pipeline
         env:
           FINNHUB_API_KEY:      ${{ secrets.FINNHUB_API_KEY }}
@@ -43,7 +51,9 @@ jobs:
           DEEPSEEK_API_KEY:     ${{ secrets.DEEPSEEK_API_KEY }}
           HF_TOKEN:             ${{ secrets.HF_TOKEN }}
           DB_URL:               ${{ secrets.DB_URL }}
-          SKIP_FINBERT:         "1"
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
+          MONGODB_URL:          ${{ secrets.MONGODB_URL }}
+          MONGODB_DB:           rsss
           LOG_LEVEL:            INFO
         run: |
           python scripts/daily_run_live.py
