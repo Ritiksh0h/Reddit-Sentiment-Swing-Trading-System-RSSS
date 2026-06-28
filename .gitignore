@@ -81,3 +81,6 @@ data/live/paper_performance.jsonl
 *.db
 *.sqlite
 *.sqlite3
+
+# ATR-augmented feature store (generated — do not commit)
+data/features/features_v2_with_atr.parquet

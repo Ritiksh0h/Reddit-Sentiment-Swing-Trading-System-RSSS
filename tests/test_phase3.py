@@ -358,6 +358,88 @@ def test_5d_priority_over_3d():
     assert _dynamic_hold(0.005, 0.020, 0.020) == 5
 
 
+# ── 13. Dynamic risk-budget engine (TASK 3) ───────────────────────────────────
+
+def test_compute_position_bull_regime():
+    """Bull regime: returns positive n_shares, valid stop within [-12%, -4%]."""
+    from portfolio.position_sizer import compute_position
+    from config.settings import POS_CAP_HIGH
+
+    result = compute_position(
+        equity=10_000.0,
+        entry_price=100.0,
+        atr_14=2.0,        # atr_pct = 2%
+        confidence=1.0,
+        regime='bull',
+        signal_rank=1,
+    )
+
+    assert result['n_shares'] > 0
+    assert -0.12 <= result['stop_pct'] <= -0.04
+    assert result['risk_dollars'] > 0
+    assert result['size_dollars'] <= 10_000.0 * POS_CAP_HIGH + 1  # +1 for rounding
+
+
+def test_compute_position_bear_halves_size():
+    """Bear regime gets half the position of bull (regime_mult 0.5 vs 1.0)."""
+    from portfolio.position_sizer import compute_position
+
+    common = dict(equity=10_000.0, entry_price=50.0, atr_14=1.0,
+                  confidence=1.0, signal_rank=1)
+
+    bull = compute_position(regime='bull', **common)
+    bear = compute_position(regime='bear', **common)
+
+    assert bear['n_shares'] < bull['n_shares'], (
+        f"Bear n_shares={bear['n_shares']} should be less than bull n_shares={bull['n_shares']}"
+    )
+    assert bear['stop_pct'] == bull['stop_pct'], (
+        "ATR-derived stop_pct must not change with regime"
+    )
+
+
+def test_heat_budget_blocks_when_full():
+    """Adding a new position that would exceed the heat budget is rejected."""
+    from portfolio.portfolio_engine import heat_budget_allows
+    from config.settings import HEAT_BUDGET_BULL
+
+    equity         = 10_000.0
+    budget_dollars = equity * HEAT_BUDGET_BULL  # 0.06 × 10000 = $600
+
+    class _FakePos:
+        def __init__(self, risk):
+            self.risk_dollars = risk
+
+    # Three positions totalling exactly the budget
+    current = [_FakePos(200.0), _FakePos(200.0), _FakePos(200.0)]
+    # Even $1 more should tip over budget
+    allowed = heat_budget_allows(current, 1.0, equity, 'POSITIVE')
+
+    assert allowed is False, (
+        f"Expected heat_budget_allows=False when total heat would exceed "
+        f"HEAT_BUDGET_BULL={HEAT_BUDGET_BULL*100:.0f}% of equity"
+    )
+
+
+def test_correlation_blocks_semi_cluster(monkeypatch):
+    """A 3rd semiconductor ticker (NVDA/AMD/MU/INTC/ARM) in the book is blocked."""
+    import yfinance as yf
+    import pandas as pd
+    from portfolio.portfolio_engine import correlation_allows
+
+    # Mock yfinance so the pairwise gate never fires (returns empty df → fail open)
+    def _mock_download(*args, **kwargs):
+        return pd.DataFrame()
+
+    monkeypatch.setattr(yf, 'download', _mock_download)
+
+    # NVDA + AMD already in book; adding MU (3rd semi) should be blocked by cluster cap
+    result = correlation_allows('MU', ['NVDA', 'AMD'])
+    assert result is False, (
+        "Semi-cluster cap (MAX_CORR_CLUSTER=2) must block a 3rd semiconductor position"
+    )
+
+
 def test_bearish_signal_not_opened():
     """BEARISH signals never open long positions."""
     signal_type = 'BEARISH'

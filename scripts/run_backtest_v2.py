@@ -18,6 +18,7 @@ Signal generation: rank-based composite score per day
     Take top MAX_DAILY_SIGNALS=2 tickers per day by score
 """
 
+import argparse
 import json
 import math
 import sys
@@ -229,6 +230,7 @@ class SatPos:
     pred_3d:     float
     pred_5d:     float
     score:       float    # composite score at entry
+    stop_loss:   float = STOP_LOSS  # per-position stop (ATR-based or fixed)
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -374,8 +376,9 @@ def run_system(
     vol_lut:       dict,
     trading_days:  list,
     drop_tickers:  set,
-    dynamic_hold:  bool,
-    ticker_series: dict = None,  # Improvement 4: needed for rolling correlation
+    dynamic_hold:   bool,
+    use_atr_stops:  bool = False,   # True → compute ATR-based per-position stops
+    ticker_series:  dict = None,    # Improvement 4: needed for rolling correlation
 ) -> dict:
     """
     Core-satellite simulation with rank-based signal generation.
@@ -442,7 +445,7 @@ def run_system(
             unrlzd = (cur - pos.entry_fill) / pos.entry_fill
             reason = None
 
-            if unrlzd <= STOP_LOSS:
+            if unrlzd <= pos.stop_loss:
                 reason = 'stop_loss'
             elif unrlzd >= TAKE_PROFIT:
                 reason = 'take_profit'
@@ -494,6 +497,7 @@ def run_system(
                 'actual_hold':  actual_hold,
                 'entry_score':  round(pos.score, 6),
                 'pred_5d':      round(pos.pred_5d, 6),
+                'stop_loss':    round(pos.stop_loss, 4),
             })
 
         # ── Skip if fully loaded ──────────────────────────────────────────────
@@ -583,6 +587,7 @@ def run_system(
                 'pred_5d':       p5,
                 'close':         cur_price,
                 'regime_score':  regime_score_val,
+                'atr_pct':       float(row.get('atr_pct', 0.0)),
             })
 
         # Rank by vol-adjusted composite score (Improvement 3); take up to MAX_DAILY_SIGNALS
@@ -606,7 +611,12 @@ def run_system(
             if n_shares == 0 or cost > sat_cash:
                 continue
 
-            ex_date = _exit_date(trading_days, current_date, MAX_HOLD_DAYS)
+            ex_date  = _exit_date(trading_days, current_date, MAX_HOLD_DAYS)
+            if use_atr_stops and cand.get('atr_pct', 0) > 0:
+                raw_pct  = max(0.005, min(0.15, cand['atr_pct']))
+                dyn_stop = max(-0.12, min(-0.04, -(2.5 * raw_pct)))
+            else:
+                dyn_stop = STOP_LOSS
             sat_cash -= cost
             open_pos.append(SatPos(
                 ticker=ticker, entry_date=current_date,
@@ -614,6 +624,7 @@ def run_system(
                 n_shares=n_shares, cost=cost,
                 pred_1d=cand['pred_1d'], pred_3d=cand['pred_3d'],
                 pred_5d=cand['pred_5d'], score=cand['score'],
+                stop_loss=dyn_stop,
             ))
 
     # ── Force-close remaining positions at period end ─────────────────────────
@@ -641,6 +652,7 @@ def run_system(
             'actual_hold':  actual_hold,
             'entry_score':  round(pos.score, 6),
             'pred_5d':      round(pos.pred_5d, 6),
+            'stop_loss':    round(pos.stop_loss, 4),
         })
 
     # ── Final accounting ──────────────────────────────────────────────────────
@@ -661,6 +673,11 @@ def run_system(
     for t in closed_trades:
         r = t['exit_reason']
         reasons[r] = reasons.get(r, 0) + 1
+
+    stop_outs     = reasons.get('stop_loss', 0)
+    avg_stop_used = round(
+        float(np.mean([t.get('stop_loss', STOP_LOSS) for t in closed_trades])) * 100, 2
+    ) if closed_trades else round(STOP_LOSS * 100, 2)
 
     # Actual-hold distribution
     holds = [t['actual_hold'] for t in closed_trades]
@@ -684,6 +701,8 @@ def run_system(
         'win_rate':             _wr(closed_trades),
         'avg_hold_days':        avg_hold,
         'exit_reasons':         reasons,
+        'stop_outs':            stop_outs,
+        'avg_stop_used_pct':    avg_stop_used,
         'significance':         sig_test,
         'monthly_returns':      monthly,
         'trades':               closed_trades,
@@ -691,15 +710,70 @@ def run_system(
     }
 
 
+# ── Comparison printer ─────────────────────────────────────────────────────────
+def _print_comparison(fixed: dict, atr: dict) -> None:
+    """Print side-by-side table: fixed -8% stop vs ATR-based stops."""
+    rows = [
+        ('Total return %',   'total_return_pct',    'pct',   True),
+        ('Sharpe ratio',     'sharpe_ratio',         'float', True),
+        ('Win rate %',       'win_rate',             'wr',    True),
+        ('Max drawdown %',   'max_drawdown_pct',     'float', True),
+        ('Total trades',     'n_trades',             'int',   False),
+        ('Avg stop used %',  'avg_stop_used_pct',    'stop',  False),
+        ('Stop-outs',        'stop_outs',            'int',   False),
+    ]
+
+    print()
+    print('─' * 65)
+    print(f'{"Metric":<22}{"Fixed -8%":>15}{"ATR Stops":>15}{"Delta":>10}')
+    print('─' * 65)
+    for label, key, fmt, show_delta in rows:
+        f_v = fixed.get(key) or 0.0
+        a_v = atr.get(key)   or 0.0
+        delta = a_v - f_v
+        if fmt == 'pct':
+            f_s = f'{f_v:+.1f}%'
+            a_s = f'{a_v:+.1f}%'
+            d_s = f'{delta:+.1f}' if show_delta else '-'
+        elif fmt == 'wr':
+            f_s = f'{f_v * 100:.1f}%'
+            a_s = f'{a_v * 100:.1f}%'
+            d_s = f'{delta * 100:+.1f}%' if show_delta else '-'
+        elif fmt == 'float':
+            f_s = f'{f_v:.2f}'
+            a_s = f'{a_v:.2f}'
+            d_s = f'{delta:+.2f}' if show_delta else '-'
+        elif fmt == 'stop':
+            f_s = f'{f_v:.1f}%'
+            a_s = f'{a_v:.1f}%'
+            d_s = f'{delta:+.1f}' if show_delta else '-'
+        else:
+            f_s = str(int(f_v))
+            a_s = str(int(a_v))
+            d_s = f'{int(delta):+d}' if show_delta else '-'
+        print(f'{label:<22}{f_s:>15}{a_s:>15}{d_s:>10}')
+    print('─' * 65)
+
+
 # ── Main ────────────────────────────────────────────────────────────────────────
 def main():
+    parser = argparse.ArgumentParser(
+        description='RSSS Backtest v2 [HISTORICAL SIMULATION]')
+    parser.add_argument(
+        '--features', default='data/features/features_v2.parquet',
+        help='Feature parquet path (default: features_v2.parquet)')
+    parser.add_argument(
+        '--atr-stops', dest='atr_stops', action='store_true',
+        help='Run ATR-based stop comparison after main simulation')
+    args = parser.parse_args()
+
     print('=' * 70)
     print('RSSS Backtest v2 — Rank-Based Signals  [HISTORICAL SIMULATION]')
     print('=' * 70)
 
     # ── Feature store ─────────────────────────────────────────────────────────
-    print('Loading features_v2.parquet...')
-    df = pd.read_parquet('data/features/features_v2.parquet')
+    print(f'Loading {args.features}...')
+    df = pd.read_parquet(args.features)
     df['date'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
     df_test = df[(df['date'] >= TEST_START) & (df['date'] <= TEST_END)].copy()
     df_test = df_test.dropna(subset=['close']).reset_index(drop=True)
@@ -812,6 +886,14 @@ def main():
     sys_a = run_system('A_rank_dynamic', df_test, dynamic_hold=True,  **common)
     sys_b = run_system('B_rank_fixed5d', df_test, dynamic_hold=False, **common)
 
+    sys_a_atr = None
+    if args.atr_stops:
+        print('\nRunning ATR-stop comparison...')
+        sys_a_atr = run_system(
+            'A_atr_stops', df_test, dynamic_hold=True,
+            use_atr_stops=True, **common)
+        _print_comparison(sys_a, sys_a_atr)
+
     # ── Save results ───────────────────────────────────────────────────────────
     out = {
         'simulation':      True,
@@ -831,6 +913,7 @@ def main():
         'systems': {
             'A_rank_dynamic': sys_a,
             'B_rank_fixed5d': sys_b,
+            **({'A_atr_stops': sys_a_atr} if sys_a_atr is not None else {}),
         },
     }
 

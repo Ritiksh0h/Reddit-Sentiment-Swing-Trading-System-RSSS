@@ -48,6 +48,8 @@ class Position:
     predicted_return_3d: float = 0.0
     predicted_return_5d: float = 0.0
     pcr_confirmation:    str   = 'UNKNOWN'
+    stop_pct:            float = STOP_LOSS_PCT  # per-position stop (ATR-based); default -8%
+    risk_dollars:        float = 0.0            # dollar risk at entry: size × |stop_pct|
 
 
 @dataclass
@@ -156,7 +158,7 @@ def check_exits(
         exit_reason, pnl_pct. Only positions meeting a condition are included.
 
     Exit conditions (priority order):
-        1. Stop-loss:   unrealized loss <= -8%
+        1. Stop-loss:   unrealized loss <= pos.stop_pct (ATR-based; default -8%)
         2. Take-profit: unrealized gain >= 15%
         3. Hold expiry: today >= stop_date (5-day hold)
     """
@@ -168,8 +170,11 @@ def check_exits(
             continue
 
         unrealized_return = (price - pos.entry_price) / pos.entry_price
+        # Use per-position stop; fall back to STOP_LOSS_PCT for positions opened
+        # before the stop_pct field was added (legacy JSON portfolio compat)
+        stop = getattr(pos, 'stop_pct', STOP_LOSS_PCT)
 
-        if unrealized_return <= STOP_LOSS_PCT:
+        if unrealized_return <= stop:
             to_close.append({
                 'position':    pos,
                 'exit_price':  price,
@@ -179,7 +184,7 @@ def check_exits(
             })
             logger.info(
                 f'stop_loss_triggered ticker={pos.ticker} '
-                f'unrealized={unrealized_return:.2%} threshold={STOP_LOSS_PCT:.0%}'
+                f'unrealized={unrealized_return:.2%} threshold={stop:.1%}'
             )
             continue
 
@@ -203,3 +208,128 @@ def check_exits(
             })
 
     return to_close
+
+
+# ── Dynamic risk-budget helpers (TASK 3) ────────────────────────────────────────
+
+def get_max_positions(regime: str) -> int:
+    """Regime-aware max concurrent positions.
+
+    Accepts both short ('bull'/'bear'/'choppy') and long
+    ('POSITIVE'/'NEGATIVE'/'NEUTRAL') regime label formats.
+    """
+    from config.settings import (
+        MAX_POSITIONS_BULL, MAX_POSITIONS_BEAR, MAX_POSITIONS_CHOPPY,
+    )
+    r = regime.lower()
+    if r in ('bull', 'positive'):
+        return MAX_POSITIONS_BULL
+    elif r in ('bear', 'negative'):
+        return MAX_POSITIONS_BEAR
+    else:
+        return MAX_POSITIONS_CHOPPY
+
+
+def heat_budget_allows(
+    current_positions: list,
+    new_risk_dollars:  float,
+    equity:            float,
+    regime:            str,
+) -> bool:
+    """Return True if adding new_risk_dollars keeps total heat within budget.
+
+    Heat = sum of risk_dollars across all open positions.
+    Budget is a % of equity that varies by regime.
+    """
+    from config.settings import (
+        HEAT_BUDGET_BULL, HEAT_BUDGET_BEAR, HEAT_BUDGET_CHOPPY,
+    )
+    r = regime.lower()
+    if r in ('bull', 'positive'):
+        budget_pct = HEAT_BUDGET_BULL
+    elif r in ('bear', 'negative'):
+        budget_pct = HEAT_BUDGET_BEAR
+    else:
+        budget_pct = HEAT_BUDGET_CHOPPY
+
+    current_heat   = sum(getattr(p, 'risk_dollars', 0.0) for p in current_positions)
+    budget_dollars = equity * budget_pct
+    return (current_heat + new_risk_dollars) <= budget_dollars
+
+
+def correlation_allows(
+    new_ticker:      str,
+    current_tickers: list,
+    lookback_days:   int = 60,
+) -> bool:
+    """Return True if adding new_ticker passes diversification gates.
+
+    Gate 1 — semiconductor cluster cap (NVDA/AMD/MU/INTC/ARM ≤ MAX_CORR_CLUSTER).
+    Gate 2 — max pairwise 60-day return correlation < MAX_BOOK_CORR.
+
+    Fails open (returns True) when yfinance data is unavailable — never blocks
+    trading due to a network error.
+    """
+    import pandas as _pd
+    import yfinance as _yf
+    from config.settings import SEMI_CLUSTER, MAX_CORR_CLUSTER, MAX_BOOK_CORR
+
+    if not current_tickers:
+        return True
+
+    # Gate 1: semiconductor cluster cap (no network needed)
+    if new_ticker in SEMI_CLUSTER:
+        cluster_count = sum(1 for t in current_tickers if t in SEMI_CLUSTER)
+        if cluster_count >= MAX_CORR_CLUSTER:
+            logger.info(
+                f'correlation_blocked ticker={new_ticker} '
+                f'reason=semi_cluster_cap count={cluster_count}'
+            )
+            return False
+
+    # Gate 2: pairwise return correlation
+    try:
+        all_tickers = list({new_ticker, *current_tickers})
+        end_dt   = _pd.Timestamp.today()
+        start_dt = end_dt - _pd.Timedelta(days=lookback_days + 10)
+
+        raw = _yf.download(
+            all_tickers,
+            start=start_dt.strftime('%Y-%m-%d'),
+            end=end_dt.strftime('%Y-%m-%d'),
+            auto_adjust=True, progress=False, threads=False,
+        )
+        if isinstance(raw.columns, _pd.MultiIndex):
+            prices = raw['Close']
+        else:
+            prices = raw[['Close']].rename(columns={'Close': all_tickers[0]})
+
+        prices = prices.dropna(how='all')
+        if len(prices) < 20:
+            return True  # insufficient history — fail open
+
+        rets = prices.pct_change().dropna(how='all')
+
+        if new_ticker not in rets.columns:
+            return True
+
+        for existing in current_tickers:
+            if existing not in rets.columns:
+                continue
+            corr = rets[new_ticker].corr(rets[existing])
+            if not _pd.isna(corr) and abs(corr) >= MAX_BOOK_CORR:
+                logger.info(
+                    f'correlation_blocked ticker={new_ticker} '
+                    f'corr_with={existing} corr={corr:.3f}'
+                )
+                return False
+
+    except Exception as exc:
+        logger.warning(
+            f'correlation_check_failed ticker={new_ticker}: {exc} — allowing'
+        )
+        return True
+
+    return True
+
+

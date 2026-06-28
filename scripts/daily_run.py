@@ -36,11 +36,12 @@ logger = logging.getLogger('daily_run')
 sys.path.insert(0, '.')
 
 from portfolio.signal_generator  import generate_signals, load_models
-from portfolio.position_sizer    import compute_position_size, compute_slippage
+from portfolio.position_sizer    import compute_position_size, compute_slippage, compute_position
 from portfolio.regime_detector   import classify_regime
 from portfolio.portfolio_engine  import (
     load_portfolio, save_portfolio, check_risk_limits, check_exits,
     Position, MAX_POSITIONS,
+    get_max_positions, heat_budget_allows, correlation_allows,
 )
 from portfolio.execution_logger  import log_signal
 from portfolio.drift_monitor     import check_drift
@@ -286,13 +287,14 @@ def run(
     current_prices.update({s.ticker: s.price for s in signals})
 
     if limits['can_open_new_trades'] and not limits['daily_loss_triggered']:
-        regime_mult     = regime.multiplier if regime else 0.75
+        regime_mult  = regime.multiplier if regime else 0.75
+        regime_label = regime.label      if regime else 'NEUTRAL'
         portfolio_value = state.total_value(current_prices)
 
         # 1 trading day ≈ 3 cal days, 3TD ≈ 5, 5TD ≈ 7
         _HOLD_CAL = {1: 3, 3: 5, 5: 7}
 
-        for signal in signals:
+        for _sig_rank, signal in enumerate(signals, start=1):
             # Long-only: BEARISH and NEUTRAL signals are logged but never opened
             if signal.signal != 'BULLISH':
                 logger.info(
@@ -303,7 +305,7 @@ def run(
                 )
                 continue
 
-            if state.n_open_positions() >= MAX_POSITIONS:
+            if state.n_open_positions() >= get_max_positions(regime_label):
                 break
 
             if state.is_ticker_on_cooldown(signal.ticker, today):
@@ -313,14 +315,27 @@ def run(
             if any(p.ticker == signal.ticker for p in state.positions):
                 continue
 
-            sizing = compute_position_size(
-                portfolio_value=portfolio_value,
-                price=signal.price,
+            sizing = compute_position(
+                equity=portfolio_value,
+                entry_price=signal.price,
                 atr_14=signal.atr_14,
-                regime_multiplier=regime_mult,
+                confidence=signal.confidence,
+                regime=regime_label,
+                signal_rank=_sig_rank,
             )
 
             if sizing['n_shares'] == 0:
+                continue
+
+            current_tickers = [p.ticker for p in state.positions]
+            if not heat_budget_allows(
+                state.positions, sizing['risk_dollars'], portfolio_value, regime_label
+            ):
+                logger.info(f'heat_budget_blocked ticker={signal.ticker} '
+                            f'risk_dollars={sizing["risk_dollars"]:.2f}')
+                continue
+            if not correlation_allows(signal.ticker, current_tickers):
+                logger.info(f'correlation_blocked ticker={signal.ticker}')
                 continue
 
             # Apply PCR size multiplier (CAUTION = 50% size; never blocks signal)
@@ -365,6 +380,8 @@ def run(
                 predicted_return_3d=signal.predicted_3d,
                 predicted_return_5d=signal.predicted_5d,
                 pcr_confirmation=getattr(signal, 'pcr_confirmation', 'UNKNOWN'),
+                stop_pct=sizing['stop_pct'],
+                risk_dollars=sizing['risk_dollars'],
             )
 
             cost = sizing['n_shares'] * fill_price

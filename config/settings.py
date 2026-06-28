@@ -150,6 +150,37 @@ PHASE0_TICKERS: list[str] = [
 # Known HuggingFace dataset candidates (ranked by fit for this project).
 # Web search was unavailable at scaffold time — verify IDs before use.
 # See scripts/phase0_validate.py for loading logic.
+# ---------------------------------------------------------------------------
+# Dynamic risk-budget engine — TASK 3
+# ---------------------------------------------------------------------------
+BASE_RISK_PCT        = 0.005    # fractional Kelly base (0.5% of equity per trade)
+BASE_RISK_PCT_MAX    = 0.0075   # hard ceiling regardless of regime/confidence
+ATR_STOP_MULT        = 2.5      # stop = -(ATR_STOP_MULT × atr_pct), clamped below
+ATR_STOP_MIN         = -0.12    # widest allowed stop (-12%)
+ATR_STOP_MAX         = -0.04    # tightest allowed stop (-4%)
+ATR_STOP_DEFAULT     = -0.08    # fallback when ATR unavailable
+
+POS_CAP_HIGH         = 0.20     # max single position in bull regime (20% of equity)
+POS_CAP_MED          = 0.15     # max single position in neutral regime
+POS_CAP_LOW          = 0.10     # max single position in bear regime
+
+MAX_POSITIONS_BULL   = 6        # max concurrent positions in bull
+MAX_POSITIONS_BEAR   = 3        # max concurrent positions in bear
+MAX_POSITIONS_CHOPPY = 2        # max concurrent positions in choppy/neutral
+
+HEAT_BUDGET_BULL     = 0.06     # max total portfolio risk deployed in bull (6%)
+HEAT_BUDGET_BEAR     = 0.03     # max total portfolio risk deployed in bear (3%)
+HEAT_BUDGET_CHOPPY   = 0.02     # max total portfolio risk deployed in choppy (2%)
+
+DEPLOY_MAX_BULL      = 0.80     # max equity deployed as positions in bull
+DEPLOY_MAX_BEAR      = 0.40     # max equity deployed as positions in bear
+DEPLOY_MAX_CHOPPY    = 0.20     # max equity deployed as positions in choppy
+
+MAX_BOOK_CORR        = 0.70     # max pairwise 60-day return correlation
+MAX_CORR_CLUSTER     = 2        # max positions from semiconductor cluster
+SEMI_CLUSTER: set    = {'NVDA', 'AMD', 'MU', 'INTC', 'ARM'}
+SEMI_MAX_EXPOSURE    = 0.35     # max portfolio weight in SEMI_CLUSTER combined
+
 PHASE0_HF_DATASETS: list[dict] = [
     {
         "id": "Lelon/reddit-wsb-posts",
