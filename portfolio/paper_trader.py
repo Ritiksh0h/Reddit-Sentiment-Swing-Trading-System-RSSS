@@ -110,7 +110,7 @@ def record_daily_pnl(
     return daily_return
 
 
-def compute_summary(initial_capital: float = 10000.0) -> dict:
+def compute_summary(initial_capital: float = 100000.0) -> dict:
     """Compute paper trading summary vs SPY."""
     if not Path(PERF_FILE).exists():
         return {'error': 'No performance data yet'}

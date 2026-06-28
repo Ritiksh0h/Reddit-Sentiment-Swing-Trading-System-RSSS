@@ -443,7 +443,7 @@ def run(
         portfolio_value = state.total_value(current_prices_for_value)
         record_daily_snapshot(
             portfolio_value=portfolio_value,
-            starting_capital=10000.0,
+            starting_capital=100000.0,
             n_trades_today=sum(1 for a in summary['actions'] if 'OPEN' in a),
             actions=summary['actions'],
             date=today,

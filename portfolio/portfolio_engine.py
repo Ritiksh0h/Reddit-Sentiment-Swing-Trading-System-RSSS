@@ -54,7 +54,7 @@ class Position:
 
 @dataclass
 class PortfolioState:
-    cash:              float = 10000.0
+    cash:              float = 100000.0
     positions:         list  = field(default_factory=list)
     closed_trades:     list  = field(default_factory=list)
     ticker_last_trade: dict  = field(default_factory=dict)
