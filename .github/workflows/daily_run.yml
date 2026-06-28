@@ -58,6 +58,17 @@ jobs:
         run: |
           python scripts/daily_run_live.py
 
+      - name: Run leakage checks
+        continue-on-error: true
+        # continue-on-error: true — checks warn but must not block live trading.
+        # Change to false when quarterly retrain is added to this workflow.
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          MONGODB_URL:  ${{ secrets.MONGODB_URL }}
+          MONGODB_DB:   rsss
+        run: |
+          python scripts/leakage_checks.py
+
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4
