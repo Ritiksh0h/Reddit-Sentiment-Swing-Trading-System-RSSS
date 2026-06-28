@@ -324,7 +324,24 @@ def main():
     # ── Persist run metadata to databases ────────────────────────────────
     save_run_to_db(summary, today, reddit_counts)
 
-    print(json.dumps(summary, indent=2))
+    # Make summary JSON-serializable before printing.
+    # FIX 4 added summary['all_signals'] as a list of SignalRecord dataclasses
+    # which json.dumps cannot serialize natively.
+    import dataclasses as _dc
+    summary_serializable: dict = {}
+    for _k, _v in summary.items():
+        if _k == 'all_signals' and isinstance(_v, list):
+            summary_serializable[_k] = [
+                _dc.asdict(s) if _dc.is_dataclass(s)
+                else (s._asdict() if hasattr(s, '_asdict')
+                else (s.__dict__ if hasattr(s, '__dict__')
+                else s))
+                for s in _v
+            ]
+        else:
+            summary_serializable[_k] = _v
+
+    print(json.dumps(summary_serializable, indent=2, default=str))
 
 
 def save_run_to_db(summary: dict, today: str, reddit_counts: dict) -> None:
