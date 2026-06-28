@@ -288,7 +288,10 @@ def main():
         logger.warning(f'Run skipped — reason: {summary["reason"]}')
 
     # ── Save live feature vectors for future retraining ───────────────────
-    if not summary.get('skipped') and summary.get('actions'):
+    # FIX 3: removed summary.get('actions') gate — always run on non-skipped
+    # days so NEUTRAL/blocked signals still get saved to all_signals.jsonl
+    # and forwarded to features_live_v2.parquet via append_live_features.py.
+    if not summary.get('skipped'):
         try:
             result = subprocess.run(
                 [sys.executable, 'scripts/append_live_features.py',

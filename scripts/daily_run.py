@@ -248,6 +248,38 @@ def run(
         save_portfolio(state)
         return summary
 
+    # ── FIX 1: Log ALL qualifying signals to all_signals.jsonl ────────────
+    # Includes NEUTRAL and BEARISH — every density-gate-passing ticker that
+    # was scored by XGBoost. Required so append_live_features.py can build
+    # features_live_v2.parquet regardless of whether trades fired.
+    try:
+        import json as _json
+        from pathlib import Path as _Path
+        _ALL_SIG_LOG = _Path('logs/all_signals.jsonl')
+        _ALL_SIG_LOG.parent.mkdir(exist_ok=True)
+        for sig in signals:
+            fv = sig.feature_vector or {}
+            _record = {
+                'date':              today,
+                'ticker':            sig.ticker,
+                'action':            'SIGNAL',
+                'signal':            sig.signal,
+                'close_price':       sig.price,
+                'predicted_return_5d': sig.predicted_5d,
+                'predicted_1d':      sig.predicted_1d,
+                'predicted_3d':      sig.predicted_3d,
+                'confidence':        sig.confidence,
+                'post_count_1d':     sig.post_count_1d,
+                'news_count_1d':     sig.news_count_1d,
+                'st_count_1d':       sig.st_count_1d,
+                'feature_vector':    fv,
+            }
+            with open(_ALL_SIG_LOG, 'a') as _f:
+                _f.write(_json.dumps(_record) + '\n')
+        logger.info(f'all_signals_logged count={len(signals)} path={_ALL_SIG_LOG}')
+    except Exception as _e:
+        logger.warning(f'all_signals_log_failed (non-fatal): {_e}')
+
     # ── 8. Open new positions ──────────────────────────────────────────────
     # current_prices: seed from step-5 early prices, overlay with signal prices
     current_prices = dict(early_prices)
@@ -402,6 +434,9 @@ def run(
     except Exception as e:
         logger.warning(f'performance_snapshot_failed error={e}')
 
+    # FIX 4: expose all qualifying signals so save_run_to_db() can write
+    # them to Supabase signals table. Includes BULLISH + NEUTRAL + BEARISH.
+    summary['all_signals'] = signals
     logger.info(f'daily_run_complete actions={len(summary["actions"])}')
     return summary
 

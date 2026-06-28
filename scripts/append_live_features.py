@@ -47,21 +47,38 @@ FEATURE_COLS = [
 
 def load_today_feature_vectors(today: str) -> list[dict]:
     """
-    Load today's feature vectors from logs/paper_trades.jsonl (OPEN records only).
+    Load today's feature vectors for all density-gate-passing tickers.
+
+    Primary source:  logs/all_signals.jsonl  (action == 'SIGNAL')
+      Written by daily_run.py for every ticker scored by XGBoost,
+      regardless of whether a trade fired. Captures BULLISH + NEUTRAL
+      + BEARISH rows — all valid training examples.
+
+    Fallback source: logs/paper_trades.jsonl (action == 'OPEN')
+      Used when all_signals.jsonl doesn't exist (backward compat with
+      runs before this fix was deployed).
 
     Args:
-        today: date string YYYY-MM-DD — only records matching this date are returned
+        today: YYYY-MM-DD — only records matching this date are returned
 
     Returns:
-        list of dicts with ticker, date, close, 14 feature values,
-        predicted_return_5d, signal, and confidence. Empty list if no OPEN
-        signals were logged for today.
+        list of dicts with ticker, date, close, 16 feature values,
+        predicted_return_5d, signal, confidence.
     """
-    rows = []
-    log_path = Path('logs/paper_trades.jsonl')
-    if not log_path.exists():
-        return rows
+    all_signals_path  = Path('logs/all_signals.jsonl')
+    paper_trades_path = Path('logs/paper_trades.jsonl')
 
+    if all_signals_path.exists():
+        log_path      = all_signals_path
+        action_filter = 'SIGNAL'
+    elif paper_trades_path.exists():
+        log_path      = paper_trades_path
+        action_filter = 'OPEN'
+        logger.info('all_signals.jsonl not found — falling back to paper_trades.jsonl OPEN records')
+    else:
+        return []
+
+    rows = []
     with open(log_path) as f:
         for line in f:
             if not line.strip():
@@ -73,13 +90,15 @@ def load_today_feature_vectors(today: str) -> list[dict]:
 
             if record.get('date') != today:
                 continue
-            if record.get('action') != 'OPEN':
+            if record.get('action') != action_filter:
                 continue
 
             ticker = record.get('ticker')
             if not ticker:
                 continue
 
+            # all_signals.jsonl stores feature_vector as a nested dict;
+            # paper_trades.jsonl uses the same key (feature_vector).
             fv = (record.get('feature_vector')
                   or record.get('feature_vector_14')
                   or record.get('feature_vector_11')
@@ -89,13 +108,16 @@ def load_today_feature_vectors(today: str) -> list[dict]:
                 logger.warning(f'no_feature_vector ticker={ticker} date={today}')
                 continue
 
+            # close_price for SIGNAL records; fill_price for OPEN records
+            close = record.get('close_price') or record.get('fill_price') or 0.0
+
             row = {
                 'ticker':              ticker,
                 'date':                today,
-                'close':               record.get('fill_price', 0.0),
-                'predicted_return_5d': record.get('predicted_return_5d', 0.0),
+                'close':               float(close),
+                'predicted_return_5d': float(record.get('predicted_return_5d', 0.0)),
                 'signal':              record.get('signal', 'NEUTRAL'),
-                'confidence':          record.get('confidence', 0.0),
+                'confidence':          float(record.get('confidence', 0.0)),
             }
 
             for col in FEATURE_COLS:
@@ -103,7 +125,7 @@ def load_today_feature_vectors(today: str) -> list[dict]:
 
             rows.append(row)
             logger.info(
-                f'feature_row ticker={ticker} '
+                f'feature_row ticker={ticker} signal={row["signal"]} '
                 f'post_count={row["post_count_1d"]:.0f} '
                 f'news={row["news_sentiment_1d"]:.3f} '
                 f'vix_pct={row["vix_percentile"]:.3f} '
@@ -218,7 +240,7 @@ def main():
 
     rows = load_today_feature_vectors(today)
     if not rows:
-        logger.info(f'No OPEN signals found for {today} — nothing to save')
+        logger.info(f'No qualifying signals found for {today} — nothing to save')
         return
 
     logger.info(f'Feature rows to save: {len(rows)}')
