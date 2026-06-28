@@ -392,12 +392,13 @@ def save_run_to_db(summary: dict, today: str, reddit_counts: dict) -> None:
                 'fetch_date':     today,
                 'ticker':         ticker,
                 'post_count_1d':  vals.get('post_count_1d', 0),
-                'avg_sentiment':  vals.get('avg_sentiment_1d'),
+                'avg_sentiment':  vals.get('vader_sentiment_1d'),
                 'wallstreetbets': sub.get('wallstreetbets'),
                 'stocks':         sub.get('stocks'),
                 'investing':      sub.get('investing'),
                 'options':        sub.get('options'),
             })
+        logger.info('db_reddit_daily_saved tickers=%d', len(reddit_counts))
     except Exception as exc:
         logger.warning('db_reddit_daily_failed: %s', exc)
 
