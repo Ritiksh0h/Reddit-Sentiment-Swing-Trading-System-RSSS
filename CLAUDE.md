@@ -16,12 +16,12 @@ A quantitative swing trading research system that answers one question:
 This is NOT a sentiment classifier or hype detector.
 It is a time-aligned numerical compression of crowd attention + market response.
 
-**Core finding so far:** Reddit post density (post_count_1d >= 10) is the
-primary value driver — not sentiment. Market IC on all rows = 0.008 (noise).
-Market IC on high-attention rows = 0.092 (real signal). Sentiment Granger
-test showed 0/6 significant years for Reddit sentiment. News + StockTwits
-historical data has been merged (features_complete.parquet) but did not
-improve IC (0.0686 vs 0.0796 baseline). Formal source validation is next.
+**Core finding so far:** Reddit *attention* is the value driver — not sentiment.
+`abnormal_attention_1d` shows IC > 0.05 in 3/7 years; `post_count_1d` shows 0/7 at
+V2 density gate=5. VADER sentiment Granger p < 0.05 in 0/7 years. `vix_percentile`
+is the strongest single feature (IC > 0.05 in 5/7 years — structural regime signal).
+Walk-forward validation (Part B, June 2026, V2 feature space): best combo = Reddit
+(attention) only, mean IC = 0.033. Gate for retrain = 0.061 → NO RETRAIN.
 
 ---
 
@@ -490,6 +490,15 @@ DONE — V2 Research Sprint (June 2026):
   ✓ train_models_v2.py: GKX stumps, per-horizon gamma, ICEarlyStopping, 16 features
   ✓ run_backtest_v2.py: rank-based core-satellite (70/30), 167 trades, Sharpe 1.32
   V2 NOT deployed to live system — gate is IC improvement > 0.005 over 0.0796
+
+DONE — Part B: Signal Validation Sprint (June 2026):
+  ✓ validate_sources.py updated: features_v2.parquet, V2 GKX params, V2 feature families
+  ✓ StockTwits excluded (zeros 2023+ corrupt walk-forward)
+  ✓ Layer 1: vix_percentile strongest (5/7 yrs); abnormal_attention > post_count (3/7 vs 0/7)
+  ✓ Layer 2: all features WEAK_SIGNAL (0/7 Granger-significant except 2025 marginal)
+  ✓ Layer 3: attention > sentiment (0.031 vs 0.006 walk-forward IC)
+  ✓ NO RETRAIN: best walk-forward IC = 0.033 < gate (0.056 + 0.005 = 0.061)
+  ✓ experiments/source_validation/results.json updated with V2 results
 
 DONE — Dynamic Risk Budget + ATR Stops Sprint (June 2026):
   ✓ add_atr_to_features.py: Wilder 14-day ATR → features_v2_with_atr.parquet (31 cols, 100% cov)

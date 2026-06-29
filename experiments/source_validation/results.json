@@ -1,8 +1,8 @@
 {
   "meta": {
-    "feature_store": "data/features/features_complete.parquet",
-    "rows_after_gate": 3753,
-    "tickers": 22,
+    "feature_store": "data/features/features_v2.parquet",
+    "rows_after_gate": 15829,
+    "tickers": 30,
     "years": [
       2019,
       2020,
@@ -17,13 +17,13 @@
   "layer1_annual_ic": {
     "post_count_1d": {
       "ic_by_year": {
-        "2019": -0.1506,
-        "2020": 0.0634,
-        "2021": -0.0159,
-        "2022": -0.0625,
-        "2023": 0.1138,
-        "2024": 0.0898,
-        "2025": 0.0196
+        "2019": -0.033,
+        "2020": 0.0252,
+        "2021": 0.0077,
+        "2022": 0.0279,
+        "2023": -0.012,
+        "2024": 0.0479,
+        "2025": -0.0319
       },
       "regime_labels": {
         "2019": "BULL (pre-COVID, low vol)",
@@ -35,15 +35,15 @@
         "2025": "MIXED (regime uncertain)"
       }
     },
-    "mention_growth_7d": {
+    "abnormal_attention_1d": {
       "ic_by_year": {
-        "2019": -0.0688,
-        "2020": 0.0047,
-        "2021": 0.0705,
-        "2022": 0.0562,
-        "2023": -0.1776,
-        "2024": 0.1103,
-        "2025": 0.0947
+        "2019": 0.0031,
+        "2020": 0.0088,
+        "2021": 0.0967,
+        "2022": 0.0504,
+        "2023": 0.0112,
+        "2024": 0.007,
+        "2025": 0.053
       },
       "regime_labels": {
         "2019": "BULL (pre-COVID, low vol)",
@@ -55,15 +55,35 @@
         "2025": "MIXED (regime uncertain)"
       }
     },
-    "avg_sentiment_1d": {
+    "vader_sentiment_1d": {
       "ic_by_year": {
-        "2019": 0.0874,
-        "2020": 0.0237,
-        "2021": -0.0306,
-        "2022": -0.0683,
-        "2023": -0.1117,
-        "2024": 0.1337,
-        "2025": -0.0883
+        "2019": 0.0123,
+        "2020": -0.0281,
+        "2021": -0.0314,
+        "2022": -0.0627,
+        "2023": -0.016,
+        "2024": -0.0053,
+        "2025": -0.0448
+      },
+      "regime_labels": {
+        "2019": "BULL (pre-COVID, low vol)",
+        "2020": "CRASH + RECOVERY (retail surge)",
+        "2021": "RETAIL BULL (meme peak, zero rates)",
+        "2022": "BEAR (rate hikes, crypto crash)",
+        "2023": "RECOVERY (mixed, AI emerges)",
+        "2024": "AI BULL (institutional momentum)",
+        "2025": "MIXED (regime uncertain)"
+      }
+    },
+    "sentiment_accel": {
+      "ic_by_year": {
+        "2019": 0.0104,
+        "2020": 0.0006,
+        "2021": -0.0081,
+        "2022": -0.0151,
+        "2023": 0.0081,
+        "2024": 0.0119,
+        "2025": -0.0059
       },
       "regime_labels": {
         "2019": "BULL (pre-COVID, low vol)",
@@ -77,13 +97,13 @@
     },
     "news_sentiment_1d": {
       "ic_by_year": {
-        "2019": -0.0355,
-        "2020": -0.0728,
-        "2021": -0.0102,
-        "2022": 0.0236,
-        "2023": -0.0468,
-        "2024": NaN,
-        "2025": NaN
+        "2019": 0.0003,
+        "2020": -0.0108,
+        "2021": -0.0053,
+        "2022": -0.0471,
+        "2023": -0.0538,
+        "2024": -0.0397,
+        "2025": 0.0286
       },
       "regime_labels": {
         "2019": "BULL (pre-COVID, low vol)",
@@ -95,55 +115,15 @@
         "2025": "MIXED (regime uncertain)"
       }
     },
-    "st_sentiment_1d": {
+    "returns_20d": {
       "ic_by_year": {
-        "2019": 0.1135,
-        "2020": -0.1107,
-        "2021": -0.0423,
-        "2022": -0.1074,
-        "2023": NaN,
-        "2024": NaN,
-        "2025": NaN
-      },
-      "regime_labels": {
-        "2019": "BULL (pre-COVID, low vol)",
-        "2020": "CRASH + RECOVERY (retail surge)",
-        "2021": "RETAIL BULL (meme peak, zero rates)",
-        "2022": "BEAR (rate hikes, crypto crash)",
-        "2023": "RECOVERY (mixed, AI emerges)",
-        "2024": "AI BULL (institutional momentum)",
-        "2025": "MIXED (regime uncertain)"
-      }
-    },
-    "st_bull_pct": {
-      "ic_by_year": {
-        "2019": 0.1136,
-        "2020": -0.1107,
-        "2021": -0.0423,
-        "2022": -0.1075,
-        "2023": NaN,
-        "2024": NaN,
-        "2025": NaN
-      },
-      "regime_labels": {
-        "2019": "BULL (pre-COVID, low vol)",
-        "2020": "CRASH + RECOVERY (retail surge)",
-        "2021": "RETAIL BULL (meme peak, zero rates)",
-        "2022": "BEAR (rate hikes, crypto crash)",
-        "2023": "RECOVERY (mixed, AI emerges)",
-        "2024": "AI BULL (institutional momentum)",
-        "2025": "MIXED (regime uncertain)"
-      }
-    },
-    "returns_5d": {
-      "ic_by_year": {
-        "2019": 0.054,
-        "2020": -0.0865,
-        "2021": -0.0279,
-        "2022": -0.0166,
-        "2023": -0.0164,
-        "2024": 0.0784,
-        "2025": 0.0048
+        "2019": -0.038,
+        "2020": 0.0098,
+        "2021": 0.0108,
+        "2022": -0.0927,
+        "2023": -0.0811,
+        "2024": 0.0056,
+        "2025": 0.0047
       },
       "regime_labels": {
         "2019": "BULL (pre-COVID, low vol)",
@@ -157,13 +137,13 @@
     },
     "relative_volume": {
       "ic_by_year": {
-        "2019": -0.1382,
-        "2020": 0.0107,
-        "2021": 0.0804,
-        "2022": 0.0857,
-        "2023": -0.044,
-        "2024": 0.0665,
-        "2025": 0.0254
+        "2019": -0.0622,
+        "2020": -0.0156,
+        "2021": 0.0548,
+        "2022": 0.0426,
+        "2023": 0.071,
+        "2024": 0.0422,
+        "2025": -0.0107
       },
       "regime_labels": {
         "2019": "BULL (pre-COVID, low vol)",
@@ -175,15 +155,35 @@
         "2025": "MIXED (regime uncertain)"
       }
     },
-    "dist_from_20ma": {
+    "vix_percentile": {
       "ic_by_year": {
-        "2019": 0.0898,
-        "2020": 0.0071,
-        "2021": -0.0541,
-        "2022": -0.0918,
-        "2023": -0.0844,
-        "2024": 0.0546,
-        "2025": -0.0505
+        "2019": 0.074,
+        "2020": 0.0214,
+        "2021": 0.1132,
+        "2022": 0.1561,
+        "2023": 0.0576,
+        "2024": 0.0251,
+        "2025": 0.0881
+      },
+      "regime_labels": {
+        "2019": "BULL (pre-COVID, low vol)",
+        "2020": "CRASH + RECOVERY (retail surge)",
+        "2021": "RETAIL BULL (meme peak, zero rates)",
+        "2022": "BEAR (rate hikes, crypto crash)",
+        "2023": "RECOVERY (mixed, AI emerges)",
+        "2024": "AI BULL (institutional momentum)",
+        "2025": "MIXED (regime uncertain)"
+      }
+    },
+    "dist_from_20ma_pct": {
+      "ic_by_year": {
+        "2019": -0.0587,
+        "2020": -0.0138,
+        "2021": 0.018,
+        "2022": -0.0933,
+        "2023": -0.0125,
+        "2024": 0.0034,
+        "2025": -0.0296
       },
       "regime_labels": {
         "2019": "BULL (pre-COVID, low vol)",
@@ -198,87 +198,175 @@
   },
   "layer2_granger": {
     "post_count_1d": {
-      "label": "Reddit attention",
+      "label": "Reddit attention (post count)",
       "results": {
         "2019": {
-          "p_value": 0.8462,
+          "p_value": 0.376,
           "significant": false,
-          "n": 161
+          "n": 1253
         },
         "2020": {
-          "p_value": 0.0524,
+          "p_value": 0.592,
           "significant": false,
-          "n": 817
+          "n": 2973
         },
         "2021": {
-          "p_value": 0.0278,
-          "significant": true,
-          "n": 1269
+          "p_value": 0.3382,
+          "significant": false,
+          "n": 3505
         },
         "2022": {
-          "p_value": 0.674,
+          "p_value": 0.7155,
           "significant": false,
-          "n": 534
+          "n": 2448
         },
         "2023": {
-          "p_value": 0.0761,
+          "p_value": 0.9619,
           "significant": false,
-          "n": 325
+          "n": 1853
         },
         "2024": {
-          "p_value": 0.9365,
+          "p_value": 0.9704,
           "significant": false,
-          "n": 446
+          "n": 2678
         },
         "2025": {
-          "p_value": 0.7339,
-          "significant": false,
-          "n": 201
+          "p_value": 0.0335,
+          "significant": true,
+          "n": 1119
         }
       },
       "sig_years": [
-        2021
+        2025
       ],
       "sig_count": 1,
       "verdict": "WEAK_SIGNAL"
     },
-    "avg_sentiment_1d": {
-      "label": "Reddit sentiment",
+    "abnormal_attention_1d": {
+      "label": "Reddit attention (abnormal)",
       "results": {
         "2019": {
-          "p_value": 0.0749,
+          "p_value": 0.9835,
           "significant": false,
-          "n": 161
+          "n": 1253
         },
         "2020": {
-          "p_value": 0.2884,
+          "p_value": 0.358,
           "significant": false,
-          "n": 817
+          "n": 2973
         },
         "2021": {
-          "p_value": 0.1369,
+          "p_value": 0.6154,
           "significant": false,
-          "n": 1269
+          "n": 3505
         },
         "2022": {
-          "p_value": 0.9552,
+          "p_value": 0.1706,
           "significant": false,
-          "n": 534
+          "n": 2448
         },
         "2023": {
-          "p_value": 0.5938,
+          "p_value": 0.5096,
           "significant": false,
-          "n": 325
+          "n": 1853
         },
         "2024": {
-          "p_value": 0.9522,
+          "p_value": 0.5704,
           "significant": false,
-          "n": 446
+          "n": 2678
         },
         "2025": {
-          "p_value": 0.4463,
+          "p_value": 0.0179,
+          "significant": true,
+          "n": 1119
+        }
+      },
+      "sig_years": [
+        2025
+      ],
+      "sig_count": 1,
+      "verdict": "WEAK_SIGNAL"
+    },
+    "vader_sentiment_1d": {
+      "label": "Reddit sentiment (VADER)",
+      "results": {
+        "2019": {
+          "p_value": 0.3866,
           "significant": false,
-          "n": 201
+          "n": 1253
+        },
+        "2020": {
+          "p_value": 0.6752,
+          "significant": false,
+          "n": 2973
+        },
+        "2021": {
+          "p_value": 0.1962,
+          "significant": false,
+          "n": 3505
+        },
+        "2022": {
+          "p_value": 0.3252,
+          "significant": false,
+          "n": 2448
+        },
+        "2023": {
+          "p_value": 0.3363,
+          "significant": false,
+          "n": 1853
+        },
+        "2024": {
+          "p_value": 0.6892,
+          "significant": false,
+          "n": 2678
+        },
+        "2025": {
+          "p_value": 0.5159,
+          "significant": false,
+          "n": 1119
+        }
+      },
+      "sig_years": [],
+      "sig_count": 0,
+      "verdict": "WEAK_SIGNAL"
+    },
+    "sentiment_accel": {
+      "label": "Reddit sentiment acceleration",
+      "results": {
+        "2019": {
+          "p_value": 0.0501,
+          "significant": false,
+          "n": 1253
+        },
+        "2020": {
+          "p_value": 0.6777,
+          "significant": false,
+          "n": 2973
+        },
+        "2021": {
+          "p_value": 0.6338,
+          "significant": false,
+          "n": 3505
+        },
+        "2022": {
+          "p_value": 0.7859,
+          "significant": false,
+          "n": 2448
+        },
+        "2023": {
+          "p_value": 0.9706,
+          "significant": false,
+          "n": 1853
+        },
+        "2024": {
+          "p_value": 0.1668,
+          "significant": false,
+          "n": 2678
+        },
+        "2025": {
+          "p_value": 0.6608,
+          "significant": false,
+          "n": 1119
         }
       },
       "sig_years": [],
@@ -286,144 +374,46 @@
       "verdict": "WEAK_SIGNAL"
     },
     "news_sentiment_1d": {
-      "label": "News sentiment (FinBERT)",
+      "label": "News sentiment (Finnhub)",
       "results": {
         "2019": {
-          "p_value": 0.8465,
+          "p_value": 0.5651,
           "significant": false,
-          "n": 161
+          "n": 1253
         },
         "2020": {
-          "p_value": 0.1909,
+          "p_value": 0.1254,
           "significant": false,
-          "n": 817
+          "n": 2973
         },
         "2021": {
-          "p_value": 0.9326,
+          "p_value": 0.4398,
           "significant": false,
-          "n": 1269
+          "n": 3505
         },
         "2022": {
-          "p_value": 0.0917,
+          "p_value": 0.342,
           "significant": false,
-          "n": 534
+          "n": 2448
         },
         "2023": {
-          "p_value": 0.971,
+          "p_value": 0.5716,
           "significant": false,
-          "n": 325
+          "n": 1853
         },
         "2024": {
-          "p_value": null,
+          "p_value": 0.0641,
           "significant": false,
-          "n": 446,
-          "error": "The x values include a column with constant values and so the test statistic cannot be computed."
+          "n": 2678
         },
         "2025": {
-          "p_value": null,
+          "p_value": 0.3634,
           "significant": false,
-          "n": 201,
-          "error": "The x values include a column with constant values and so the test statistic cannot be computed."
+          "n": 1119
         }
       },
       "sig_years": [],
       "sig_count": 0,
-      "verdict": "WEAK_SIGNAL"
-    },
-    "st_sentiment_1d": {
-      "label": "StockTwits sentiment",
-      "results": {
-        "2019": {
-          "p_value": 0.8651,
-          "significant": false,
-          "n": 161
-        },
-        "2020": {
-          "p_value": 0.3433,
-          "significant": false,
-          "n": 817
-        },
-        "2021": {
-          "p_value": 0.0275,
-          "significant": true,
-          "n": 1269
-        },
-        "2022": {
-          "p_value": 0.927,
-          "significant": false,
-          "n": 534
-        },
-        "2023": {
-          "p_value": null,
-          "significant": false,
-          "n": 325,
-          "error": "The x values include a column with constant values and so the test statistic cannot be computed."
-        },
-        "2024": {
-          "p_value": null,
-          "significant": false,
-          "n": 446,
-          "error": "The x values include a column with constant values and so the test statistic cannot be computed."
-        },
-        "2025": {
-          "p_value": null,
-          "significant": false,
-          "n": 201,
-          "error": "The x values include a column with constant values and so the test statistic cannot be computed."
-        }
-      },
-      "sig_years": [
-        2021
-      ],
-      "sig_count": 1,
-      "verdict": "WEAK_SIGNAL"
-    },
-    "st_bull_pct": {
-      "label": "StockTwits bull %",
-      "results": {
-        "2019": {
-          "p_value": 0.8653,
-          "significant": false,
-          "n": 161
-        },
-        "2020": {
-          "p_value": 0.3433,
-          "significant": false,
-          "n": 817
-        },
-        "2021": {
-          "p_value": 0.0275,
-          "significant": true,
-          "n": 1269
-        },
-        "2022": {
-          "p_value": 0.9266,
-          "significant": false,
-          "n": 534
-        },
-        "2023": {
-          "p_value": null,
-          "significant": false,
-          "n": 325,
-          "error": "The x values include a column with constant values and so the test statistic cannot be computed."
-        },
-        "2024": {
-          "p_value": null,
-          "significant": false,
-          "n": 446,
-          "error": "The x values include a column with constant values and so the test statistic cannot be computed."
-        },
-        "2025": {
-          "p_value": null,
-          "significant": false,
-          "n": 201,
-          "error": "The x values include a column with constant values and so the test statistic cannot be computed."
-        }
-      },
-      "sig_years": [
-        2021
-      ],
-      "sig_count": 1,
       "verdict": "WEAK_SIGNAL"
     }
   },
@@ -431,22 +421,25 @@
     "Market only": {
       "features": [
         "returns_1d",
-        "returns_5d",
         "returns_20d",
         "rsi_14",
-        "atr_14",
         "relative_volume",
-        "dist_from_20ma",
-        "dist_from_50ma"
+        "vix_percentile",
+        "vix_x_volume",
+        "dist_from_20ma_pct",
+        "pead_proxy",
+        "volume",
+        "spy_above_200ma",
+        "regime_score"
       ],
-      "n_features": 8,
+      "n_features": 11,
       "wf_ics": [
-        0.0775,
-        0.0594,
-        0.0822,
-        -0.0191
+        -0.0571,
+        0.0307,
+        0.0216,
+        0.0352
       ],
-      "mean_ic": 0.05,
+      "mean_ic": 0.0076,
       "windows": [
         "\u21922022",
         "\u21922023",
@@ -454,28 +447,98 @@
         "\u21922025"
       ]
     },
-    "Market + Reddit": {
+    "Market + Reddit (attention)": {
       "features": [
         "returns_1d",
-        "returns_5d",
         "returns_20d",
         "rsi_14",
-        "atr_14",
         "relative_volume",
-        "dist_from_20ma",
-        "dist_from_50ma",
+        "vix_percentile",
+        "vix_x_volume",
+        "dist_from_20ma_pct",
+        "pead_proxy",
+        "volume",
+        "spy_above_200ma",
+        "regime_score",
         "post_count_1d",
-        "mention_growth_1d",
-        "mention_growth_7d"
+        "abnormal_attention_1d",
+        "total_comments_1d"
       ],
-      "n_features": 11,
+      "n_features": 14,
       "wf_ics": [
-        0.0719,
-        0.0744,
-        0.0726,
-        0.0561
+        0.0436,
+        0.0558,
+        0.0343,
+        -0.0109
       ],
-      "mean_ic": 0.0688,
+      "mean_ic": 0.0307,
+      "windows": [
+        "\u21922022",
+        "\u21922023",
+        "\u21922024",
+        "\u21922025"
+      ]
+    },
+    "Market + Reddit (sentiment)": {
+      "features": [
+        "returns_1d",
+        "returns_20d",
+        "rsi_14",
+        "relative_volume",
+        "vix_percentile",
+        "vix_x_volume",
+        "dist_from_20ma_pct",
+        "pead_proxy",
+        "volume",
+        "spy_above_200ma",
+        "regime_score",
+        "vader_sentiment_1d",
+        "sentiment_extremity",
+        "sentiment_accel"
+      ],
+      "n_features": 14,
+      "wf_ics": [
+        -0.0299,
+        0.0249,
+        0.0216,
+        0.0091
+      ],
+      "mean_ic": 0.0064,
+      "windows": [
+        "\u21922022",
+        "\u21922023",
+        "\u21922024",
+        "\u21922025"
+      ]
+    },
+    "Market + Reddit (all)": {
+      "features": [
+        "returns_1d",
+        "returns_20d",
+        "rsi_14",
+        "relative_volume",
+        "vix_percentile",
+        "vix_x_volume",
+        "dist_from_20ma_pct",
+        "pead_proxy",
+        "volume",
+        "spy_above_200ma",
+        "regime_score",
+        "post_count_1d",
+        "abnormal_attention_1d",
+        "total_comments_1d",
+        "vader_sentiment_1d",
+        "sentiment_extremity",
+        "sentiment_accel"
+      ],
+      "n_features": 17,
+      "wf_ics": [
+        0.0052,
+        0.0291,
+        0.0227,
+        -0.0232
+      ],
+      "mean_ic": 0.0085,
       "windows": [
         "\u21922022",
         "\u21922023",
@@ -486,81 +549,26 @@
     "Market + News": {
       "features": [
         "returns_1d",
-        "returns_5d",
         "returns_20d",
         "rsi_14",
-        "atr_14",
         "relative_volume",
-        "dist_from_20ma",
-        "dist_from_50ma",
-        "news_sentiment_1d"
-      ],
-      "n_features": 9,
-      "wf_ics": [
-        0.0659,
-        0.0283,
-        0.0677,
-        -0.0269
-      ],
-      "mean_ic": 0.0338,
-      "windows": [
-        "\u21922022",
-        "\u21922023",
-        "\u21922024",
-        "\u21922025"
-      ]
-    },
-    "Market + StockTwits": {
-      "features": [
-        "returns_1d",
-        "returns_5d",
-        "returns_20d",
-        "rsi_14",
-        "atr_14",
-        "relative_volume",
-        "dist_from_20ma",
-        "dist_from_50ma",
-        "st_sentiment_1d",
-        "st_bull_pct"
-      ],
-      "n_features": 10,
-      "wf_ics": [
-        0.0696,
-        0.0821,
-        0.066,
-        -0.0122
-      ],
-      "mean_ic": 0.0514,
-      "windows": [
-        "\u21922022",
-        "\u21922023",
-        "\u21922024",
-        "\u21922025"
-      ]
-    },
-    "Market + Reddit + News": {
-      "features": [
-        "returns_1d",
-        "returns_5d",
-        "returns_20d",
-        "rsi_14",
-        "atr_14",
-        "relative_volume",
-        "dist_from_20ma",
-        "dist_from_50ma",
-        "post_count_1d",
-        "mention_growth_1d",
-        "mention_growth_7d",
+        "vix_percentile",
+        "vix_x_volume",
+        "dist_from_20ma_pct",
+        "pead_proxy",
+        "volume",
+        "spy_above_200ma",
+        "regime_score",
         "news_sentiment_1d"
       ],
       "n_features": 12,
       "wf_ics": [
-        0.0805,
-        0.1247,
-        0.072,
-        0.0405
+        -0.0332,
+        0.0326,
+        0.0243,
+        -0.0099
       ],
-      "mean_ic": 0.0794,
+      "mean_ic": 0.0034,
       "windows": [
         "\u21922022",
         "\u21922023",
@@ -568,30 +576,35 @@
         "\u21922025"
       ]
     },
-    "Market + Reddit + ST": {
+    "Market + Reddit (all) + News": {
       "features": [
         "returns_1d",
-        "returns_5d",
         "returns_20d",
         "rsi_14",
-        "atr_14",
         "relative_volume",
-        "dist_from_20ma",
-        "dist_from_50ma",
+        "vix_percentile",
+        "vix_x_volume",
+        "dist_from_20ma_pct",
+        "pead_proxy",
+        "volume",
+        "spy_above_200ma",
+        "regime_score",
         "post_count_1d",
-        "mention_growth_1d",
-        "mention_growth_7d",
-        "st_sentiment_1d",
-        "st_bull_pct"
+        "abnormal_attention_1d",
+        "total_comments_1d",
+        "vader_sentiment_1d",
+        "sentiment_extremity",
+        "sentiment_accel",
+        "news_sentiment_1d"
       ],
-      "n_features": 13,
+      "n_features": 18,
       "wf_ics": [
-        0.0813,
-        0.0921,
-        0.0827,
-        0.0365
+        0.0026,
+        0.0466,
+        0.0135,
+        0.0034
       ],
-      "mean_ic": 0.0731,
+      "mean_ic": 0.0165,
       "windows": [
         "\u21922022",
         "\u21922023",
@@ -599,60 +612,56 @@
         "\u21922025"
       ]
     },
-    "Market + News + ST": {
+    "Reddit (attention) only": {
       "features": [
-        "returns_1d",
-        "returns_5d",
-        "returns_20d",
-        "rsi_14",
-        "atr_14",
-        "relative_volume",
-        "dist_from_20ma",
-        "dist_from_50ma",
-        "news_sentiment_1d",
-        "st_sentiment_1d",
-        "st_bull_pct"
-      ],
-      "n_features": 11,
-      "wf_ics": [
-        0.0679,
-        0.0517,
-        0.0824,
-        -0.0116
-      ],
-      "mean_ic": 0.0476,
-      "windows": [
-        "\u21922022",
-        "\u21922023",
-        "\u21922024",
-        "\u21922025"
-      ]
-    },
-    "All sources": {
-      "features": [
-        "returns_1d",
-        "returns_5d",
-        "returns_20d",
-        "rsi_14",
-        "atr_14",
-        "relative_volume",
-        "dist_from_20ma",
-        "dist_from_50ma",
         "post_count_1d",
-        "mention_growth_1d",
-        "mention_growth_7d",
-        "news_sentiment_1d",
-        "st_sentiment_1d",
-        "st_bull_pct"
+        "abnormal_attention_1d",
+        "total_comments_1d"
       ],
-      "n_features": 14,
+      "n_features": 3,
       "wf_ics": [
-        0.0576,
-        0.0822,
-        0.0532,
-        0.0411
+        0.0272,
+        0.0168,
+        0.0197,
+        0.0667
       ],
-      "mean_ic": 0.0585,
+      "mean_ic": 0.0326,
+      "windows": [
+        "\u21922022",
+        "\u21922023",
+        "\u21922024",
+        "\u21922025"
+      ]
+    },
+    "Full V2 (16 features)": {
+      "features": [
+        "returns_1d",
+        "returns_20d",
+        "rsi_14",
+        "relative_volume",
+        "vix_percentile",
+        "vix_x_volume",
+        "dist_from_20ma_pct",
+        "pead_proxy",
+        "volume",
+        "spy_above_200ma",
+        "regime_score",
+        "post_count_1d",
+        "abnormal_attention_1d",
+        "total_comments_1d",
+        "vader_sentiment_1d",
+        "sentiment_extremity",
+        "sentiment_accel",
+        "news_sentiment_1d"
+      ],
+      "n_features": 18,
+      "wf_ics": [
+        0.0026,
+        0.0466,
+        0.0135,
+        0.0034
+      ],
+      "mean_ic": 0.0165,
       "windows": [
         "\u21922022",
         "\u21922023",
@@ -662,12 +671,12 @@
     }
   },
   "conclusion": {
-    "best_combination": "Market + Reddit + News",
-    "best_mean_ic": 0.0794,
-    "market_only_ic": 0.05,
-    "current_model_ic": 0.0796,
-    "improvement_vs_market": 0.0294,
-    "improvement_vs_current": -0.0002,
+    "best_combination": "Reddit (attention) only",
+    "best_mean_ic": 0.0326,
+    "market_only_ic": 0.0076,
+    "current_model_ic": 0.05622,
+    "improvement_vs_market": 0.025,
+    "improvement_vs_current": -0.0236,
     "recommendation": "use_external_sources",
     "retrain_needed": false
   }

@@ -27,9 +27,9 @@ Path('experiments/source_validation').mkdir(parents=True, exist_ok=True)
 
 # ── Load feature store ────────────────────────────────────────────────────
 logger.info('Loading feature store...')
-df = pd.read_parquet('data/features/features_complete.parquet')
-df = df[df['post_count_1d'] >= 10].copy()
-df = df[~df['ticker'].isin(['ASTS', 'LCID', 'MSTR', 'RIOT', 'RIVN', 'SMCI', 'WMT'])].copy()
+df = pd.read_parquet('data/features/features_v2.parquet')
+df = df[df['post_count_1d'] >= 5].copy()   # V2 density gate
+# No drop-ticker filter — features_v2 already excludes problem tickers
 df['year'] = pd.to_datetime(df['date']).dt.year
 # Exclude 2026 — incomplete forward returns
 df = df[df['year'] < 2026].copy()
@@ -39,20 +39,29 @@ logger.info(f'Rows: {len(df):,}  Tickers: {df["ticker"].nunique()}  '
 TARGET = 'target_return_5d'
 
 # ── Feature families ──────────────────────────────────────────────────────
+# V2 feature families — must match features_v2.parquet columns
+# Source: models/training_metadata_v2.json feature_cols
 MARKET_FEATURES = [
-    'returns_1d', 'returns_5d', 'returns_20d', 'rsi_14', 'atr_14',
-    'relative_volume', 'dist_from_20ma', 'dist_from_50ma',
+    'returns_1d', 'returns_20d', 'rsi_14', 'relative_volume',
+    'vix_percentile', 'vix_x_volume', 'dist_from_20ma_pct', 'pead_proxy',
+    'volume', 'spy_above_200ma', 'regime_score',
 ]
-REDDIT_FEATURES = ['post_count_1d', 'mention_growth_1d', 'mention_growth_7d']
+REDDIT_FEATURES = [
+    'post_count_1d', 'abnormal_attention_1d', 'total_comments_1d',
+    'vader_sentiment_1d', 'sentiment_extremity', 'sentiment_accel',
+]
 NEWS_FEATURES   = ['news_sentiment_1d']
-ST_FEATURES     = ['st_sentiment_1d', 'st_bull_pct']
-ALL_FEATURES    = MARKET_FEATURES + REDDIT_FEATURES + NEWS_FEATURES + ST_FEATURES
+# StockTwits excluded: archive ends 2022, zeros in 2023+ corrupt walk-forward
+ST_FEATURES     = []
+ALL_FEATURES    = MARKET_FEATURES + REDDIT_FEATURES + NEWS_FEATURES
 
+# V2 GKX stump architecture — matches train_models_v2.py
+# depth=1, Pseudo-Huber loss, gamma=0.0 (fixed from prediction collapse)
 XGB_PARAMS = dict(
-    n_estimators=200, max_depth=3, learning_rate=0.05,
-    subsample=0.6, colsample_bytree=0.6, min_child_weight=20,
-    reg_alpha=0.5, reg_lambda=2.0, random_state=42, n_jobs=-1,
-    objective='reg:squarederror',
+    n_estimators=50, max_depth=1, learning_rate=0.05,
+    subsample=0.7, colsample_bytree=0.8, min_child_weight=20,
+    reg_lambda=5.0, gamma=0.0, random_state=42, n_jobs=-1,
+    objective='reg:pseudohubererror',
 )
 
 WALK_FORWARD_WINDOWS = [
@@ -137,15 +146,15 @@ print('IC > 0.05 in 2+ years = meaningful signal threshold')
 print()
 
 test_features = {
-    'Reddit — post_count_1d':       'post_count_1d',
-    'Reddit — mention_growth_7d':   'mention_growth_7d',
-    'Reddit — avg_sentiment_1d':    'avg_sentiment_1d',
-    'News — news_sentiment_1d':     'news_sentiment_1d',
-    'ST — st_sentiment_1d':         'st_sentiment_1d',
-    'ST — st_bull_pct':             'st_bull_pct',
-    'Market — returns_5d':          'returns_5d',
-    'Market — relative_volume':     'relative_volume',
-    'Market — dist_from_20ma':      'dist_from_20ma',
+    'Reddit — post_count_1d':           'post_count_1d',
+    'Reddit — abnormal_attention_1d':   'abnormal_attention_1d',
+    'Reddit — vader_sentiment_1d':      'vader_sentiment_1d',
+    'Reddit — sentiment_accel':         'sentiment_accel',
+    'News — news_sentiment_1d':         'news_sentiment_1d',
+    'Market — returns_20d':             'returns_20d',
+    'Market — relative_volume':         'relative_volume',
+    'Market — vix_percentile':          'vix_percentile',
+    'Market — dist_from_20ma_pct':      'dist_from_20ma_pct',
 }
 
 years = sorted(df['year'].unique())
@@ -196,12 +205,14 @@ print('Does past X predict future returns beyond what past returns predict?')
 print('p < 0.05 = significant causal-predictive structure (max_lag=1)')
 print()
 
+# StockTwits removed — zeros from 2023+ corrupt Granger tests
+# avg_sentiment_1d not in V2 store — replaced by vader_sentiment_1d
 granger_features = {
-    'post_count_1d':     'Reddit attention',
-    'avg_sentiment_1d':  'Reddit sentiment',
-    'news_sentiment_1d': 'News sentiment (FinBERT)',
-    'st_sentiment_1d':   'StockTwits sentiment',
-    'st_bull_pct':       'StockTwits bull %',
+    'post_count_1d':          'Reddit attention (post count)',
+    'abnormal_attention_1d':  'Reddit attention (abnormal)',
+    'vader_sentiment_1d':     'Reddit sentiment (VADER)',
+    'sentiment_accel':        'Reddit sentiment acceleration',
+    'news_sentiment_1d':      'News sentiment (Finnhub)',
 }
 
 layer2_results = {}
@@ -238,15 +249,18 @@ print('Which combination of sources produces the best out-of-sample IC?')
 print('Expanding window: train grows, test always = 1 year held out')
 print()
 
+# StockTwits excluded — no valid historical data post-2022
+# Attention-only = post_count + abnormal_attention (no sentiment)
+# This tests whether raw attention or sentiment is the value driver
 combinations = {
-    'Market only':             MARKET_FEATURES,
-    'Market + Reddit':         MARKET_FEATURES + REDDIT_FEATURES,
-    'Market + News':           MARKET_FEATURES + NEWS_FEATURES,
-    'Market + StockTwits':     MARKET_FEATURES + ST_FEATURES,
-    'Market + Reddit + News':  MARKET_FEATURES + REDDIT_FEATURES + NEWS_FEATURES,
-    'Market + Reddit + ST':    MARKET_FEATURES + REDDIT_FEATURES + ST_FEATURES,
-    'Market + News + ST':      MARKET_FEATURES + NEWS_FEATURES + ST_FEATURES,
-    'All sources':             ALL_FEATURES,
+    'Market only':                    MARKET_FEATURES,
+    'Market + Reddit (attention)':    MARKET_FEATURES + ['post_count_1d', 'abnormal_attention_1d', 'total_comments_1d'],
+    'Market + Reddit (sentiment)':    MARKET_FEATURES + ['vader_sentiment_1d', 'sentiment_extremity', 'sentiment_accel'],
+    'Market + Reddit (all)':          MARKET_FEATURES + REDDIT_FEATURES,
+    'Market + News':                  MARKET_FEATURES + NEWS_FEATURES,
+    'Market + Reddit (all) + News':   MARKET_FEATURES + REDDIT_FEATURES + NEWS_FEATURES,
+    'Reddit (attention) only':        ['post_count_1d', 'abnormal_attention_1d', 'total_comments_1d'],
+    'Full V2 (16 features)':          ALL_FEATURES,
 }
 
 window_labels = [f'→{w["test"][0]}' for w in WALK_FORWARD_WINDOWS]
@@ -283,13 +297,13 @@ print('=' * 70)
 print('CONCLUSION')
 print('=' * 70)
 
-# Load current production model IC for retrain threshold comparison
-_meta_path = Path('models/registry/phase3_model_baseline.json')
-CURRENT_MODEL_IC = 0.0796  # fallback
+# Load V2 model IC for retrain threshold comparison (gate = V2_IC + 0.005)
+_meta_path = Path('models/training_metadata_v2.json')
+CURRENT_MODEL_IC = 0.0562  # fallback: V2 5D test IC after 2026-06-29 retrain
 if _meta_path.exists():
     with open(_meta_path) as _f:
         _meta = json.load(_f)
-    CURRENT_MODEL_IC = _meta.get('horizons', {}).get('5d', {}).get('ic_test', 0.0796)
+    CURRENT_MODEL_IC = _meta.get('model_5d', {}).get('test_ic', 0.0562)
 
 valid_combos = {k: v for k, v in layer3_results.items() if v['mean_ic'] is not None}
 if valid_combos:
@@ -340,7 +354,7 @@ else:
 # ── Save results ─────────────────────────────────────────────────────────
 output = {
     'meta': {
-        'feature_store':  'data/features/features_complete.parquet',
+        'feature_store':  'data/features/features_v2.parquet',
         'rows_after_gate': int(len(df)),
         'tickers':         int(df['ticker'].nunique()),
         'years':           [int(y) for y in sorted(df['year'].unique())],
