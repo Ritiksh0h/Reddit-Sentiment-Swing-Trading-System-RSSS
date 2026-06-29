@@ -31,7 +31,7 @@ SENTIMENT_FEATURES_DROPPED: list = [
 ]
 
 # ── Density Gate ────────────────────────────────────────────────────────────
-DENSITY_GATE: int = 10          # post_count_1d must be >= this to pass filter
+DENSITY_GATE: int = 5           # post_count_1d must be >= this to pass filter (V2)
 
 # ── Drop Tickers ────────────────────────────────────────────────────────────
 # Insufficient training rows or persistent data quality issues

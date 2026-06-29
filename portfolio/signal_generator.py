@@ -300,7 +300,7 @@ def generate_signals(
     """
     Generate multi-horizon ranked signals for all tickers that pass the density gate.
 
-    Density gate: post_count_1d >= 10 — tickers below are skipped silently.
+    Density gate: post_count_1d >= 5  — tickers below are skipped silently.
     Tickers in ARCH['drop_tickers'] are always excluded regardless of post count.
 
     Args:

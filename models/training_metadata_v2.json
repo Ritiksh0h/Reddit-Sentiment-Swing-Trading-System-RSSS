@@ -82,6 +82,7 @@
     "n_test": 3797,
     "gate_pass": true
   },
-  "retrain_threshold_ic": 0.0796,
-  "status": "PASS"
+  "retrain_threshold_ic": 0.0612,
+  "status": "PASS",
+  "retrain_threshold_note": "V2 test_ic (0.0562) + 0.005 margin"
 }

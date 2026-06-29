@@ -556,7 +556,7 @@
                             <div class="bg-zinc-950 p-4 rounded-lg border border-cardBorder text-xs space-y-2 font-mono">
                                 <div class="flex justify-between text-zinc-500 border-b border-zinc-800 pb-2 text-[10px] font-sans font-bold">
                                     <span>CALENDAR YEAR REGIME ERA</span>
-                                    <span>REDDIT IC</span>
+                                    <span>ATTENTION IC</span>
                                     <span>NEWS IC</span>
                                 </div>
                                 <div id="research-ic-body">
@@ -965,11 +965,12 @@
             const data = await fetchAPI('/research-findings');
             if (!data || data.status === 'not_run') return;
 
-            // Layer 1: annual IC for post_count_1d (Reddit) and news_sentiment_1d
+            // Layer 1: annual IC for abnormal_attention_1d (Reddit) and news_sentiment_1d
+            // abnormal_attention = post_count / 20d rolling avg — stronger signal than raw count
             const l1 = data.layer1_annual_ic ?? {};
-            const redditIC = l1['post_count_1d']?.ic_by_year ?? {};
+            const redditIC = l1['abnormal_attention_1d']?.ic_by_year ?? {};
             const newsIC   = l1['news_sentiment_1d']?.ic_by_year ?? {};
-            const regimes  = l1['post_count_1d']?.regime_labels ?? {};
+            const regimes  = l1['abnormal_attention_1d']?.regime_labels ?? {};
 
             const icColor = v => v > 0.05 ? 'text-bullish font-bold' : v > 0 ? 'text-zinc-300' : 'text-bearish';
             const icLabel = v => v > 0.08 ? 'Strong' : v > 0.04 ? 'Moderate' : v > 0 ? 'Weak' : 'Negative';

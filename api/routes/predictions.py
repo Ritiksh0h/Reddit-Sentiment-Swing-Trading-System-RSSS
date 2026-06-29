@@ -152,29 +152,30 @@ def get_predictions(ticker: str = None, n: int = 30):
 def get_shap_values(ticker: str):
     """
     SHAP feature contributions for the latest OPEN signal for this ticker.
-    Groups by source family: Reddit / News / StockTwits / Market.
+    Groups by source family: Reddit / News / Market.
+    Uses V2 model (model_5d_v2.json) and V2 feature families.
     Positive SHAP = pushed prediction bullish. Negative = bearish.
     """
-    import pickle
     import shap
     import pandas as pd
+    import xgboost as xgb
 
-    model_path = Path('models/registry/model_5d.pkl')
-    arch_path  = Path('experiments/phase3_locked_architecture.json')
+    model_path = Path('models/model_5d_v2.json')
+    meta_path  = Path('models/training_metadata_v2.json')
     log_path   = Path('logs/paper_trades.jsonl')
 
     if not model_path.exists():
-        return {'error': 'model_5d.pkl not found'}
-    if not arch_path.exists():
-        return {'error': 'phase3_locked_architecture.json not found'}
+        return {'error': 'model_5d_v2.json not found — run train_models_v2.py first'}
+    if not meta_path.exists():
+        return {'error': 'training_metadata_v2.json not found'}
     if not log_path.exists():
         return {'error': 'no signals logged'}
 
-    with open(model_path, 'rb') as f:
-        model = pickle.load(f)
-    with open(arch_path) as f:
-        arch = json.load(f)
-    features = arch['features']
+    model = xgb.XGBRegressor()
+    model.load_model(str(model_path))
+    with open(meta_path) as f:
+        meta = json.load(f)
+    features = meta['feature_cols']
 
     latest = None
     with open(log_path) as f:
@@ -208,12 +209,15 @@ def get_shap_values(ticker: str):
     except Exception as e:
         return {'error': f'SHAP computation failed: {e}'}
 
+    # V2 source families — matches training_metadata_v2.json feature_cols
+    # StockTwits removed: no historical data post-2022, not in V2 model
     SOURCE_FAMILIES = {
-        'reddit':     ['post_count_1d', 'mention_growth_1d', 'mention_growth_7d'],
-        'news':       ['news_sentiment_1d'],
-        'stocktwits': ['st_sentiment_1d', 'st_bull_pct'],
-        'market':     ['returns_1d', 'returns_5d', 'returns_20d', 'rsi_14', 'atr_14',
-                       'relative_volume', 'dist_from_20ma', 'dist_from_50ma'],
+        'reddit':  ['post_count_1d', 'abnormal_attention_1d', 'total_comments_1d',
+                    'vader_sentiment_1d', 'sentiment_extremity', 'sentiment_accel'],
+        'news':    ['news_sentiment_1d'],
+        'market':  ['returns_1d', 'returns_20d', 'rsi_14', 'relative_volume',
+                    'vix_percentile', 'vix_x_volume', 'dist_from_20ma_pct',
+                    'pead_proxy', 'volume'],
     }
 
     contributions = [
@@ -239,16 +243,14 @@ def get_shap_values(ticker: str):
         f"(SHAP={drivers[0][1]:+.4f}). "
         f"Reddit: {family_shap.get('reddit', 0):+.4f} | "
         f"News: {family_shap.get('news', 0):+.4f} | "
-        f"StockTwits: {family_shap.get('stocktwits', 0):+.4f} | "
         f"Market: {family_shap.get('market', 0):+.4f}."
     )
 
     total_abs  = sum(abs(v) for v in family_shap.values()) or 1.0
-    reddit_pct = max(int(abs(family_shap.get('reddit', 0))     / total_abs * 100), 0)
-    news_pct   = max(int(abs(family_shap.get('news', 0))       / total_abs * 100), 0)
-    st_pct     = max(int(abs(family_shap.get('stocktwits', 0)) / total_abs * 100), 0)
-    market_pct = max(int(abs(family_shap.get('market', 0))     / total_abs * 100), 0)
-    total_pct  = reddit_pct + news_pct + st_pct + market_pct
+    reddit_pct = max(int(abs(family_shap.get('reddit', 0)) / total_abs * 100), 0)
+    news_pct   = max(int(abs(family_shap.get('news', 0))   / total_abs * 100), 0)
+    market_pct = max(int(abs(family_shap.get('market', 0)) / total_abs * 100), 0)
+    total_pct  = reddit_pct + news_pct + market_pct
     if total_pct > 0 and total_pct != 100:
         market_pct += (100 - total_pct)
 
@@ -256,7 +258,7 @@ def get_shap_values(ticker: str):
         'reddit_attention':  reddit_pct,
         'reddit_sentiment':  0,
         'news_sentiment':    news_pct,
-        'st_sentiment':      st_pct,
+        'st_sentiment':      0,
         'market_technical':  market_pct,
         'ticker':            ticker.upper(),
         'date':              latest.get('date'),

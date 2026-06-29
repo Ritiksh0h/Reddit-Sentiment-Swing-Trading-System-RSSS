@@ -299,7 +299,7 @@ V2 model metrics after retrain (test 2024-2025):
   model_1d_v2:  IC=+0.0346  PASS ✓
   model_3d_v2:  IC=+0.0273  PASS ✓
   model_5d_v2:  IC=+0.0562  PASS ✓  (4 unique preds — 3 stumps, depth=1)
-  Gate:         test_ic > 0.025  |  retrain_threshold_ic = 0.0796
+  Gate:         test_ic > 0.025  |  retrain_threshold_ic = 0.0612 (V2 IC 0.0562 + 0.005)
   Previous collapse: gamma=0.5 on 5D → 97.6% identical predictions → fixed
 
 V2 backtest (rank-based, core-satellite 70% SPY / 30% RSSS, 2024-2025 OOS):
@@ -518,25 +518,16 @@ DONE — Dynamic Risk Budget + ATR Stops Sprint (June 2026):
   ✓ Tests: 40 total (32 test_phase3 + 5 test_backtest + 3 test_leakage_checks)
 
 Priority 1 — NEXT (Claude Code):
-  Part B: Signal Validation Sprint
-    Create experiments/source_validation/validate_sources.py
-    Layer 1: Annual IC per feature with REGIME LABELS per year
-             2019=BULL, 2020=CRASH/RECOVERY, 2021=RETAIL BULL,
-             2022=BEAR, 2023=RECOVERY, 2024=AI BULL, 2025=MIXED
-    Layer 2: Granger causality for news, ST, Reddit
-    Layer 3: Walk-forward IC for 8 feature combinations
-    Output: experiments/source_validation/results.json
-    Answers: which source (Reddit/news/ST) has causal-predictive signal?
-
   Part C: Dashboard wiring (API endpoints already exist)
     C1: /shap/{ticker} — verify SHAP attribution renders in dashboard
     C2: /signal-accuracy — verify 1D/3D/5D accuracy panel renders
         Color: green>=55%, amber>=50%, red<50%
-    C3: /research-findings — wire results.json to research panel once Part B done
+    C3: /research-findings — wire results.json to research panel (Part B done)
 
-Priority 2 — after signal validation:
-  Retrain with winning feature combination from Part B Layer 3
-  ONLY if mean_ic improvement > 0.005 over current 0.0796
+Priority 2 — September retrain (after 30+ days live IC):
+  Retrain V2 with attention-only Reddit features (drop vader_sentiment_1d)
+  ONLY if: new walk-forward IC > current V2 IC (0.056) + 0.005 = 0.061
+  Also consider: drop sentiment_extremity, sentiment_accel (confirmed no signal)
 
 Priority 3 — after 30+ days live IC:
   Upgrade density gate to Reddit OR news OR StockTwits combined
