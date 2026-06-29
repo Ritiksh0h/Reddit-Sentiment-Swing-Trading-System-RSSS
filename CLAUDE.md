@@ -57,6 +57,7 @@ data/
     features_complete.parquet             ← with news+ST merged ✓
     features_live_2026.parquet            ← live rows (grows daily, t+5 filled)
     features_v2.parquet                   ← V2: 53,592 rows, 27 cols (incl. regime)
+  features_v2_with_atr.parquet          ← V2 + atr_14 + atr_pct (31 cols, 100% coverage)
   live/
     paper_portfolio.json                  ← current portfolio state
     paper_performance.jsonl               ← daily PnL snapshots
@@ -108,7 +109,12 @@ scripts/
   merge_external_features.py    ← merges news+ST into feature store
   build_features_v2.py          ← V2: builds features_v2.parquet (27 cols + regime)
   train_models_v2.py            ← V2: GKX stumps with ICEarlyStopping, 16 features
-  run_backtest_v2.py            ← V2: rank-based core-satellite backtest
+  run_backtest_v2.py            ← V2: rank-based core-satellite backtest (--atr-stops flag)
+  add_atr_to_features.py        ← fetch OHLC → Wilder 14-day ATR → features_v2_with_atr.parquet
+  walk_forward_validation.py    ← expanding-window WFV, ICEarlyStopping, fold model save
+  walk_forward_sliding.py       ← sliding-window WFV (fixed test size), same training loop
+  leakage_checks.py             ← future-leak detection: autocorr + Granger + date-order checks
+  universe_manager.py           ← four-stage universe: screen → liquidity → drop → approve
 
 api/
   main.py                       ← FastAPI thin entry point + /dashboard route
@@ -133,9 +139,10 @@ archive/
   notebooks/                    ← Colab notebooks (phase0, experiment_c, news/ST processing)
 
 tests/
-  test_phase3.py                ← 21 tests
+  test_phase3.py                ← 32 tests
   test_backtest.py              ← 5 tests
-  (26 total — all must pass)
+  test_leakage_checks.py        ← 3 tests
+  (40 total — all must pass)
 ```
 
 ---
@@ -161,12 +168,77 @@ Density gate:    post_count_1d >= 10
 Drop tickers:    ASTS, LCID, MSTR, RIOT, RIVN, SMCI, WMT
 Hold days:       5
 Take-profit cap: 15%
-Max positions:   3
+Max positions:   dynamic — 6 (bull) / 3 (bear) / 2 (choppy) — see get_max_positions()
 Min pred return: 1% (0.01)
-Regime sizing:   POSITIVE=100% / NEUTRAL=75% / NEGATIVE=50%
-Position sizing: ATR-based (target_risk_pct=0.02)
+Position sizing: fractional Kelly via compute_position() — see Dynamic Risk Budget below
+ATR stop:        -(2.5 × atr_pct), clamped to [-12%, -4%]; per-position, not global -8%
 Slippage:        dynamic: 0.001 + 0.0005 × min(mention_growth_7d, 3.0)
 Ticker cooldown: 7 days
+Starting equity: $100,000 paper
+```
+
+---
+
+## Dynamic Risk Budget (Live System)
+
+`compute_position()` in `portfolio/position_sizer.py` — replaces the old `compute_position_size()` for new entries.
+
+```
+Fractional Kelly sizing:
+  effective_risk = BASE_RISK_PCT × regime_mult × rank_decay × conf_scale
+  effective_risk = min(effective_risk, BASE_RISK_PCT_MAX)
+  risk_dollars   = equity × effective_risk
+  size_dollars   = risk_dollars / atr_pct   (1-ATR risk distance)
+  n_shares       = floor(size_dollars / price)
+  THEN hard ceiling: n_shares × stop_dist ≤ BASE_RISK_PCT_MAX × equity
+    (stop_dist = entry_price × abs(stop_pct), where stop_pct = -(2.5 × atr_pct))
+
+Key constants (config/settings.py):
+  BASE_RISK_PCT       = 0.005   (0.5% equity risk target per trade)
+  BASE_RISK_PCT_MAX   = 0.0075  (0.75% hard ceiling at the stop)
+  ATR_STOP_MULT       = 2.5
+  ATR_STOP_MIN/MAX    = -0.12 / -0.04  (stop clamped between -4% and -12%)
+  ATR_STOP_DEFAULT    = -0.08  (fallback for legacy positions)
+  POS_CAP_HIGH/MED/LOW = 0.20 / 0.15 / 0.10  (notional cap by regime)
+
+Regime multipliers:
+  bull/positive  → mult=1.0, cap=20%  heat_budget=6%  max_pos=6
+  neutral/choppy → mult=0.3, cap=15%  heat_budget=2%  max_pos=2
+  bear/negative  → mult=0.5, cap=10%  heat_budget=3%  max_pos=3
+
+Four-gate check before opening any position (daily_run.py):
+  Gate 1: get_max_positions(regime) — regime-aware slot limit
+  Gate 2: n_shares > 0 — sizing produced a tradeable quantity
+  Gate 3: heat_budget_allows() — sum of risk_dollars ≤ regime heat budget
+  Gate 4: correlation_allows() — semi-cluster cap (NVDA/AMD/MU/INTC/ARM ≤ 2)
+                                  + pairwise 60-day return correlation < 0.70
+
+ATR stop vs fixed -8% backtest comparison (run_backtest_v2.py --atr-stops):
+  Fixed -8%:  return=+36.5%  Sharpe=1.36  stop-outs=16
+  ATR stops:  return=+36.5%  Sharpe=1.36  stop-outs=14
+  (marginal improvement; per-position stops now carry over to live system)
+```
+
+---
+
+## Walk-Forward Validation
+
+Two modes in `scripts/`:
+
+```
+walk_forward_validation.py  — expanding train window (all history to date)
+walk_forward_sliding.py     — sliding train window (fixed lookback, e.g. 36 months)
+
+Both use:
+  ICEarlyStopping(rounds=20, X_eval=X_train, y_eval=y_train)
+    Note: eval set = training data — best_iteration is optimistic; OOS fold IC is truth
+  Two-phase: scout (n_estimators=200) → best_n → clean final model (n_estimators=best_n)
+  Fold model JSONs saved to experiments/walk_forward_sliding/fold_models/
+
+get_num_boosting_rounds() WARNING: returns configured n_estimators (100), NOT actual trees.
+Read actual tree count from JSON: learner.gradient_booster.model.trees[]
+Actual fold model tree counts: 1–62 (ICEarlyStopping working correctly)
+Speed: 4 folds × 3 horizons × 2 phases = 24 fits ≈ 10 seconds (max_depth=1 stumps)
 ```
 
 ---
@@ -196,28 +268,36 @@ news/ST retrain did NOT improve IC:
   2019-2023 train (features_full):      IC = 0.0796  ← best, current
 ```
 
-### V2 Research Track — GKX Stumps + Regime Features (NOT in live system yet)
+### V2 Research Track — GKX Stumps (retrained 2026-06-29)
 
 ```
 Architecture:  GKX stumps (Gu, Kelly & Xiu 2020)
-               max_depth=1, Pseudo-Huber loss, L2 reg_lambda=5, min_child_weight=20
-               Per-horizon gamma: 1D=0.0 / 3D=0.1 / 5D=0.5
-               ICEarlyStopping callback (Spearman) — two-phase: scout then clean fit
+               max_depth=1, Pseudo-Huber loss, gamma=0.0 (all horizons)
+               Per-horizon L2/min_child_weight: 1D=(3.0,15) / 3D=(1.0,10) / 5D=(5.0,20)
+               ICEarlyStopping — val-based, no test leakage:
+                 scout fits on 2022-01→2023-06, evaluates IC on val 2023-07→2023-12
+                 final model trains on full 2022-2023
 
-Features (16): 14 phase3 features + 2 regime features:
-  spy_above_200ma  float — 1.0 if SPY close > SPY 200-day MA, else 0.0
-  regime_score     spy_above×0.6 + (1−vix_pct)×0.4
+Features (16): regime features DROPPED — pure market + attention + news
+  post_count_1d, abnormal_attention_1d, total_comments_1d, vader_sentiment_1d,
+  sentiment_extremity, sentiment_accel, volume, relative_volume,
+  returns_1d, returns_20d, rsi_14, news_sentiment_1d,
+  vix_percentile, vix_x_volume, dist_from_20ma_pct, pead_proxy
+  (spy_above_200ma / regime_score computed at inference but NOT model inputs)
 
 Feature store: data/features/features_v2.parquet (53,592 rows, 27 cols)
-Density gate:  >= 5 (training) / >= 3 (backtest signal generation)
-Train gated:   12,032 rows  |  Test gated: 3,797 rows
+               data/features/features_v2_with_atr.parquet (31 cols — adds atr_14, atr_pct)
+               Use features_v2_with_atr for ATR-stop backtest (--atr-stops flag)
+Density gate:  >= 5 (training and live)
+Train window:  sliding 2022-2023 (excludes COVID crash + meme-stock patterns)
+  train_gated: 4,301 rows  |  val_gated: 939 rows  |  test_gated: 3,797 rows
 
-V2 model metrics (test 2024-2025):
-  model_1d_v2:  IC=0.041  trees=13  dir=53.7%
-  model_3d_v2:  IC=0.013  trees=1   dir=54.5%  (1 tree: gamma=0.1 limits splits)
-  model_5d_v2:  IC=0.041  trees=28  dir=55.8%
-  Note: lower IC vs phase3 0.0796 because GKX stumps compress predictions
-        to ~mean; signal is in rank ordering, not absolute magnitude
+V2 model metrics after retrain (test 2024-2025):
+  model_1d_v2:  IC=+0.0346  PASS ✓
+  model_3d_v2:  IC=+0.0273  PASS ✓
+  model_5d_v2:  IC=+0.0562  PASS ✓  (4 unique preds — 3 stumps, depth=1)
+  Gate:         test_ic > 0.025  |  retrain_threshold_ic = 0.0796
+  Previous collapse: gamma=0.5 on 5D → 97.6% identical predictions → fixed
 
 V2 backtest (rank-based, core-satellite 70% SPY / 30% RSSS, 2024-2025 OOS):
   Signal:   composite = 0.5×pred5d + 0.3×pred3d + 0.2×pred1d
@@ -225,17 +305,20 @@ V2 backtest (rank-based, core-satellite 70% SPY / 30% RSSS, 2024-2025 OOS):
   Combined: +35.6%  |  SPY: +49.7%  |  Alpha: -12.2%
   Sharpe:   1.32  |  Max DD: -14.1%
   Trades:   167   |  Win rate: 57.5%  |  p=0.063 (borderline, not significant)
-  Sys A = Sys B (model-reversal never fires — GKX stumps always predict positive)
 
 V2 files:
-  scripts/build_features_v2.py      ← builds features_v2.parquet (27 cols)
-  scripts/train_models_v2.py        ← GKX training with ICEarlyStopping
-  scripts/run_backtest_v2.py        ← rank-based core-satellite backtest
-  models/model_{1d,3d,5d}_v2.json  ← XGBoost JSON format (16 features)
-  models/training_metadata_v2.json  ← training metrics + status
+  scripts/build_features_v2.py       ← builds features_v2.parquet (27 cols)
+  scripts/add_atr_to_features.py     ← builds features_v2_with_atr.parquet (31 cols)
+  scripts/train_models_v2.py         ← GKX training with val-based ICEarlyStopping
+  scripts/run_backtest_v2.py         ← rank-based core-satellite backtest (--atr-stops)
+  scripts/walk_forward_validation.py ← expanding-window WFV
+  scripts/walk_forward_sliding.py    ← sliding-window WFV
+  models/model_{1d,3d,5d}_v2.json   ← XGBoost JSON format (16 features, retrained 2026-06-29)
+  models/training_metadata_v2.json   ← training metrics + gate status (validated JSON)
+  models/backup_pre_retrain_20260629/ ← backup of pre-retrain models
   experiments/backtest_v2_results.json
+  experiments/walk_forward_sliding/  ← fold model JSONs + results.json
 ```
-
 ---
 
 ## External Data Collected (historical)
@@ -334,6 +417,18 @@ e4e7c22  Exit price: used entry_price for exits. Fix: yfinance fetch.
 e3c5c0b  Backfill accuracy: is_backfill flag + date-specific fetch.
 Drift 1: post_count uses max() not mean().
 Drift 2: mention_growth_7d skipped while history immature.
+
+compute_position() risk ceiling bug (June 2026):
+  Sizing used 1-ATR as risk distance; actual stop is 2.5-ATR away.
+  Without ceiling, realized risk at stop = 2.5 × BASE_RISK_PCT_MAX.
+  Fix: compute stop_dist = entry_price × |stop_pct| BEFORE n_shares,
+       then hard ceiling: n_shares = int(max_risk_dollars / stop_dist).
+
+Paper equity too low (June 2026):
+  At $10k, MU at $1,132 returned 0 shares — system never opened positions.
+  Fix: Changed starting equity to $100,000 across paper_portfolio.json,
+       portfolio_engine.py (PortfolioState default), paper_trader.py,
+       and daily_run.py starting_capital.
 ```
 
 ---
@@ -396,6 +491,20 @@ DONE — V2 Research Sprint (June 2026):
   ✓ run_backtest_v2.py: rank-based core-satellite (70/30), 167 trades, Sharpe 1.32
   V2 NOT deployed to live system — gate is IC improvement > 0.005 over 0.0796
 
+DONE — Dynamic Risk Budget + ATR Stops Sprint (June 2026):
+  ✓ add_atr_to_features.py: Wilder 14-day ATR → features_v2_with_atr.parquet (31 cols, 100% cov)
+  ✓ compute_position() in position_sizer.py: fractional Kelly with ATR-derived stop
+      BASE_RISK_PCT=0.005, ceiling at BASE_RISK_PCT_MAX=0.0075, rank decay, conf scaling
+  ✓ get_max_positions() / heat_budget_allows() / correlation_allows() in portfolio_engine.py
+  ✓ daily_run.py: four-gate check (max_pos, n_shares>0, heat_budget, correlation)
+  ✓ run_backtest_v2.py: --atr-stops flag; ATR ≈ fixed -8% (+36.5% Sharpe 1.36, stop-outs 14 vs 16)
+  ✓ walk_forward_validation.py + walk_forward_sliding.py: expanding + sliding WFV
+  ✓ leakage_checks.py: autocorr + Granger + date-order leak detection
+  ✓ universe_manager.py: four-stage universe (screen → liquidity → drop → approve)
+  ✓ compute_position() risk ceiling bug fixed (2.5× ATR stop distance, not 1×)
+  ✓ Paper equity: $10,000 → $100,000 (MU at $1,132 gets 0 shares at $10k)
+  ✓ Tests: 40 total (32 test_phase3 + 5 test_backtest + 3 test_leakage_checks)
+
 Priority 1 — NEXT (Claude Code):
   Part B: Signal Validation Sprint
     Create experiments/source_validation/validate_sources.py
@@ -448,9 +557,10 @@ MODEL
   NEVER retrain unless IC improvement > 0.005
 
 PORTFOLIO
-  NEVER equal-weight sizing — always ATR-based
+  NEVER equal-weight sizing — always ATR-based via compute_position()
   NEVER flat slippage — always dynamic
-  NEVER open more than 3 positions simultaneously
+  NEVER skip four-gate check (max_pos, n_shares, heat_budget, correlation)
+  Max positions is regime-dynamic: bull=6 / bear=3 / choppy=2
   NEVER force trades on zero signals — hold cash is correct
 
 LIVE SYSTEM
@@ -513,5 +623,6 @@ bash push.sh "[scope] what you built"
 ---
 
 *CLAUDE.md — June 2026*
-*Updated: V2 research sprint complete — GKX stumps (16 features, regime), rank-based*
-*backtest (167 trades, Sharpe 1.32, p=0.063). V2 NOT in live system (gate: IC > 0.0796+0.005).*
+*Updated: Dynamic risk-budget engine live (fractional Kelly, ATR stops, heat budget, correlation gates).*
+*Paper equity $100k. 40 tests passing. Walk-forward sliding + leakage_checks + universe_manager added.*
+*V2 NOT in live system (gate: IC > 0.0796+0.005). get_num_boosting_rounds() misleading — read JSON for actual tree count.*

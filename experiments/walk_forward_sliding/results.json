@@ -1,0 +1,138 @@
+{
+  "generated_at": "2026-06-28T22:38:11.981177+00:00",
+  "wf_start": "2019-01-01",
+  "wf_end": "2025-12-31",
+  "sliding_train_years": 4,
+  "sliding_val_months": 6,
+  "sliding_test_months": 6,
+  "sliding_step_months": 6,
+  "purge_days": 5,
+  "embargo_days": 21,
+  "is_lookback": 252,
+  "feature_count": 18,
+  "aggregate": {
+    "n_folds": 4,
+    "pooled_sharpe": 1.284,
+    "avg_return_per_fold": 7.4,
+    "avg_win_rate": 0.5427,
+    "total_trades": 218,
+    "wfe": 1.514,
+    "dsr_confidence": 0.0,
+    "pct_positive_folds": 1.0,
+    "bear_2022_return": 0.0,
+    "regime_summary": {
+      "recovery_2023": {
+        "n_folds": 1,
+        "avg_return": 6.2,
+        "avg_sharpe": 1.406,
+        "win_rate": 0.5205,
+        "n_trades": 73
+      },
+      "ai_bull_2024": {
+        "n_folds": 3,
+        "avg_return": 7.8,
+        "avg_sharpe": 1.585,
+        "win_rate": 0.5379,
+        "n_trades": 145
+      }
+    },
+    "gates": {
+      "g1_pooled_sharpe_ge_0.8": true,
+      "g2_60pct_profitable": true,
+      "g3_bear_2022_gt_neg20": true,
+      "g4_wfe_ge_0.5": true,
+      "g5_dsr_ge_0.95": false,
+      "overall": false
+    }
+  },
+  "folds": [
+    {
+      "fold": 1,
+      "regime": "recovery_2023",
+      "train_start": "2019-01-02",
+      "train_end": "2023-01-03",
+      "test_start": "2023-07-24",
+      "test_end": "2024-01-23",
+      "oos": {
+        "n_trades": 73,
+        "total_return_pct": 6.196,
+        "sat_return_pct": 3.385,
+        "win_rate": 0.5205,
+        "sharpe": 1.406,
+        "max_dd_pct": -7.81
+      },
+      "is_sharpe": -0.917,
+      "is_ic": {
+        "1d": 0.05913220262492848,
+        "3d": 0.10053779868322871,
+        "5d": 0.05793514252706949
+      }
+    },
+    {
+      "fold": 2,
+      "regime": "ai_bull_2024",
+      "train_start": "2019-07-02",
+      "train_end": "2023-07-03",
+      "test_start": "2024-01-23",
+      "test_end": "2024-07-23",
+      "oos": {
+        "n_trades": 59,
+        "total_return_pct": 11.402,
+        "sat_return_pct": 3.551,
+        "win_rate": 0.4915,
+        "sharpe": 2.702,
+        "max_dd_pct": -4.09
+      },
+      "is_sharpe": 1.016,
+      "is_ic": {
+        "1d": 0.06810572959118477,
+        "3d": 0.0923677928075877,
+        "5d": 0.05038558592306975
+      }
+    },
+    {
+      "fold": 3,
+      "regime": "ai_bull_2024",
+      "train_start": "2020-01-02",
+      "train_end": "2024-01-02",
+      "test_start": "2024-07-23",
+      "test_end": "2025-01-23",
+      "oos": {
+        "n_trades": 49,
+        "total_return_pct": 8.258,
+        "sat_return_pct": 2.678,
+        "win_rate": 0.5102,
+        "sharpe": 1.522,
+        "max_dd_pct": -4.66
+      },
+      "is_sharpe": 1.84,
+      "is_ic": {
+        "1d": 0.03448192677510485,
+        "3d": 0.04914976281784755,
+        "5d": 0.05852028520497923
+      }
+    },
+    {
+      "fold": 4,
+      "regime": "ai_bull_2024",
+      "train_start": "2020-07-02",
+      "train_end": "2024-07-02",
+      "test_start": "2025-01-23",
+      "test_end": "2025-07-23",
+      "oos": {
+        "n_trades": 37,
+        "total_return_pct": 3.753,
+        "sat_return_pct": 2.065,
+        "win_rate": 0.6486,
+        "sharpe": 0.532,
+        "max_dd_pct": -13.67
+      },
+      "is_sharpe": 2.132,
+      "is_ic": {
+        "1d": 0.05103301860511165,
+        "3d": 0.061692546198996744,
+        "5d": 0.0
+      }
+    }
+  ]
+}
