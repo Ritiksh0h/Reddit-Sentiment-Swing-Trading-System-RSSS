@@ -16,12 +16,15 @@ A quantitative swing trading research system that answers one question:
 This is NOT a sentiment classifier or hype detector.
 It is a time-aligned numerical compression of crowd attention + market response.
 
-**Core finding so far:** Reddit *attention* is the value driver — not sentiment.
-`abnormal_attention_1d` shows IC > 0.05 in 3/7 years; `post_count_1d` shows 0/7 at
-V2 density gate=5. VADER sentiment Granger p < 0.05 in 0/7 years. `vix_percentile`
-is the strongest single feature (IC > 0.05 in 5/7 years — structural regime signal).
-Walk-forward validation (Part B, June 2026, V2 feature space): best combo = Reddit
-(attention) only, mean IC = 0.033. Gate for retrain = 0.061 → NO RETRAIN.
+**Core finding (Part B validated 2026-06-29):** abnormal_attention_1d
+(post count normalized by ticker's own 20d history) is the primary Reddit
+value driver — not raw post_count_1d and not sentiment. vix_percentile is
+the single strongest feature (5/7 years |IC|>0.05, structural signal).
+VADER sentiment: 1/7 years, negative IC, no Granger signal — confirms
+sentiment adds no predictive value. Attention vs sentiment walk-forward:
+Market + Reddit (attention) IC=0.031 vs Market + Reddit (sentiment) IC=0.006.
+No retrain triggered: best combination IC=0.033 < gate=0.062 (V2 IC + 0.005).
+Current V2 model (IC=0.056) remains deployed.
 
 ---
 
