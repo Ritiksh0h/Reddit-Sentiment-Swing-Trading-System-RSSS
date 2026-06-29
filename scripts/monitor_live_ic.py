@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 GREEN_GATE       = 0.03
 AMBER_GATE       = 0.01
-BASELINE_TEST_IC = 0.0726   # from phase3_model_baseline.json
+BASELINE_TEST_IC = 0.0562   # V2 model_5d test IC (retrained 2026-06-29)
 
 
 def load_open_signals() -> list:
