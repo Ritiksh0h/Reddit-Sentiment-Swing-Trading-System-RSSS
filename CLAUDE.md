@@ -427,6 +427,12 @@ compute_position() risk ceiling bug (June 2026):
   Fix: compute stop_dist = entry_price × |stop_pct| BEFORE n_shares,
        then hard ceiling: n_shares = int(max_risk_dollars / stop_dist).
 
+BEARISH→LONG bug (June 19, 2026):
+  Old daily_run.py had no signal direction guard — BEARISH signals opened long positions.
+  MU: pred_5d=-7.36%, BEARISH, $2,268 long opened, -0.15% pnl, emergency close logged.
+  Fix: commit 2cedebe added `if signal.signal != 'BULLISH': continue` — long-only by design.
+  Long-only is correct: no borrow cost model, no short position tracking exists.
+
 Paper equity too low (June 2026):
   At $10k, MU at $1,132 returned 0 shares — system never opened positions.
   Fix: Changed starting equity to $100,000 across paper_portfolio.json,
@@ -565,6 +571,8 @@ PORTFOLIO
   NEVER skip four-gate check (max_pos, n_shares, heat_budget, correlation)
   Max positions is regime-dynamic: bull=6 / bear=3 / choppy=2
   NEVER force trades on zero signals — hold cash is correct
+  Long-only: BEARISH + NEUTRAL logged for IC monitoring, NEVER traded
+             No short infrastructure — BEARISH = skip, not short (daily_run.py:298)
 
 LIVE SYSTEM
   ALWAYS log every signal to logs/paper_trades.jsonl

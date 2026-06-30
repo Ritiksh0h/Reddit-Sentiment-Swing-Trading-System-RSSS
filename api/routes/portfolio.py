@@ -14,7 +14,7 @@ def get_portfolio():
     import pandas as pd
     from datetime import date
 
-    INITIAL_CAPITAL = 10000.0
+    INITIAL_CAPITAL = 100000.0
 
     portfolio = _load_portfolio()
     cash      = float(portfolio.get('cash', INITIAL_CAPITAL))

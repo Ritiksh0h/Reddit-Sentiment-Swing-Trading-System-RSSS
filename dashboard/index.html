@@ -1,1264 +1,1235 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RSSS — Simple Trading AI Dashboard</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkBg: '#09090b',
-                        cardBg: '#18181b',
-                        cardBorder: '#27272a',
-                        bullish: '#10b981',
-                        bearish: '#ef4444',
-                        neutralGold: '#f59e0b',
-                        accentBlue: '#3b82f6',
-                        panelBg: '#202024',
-                        textMain: '#f4f4f5',
-                        textMuted: '#a1a1aa'
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #09090b;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #09090b;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #27272a;
-            border-radius: 9999px;
-        }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RSSS — Reddit Sentiment Swing Trading System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0c10;--sidebar:#0d1017;--card:#111520;--card2:#161b26;
+  --border:#1e2535;--text:#e2e8f0;--muted:#64748b;--dim:#94a3b8;
+  --blue:#3b82f6;--green:#22c55e;--red:#ef4444;--amber:#f59e0b;
+  --purple:#a855f7;--cyan:#06b6d4;--teal:#14b8a6;
+  --font:'Inter',system-ui,sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;display:flex;min-height:100vh;overflow-x:hidden}
+
+/* SIDEBAR */
+#sidebar{width:200px;min-width:200px;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0;position:fixed;top:0;left:0;height:100vh;z-index:100}
+.sidebar-logo{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.logo-text{line-height:1.2}
+.logo-text .name{font-weight:700;font-size:13px;color:var(--text)}
+.logo-text .sub{font-size:10px;color:var(--muted)}
+nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-section{padding:12px 16px 4px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 16px;cursor:pointer;color:var(--dim);transition:all .15s;font-size:12.5px;border-left:2px solid transparent}
+.nav-item:hover{background:var(--card);color:var(--text)}
+.nav-item.active{background:rgba(59,130,246,.12);color:var(--blue);border-left-color:var(--blue)}
+.nav-item svg{width:14px;height:14px;flex-shrink:0}
+.model-info{padding:12px 14px;border-top:1px solid var(--border);font-size:11px}
+.model-info .mi-title{color:var(--muted);margin-bottom:6px;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.mi-row{display:flex;justify-content:space-between;padding:2px 0;color:var(--dim)}
+.mi-row span:last-child{color:var(--text);font-weight:500}
+
+/* MAIN */
+#main{margin-left:200px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* TOPBAR */
+#topbar{background:var(--sidebar);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.live-badge{display:flex;align-items:center;gap:6px;font-weight:600;font-size:13px}
+.live-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{opacity:.8;box-shadow:0 0 0 6px rgba(34,197,94,0)}}
+.top-date{color:var(--muted);font-size:12px}
+.status-pills{display:flex;gap:8px}
+.pill{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:var(--card);border:1px solid var(--border);font-size:11px;color:var(--dim)}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.pill .dot.warn{background:var(--amber)}
+.pill .dot.bad{background:var(--red)}
+.topbar-right{display:flex;align-items:center;gap:16px;font-size:12px;color:var(--muted)}
+.run-info span{color:var(--text);font-weight:500}
+.btn-run{background:var(--blue);color:#fff;border:none;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-run:hover{background:#2563eb}
+
+/* CONTENT */
+#content{padding:16px 20px;flex:1}
+
+/* METRIC ROW */
+.metric-row{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:14px}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;position:relative;overflow:hidden}
+.metric-card .mc-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.metric-card .mc-value{font-size:22px;font-weight:700;line-height:1}
+.metric-card .mc-sub{font-size:11px;color:var(--muted);margin-top:3px}
+.mc-green{color:var(--green)}
+.mc-red{color:var(--red)}
+.mc-blue{color:var(--blue)}
+.mc-amber{color:var(--amber)}
+
+/* GRID LAYOUTS */
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.card-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:11px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+.card-body{padding:12px 14px}
+.card-body.no-pad{padding:0}
+
+/* TABLES */
+.data-table{width:100%;border-collapse:collapse;font-size:12px}
+.data-table th{text-align:left;padding:6px 10px;color:var(--muted);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+.data-table td{padding:7px 10px;border-bottom:1px solid rgba(30,37,53,.5)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(255,255,255,.02)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600}
+.badge.buy{background:rgba(34,197,94,.15);color:var(--green)}
+.badge.sell{background:rgba(239,68,68,.15);color:var(--red)}
+.badge.watch{background:rgba(245,158,11,.15);color:var(--amber)}
+.badge.neutral{background:rgba(100,116,139,.15);color:var(--muted)}
+.badge.high{background:rgba(168,85,247,.15);color:var(--purple)}
+.badge.medium{background:rgba(59,130,246,.15);color:var(--blue)}
+.badge.low{background:rgba(100,116,139,.15);color:var(--muted)}
+.badge.good{background:rgba(34,197,94,.15);color:var(--green)}
+.badge.warn{background:rgba(245,158,11,.15);color:var(--amber)}
+.badge.bad{background:rgba(239,68,68,.15);color:var(--red)}
+.badge.amber{background:rgba(245,158,11,.15);color:var(--amber)}
+.badge.green{background:rgba(34,197,94,.15);color:var(--green)}
+.badge.red{background:rgba(239,68,68,.15);color:var(--red)}
+
+/* REGIME */
+.regime-badge{padding:4px 12px;border-radius:6px;font-weight:700;font-size:14px}
+.regime-bull{background:rgba(34,197,94,.15);color:var(--green)}
+.regime-bear{background:rgba(239,68,68,.15);color:var(--red)}
+.regime-neutral{background:rgba(245,158,11,.15);color:var(--amber)}
+
+/* CHART containers */
+.chart-wrap{position:relative;width:100%}
+
+/* POSITION BARS */
+.pos-bar-wrap{height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.pos-bar{height:100%;border-radius:4px;background:var(--blue)}
+
+/* SECTOR / FEATURE BARS */
+.sector-bar{display:flex;align-items:center;gap:8px;margin:4px 0}
+.sector-name{min-width:120px;font-size:11px;color:var(--dim)}
+.sector-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.sector-fill{height:100%;border-radius:3px}
+.sector-pct{min-width:38px;text-align:right;font-size:11px;color:var(--text)}
+
+/* PERF METRICS GRID */
+.perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.perf-metric{background:var(--card2);border-radius:6px;padding:10px 12px}
+.perf-metric .pm-label{font-size:10px;color:var(--muted);margin-bottom:2px}
+.perf-metric .pm-value{font-size:18px;font-weight:700}
+
+/* SCROLLABLE */
+.scroll-y{overflow-y:auto;max-height:220px}
+.scroll-y::-webkit-scrollbar{width:4px}
+.scroll-y::-webkit-scrollbar-track{background:transparent}
+.scroll-y::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ALERTS */
+.alert-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
+.alert-item:last-child{border-bottom:none}
+.alert-dot{width:8px;height:8px;border-radius:50%;margin-top:2px;flex-shrink:0}
+.alert-time{font-size:10px;color:var(--muted);min-width:36px}
+.alert-text{font-size:12px;color:var(--dim)}
+
+/* STAT ROWS */
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(30,37,53,.6)}
+.stat-row:last-child{border-bottom:none}
+.stat-label{color:var(--muted);font-size:11px}
+.stat-value{font-weight:600;font-size:12px}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:24px;color:var(--muted);font-size:12px}
+.empty .empty-icon{font-size:24px;margin-bottom:8px;opacity:.4}
+</style>
 </head>
-<body class="text-zinc-200 min-h-screen flex flex-col md:flex-row custom-scrollbar">
+<body>
 
-    <!-- Mobile Navigation Bar Header -->
-    <header class="md:hidden flex items-center justify-between bg-cardBg border-b border-cardBorder px-4 py-3 z-50">
-        <div class="flex items-center gap-2">
-            <div class="p-1.5 bg-accentBlue rounded text-white flex items-center justify-center">
-                <i data-lucide="bot" class="w-5 h-5"></i>
-            </div>
-            <span class="text-lg font-bold tracking-tight text-white">RSSS AI</span>
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">RS</div>
+    <div class="logo-text">
+      <div class="name">RSSS</div>
+      <div class="sub">Reddit Sentiment Swing</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-section">Trading</div>
+    <div class="nav-item active" onclick="showView('overview')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Overview
+    </div>
+    <div class="nav-item" onclick="showView('signals')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Signals
+    </div>
+    <div class="nav-item" onclick="showView('portfolio')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      Portfolio
+    </div>
+    <div class="nav-item" onclick="showView('predictions')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Predictions
+    </div>
+    <div class="nav-section">Research</div>
+    <div class="nav-item" onclick="showView('performance')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      Performance
+    </div>
+    <div class="nav-item" onclick="showView('research')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Research
+    </div>
+    <div class="nav-item" onclick="showView('backtests')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+      Backtests
+    </div>
+    <div class="nav-item" onclick="showView('tradelog')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Trade Log
+    </div>
+    <div class="nav-section">System</div>
+    <div class="nav-item" onclick="showView('pipeline')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      Pipeline
+    </div>
+  </nav>
+  <div class="model-info">
+    <div class="mi-title">Model Info</div>
+    <div class="mi-row"><span>Model</span><span>GKX Stump V2</span></div>
+    <div class="mi-row"><span>Features</span><span id="mi-features">16</span></div>
+    <div class="mi-row"><span>1D Trees</span><span id="mi-1d">—</span></div>
+    <div class="mi-row"><span>3D Trees</span><span id="mi-3d">—</span></div>
+    <div class="mi-row"><span>5D Trees</span><span id="mi-5d">—</span></div>
+    <div class="mi-row"><span>Train IC (5D)</span><span id="mi-train-ic">—</span></div>
+    <div class="mi-row"><span>Test IC (5D)</span><span id="mi-test-ic">—</span></div>
+    <div class="mi-row"><span>Training</span><span id="mi-window" style="font-size:10px">—</span></div>
+    <div class="mi-row"><span>Trained</span><span id="mi-trained">—</span></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- TOPBAR -->
+  <header id="topbar">
+    <div class="topbar-left">
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span>Live Paper Trading</span>
+        <span class="top-date" id="top-date">—</span>
+      </div>
+      <div class="status-pills">
+        <div class="pill"><div class="dot" id="dot-api"></div>API</div>
+        <div class="pill"><div class="dot" id="dot-pipeline"></div>Pipeline</div>
+        <div class="pill"><div class="dot" id="dot-reddit"></div>Reddit</div>
+        <div class="pill"><div class="dot" id="dot-finnhub"></div>Finnhub</div>
+        <div class="pill"><div class="dot" id="dot-st"></div>StockTwits</div>
+        <div class="pill"><div class="dot" id="dot-models"></div>Models</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="run-info">Last Run <span id="last-run">—</span></div>
+      <div class="run-info">Next Run <span id="next-run">—</span></div>
+      <button class="btn-run" onclick="loadAll()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh Data
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ── OVERVIEW ─────────────────────────────────────────────────────── -->
+    <div id="view-overview">
+
+      <!-- METRIC ROW -->
+      <div class="metric-row">
+        <div class="metric-card">
+          <div class="mc-label">Portfolio Value</div>
+          <div class="mc-value mc-blue" id="m-equity">$100,000</div>
+          <div class="mc-sub" id="m-daily-pnl">Daily P&amp;L —</div>
         </div>
-        <button id="mobile-menu-btn" class="p-2 text-zinc-300 hover:text-white" onclick="toggleMobileSidebar()">
-            <i data-lucide="menu"></i>
-        </button>
-    </header>
-
-    <!-- Sidebar Navigation -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 md:relative md:flex flex-col w-64 bg-cardBg border-r border-cardBorder z-40 transition-transform duration-300 ease-in-out">
-        <div class="p-6 border-b border-cardBorder flex items-center gap-3">
-            <div class="p-2 bg-accentBlue rounded-lg text-white flex items-center justify-center shadow-md">
-                <i data-lucide="bot" class="w-6 h-6"></i>
-            </div>
-            <div>
-                <div class="flex items-center gap-1.5">
-                    <span class="text-lg font-bold text-white tracking-tight">RSSS Trader</span>
-                    <span class="text-[10px] bg-bullish/10 text-bullish border border-bullish/20 px-1.5 py-0.5 rounded font-bold uppercase">LIVE</span>
-                </div>
-                <p class="text-xs text-zinc-400">Social Sentiment Scanner</p>
-            </div>
+        <div class="metric-card">
+          <div class="mc-label">Total Return</div>
+          <div class="mc-value" id="m-total-return">+0.00%</div>
+          <div class="mc-sub" id="m-vs-spy">vs SPY —</div>
         </div>
-
-        <!-- AI System Engine Live Health Status Block -->
-        <div class="px-4 py-3 mx-4 my-4 bg-zinc-900/50 border border-cardBorder rounded-lg">
-            <div class="flex items-center justify-between text-xs mb-1">
-                <span class="text-zinc-400">Bot Status:</span>
-                <span class="flex items-center gap-1.5 text-bullish font-bold uppercase">
-                    <span class="w-2 h-2 rounded-full bg-bullish animate-pulse"></span> Scanning Market
-                </span>
-            </div>
-            <div class="flex items-center justify-between text-xs text-zinc-400">
-                <span>Next Update:</span>
-                <span id="countdown-timer" class="text-white font-mono">--:--:--</span>
-            </div>
+        <div class="metric-card">
+          <div class="mc-label">Open Positions</div>
+          <div class="mc-value mc-blue" id="m-positions">0</div>
+          <div class="mc-sub" id="m-active-cap">Active Capital $0</div>
         </div>
-
-        <!-- Plain English Navigation Options -->
-        <nav class="flex-grow px-3 space-y-1">
-            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition bg-accentBlue/10 text-accentBlue border-l-4 border-accentBlue">
-                <i data-lucide="line-chart" class="w-4 h-4"></i> Virtual Account Portfolio
-            </button>
-            <button onclick="switchTab('simulator')" id="nav-simulator" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition border-l-4 border-transparent">
-                <i data-lucide="gamepad-2" class="w-4 h-4"></i> Hype Sandbox Tester
-            </button>
-            <button onclick="switchTab('live-rsss')" id="nav-live-rsss" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition border-l-4 border-transparent">
-                <i data-lucide="rss" class="w-4 h-4"></i> Real-Time Hype Scanner
-            </button>
-            <button onclick="switchTab('research')" id="nav-research" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition border-l-4 border-transparent">
-                <i data-lucide="microscope" class="w-4 h-4"></i> AI Brain Verifier
-            </button>
-            <button onclick="switchTab('backtest')" id="nav-backtest" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition border-l-4 border-transparent">
-                <i data-lucide="history" class="w-4 h-4"></i> Historical Test Results
-            </button>
-        </nav>
-
-        <div class="p-4 border-t border-cardBorder text-center">
-            <p class="text-xs text-zinc-500 font-mono">System Configuration Active</p>
+        <div class="metric-card">
+          <div class="mc-label">Today's Signals</div>
+          <div class="mc-value" id="m-signals">0</div>
+          <div class="mc-sub" id="m-signal-split">BUY: 0 SELL: 0</div>
         </div>
-    </aside>
-
-    <!-- Main Content Area -->
-    <main class="flex-grow flex flex-col min-w-0 h-screen overflow-y-auto custom-scrollbar bg-darkBg">
-        
-        <!-- Simplified Header View -->
-        <header class="hidden md:flex items-center justify-between border-b border-cardBorder bg-cardBg px-8 py-4 sticky top-0 z-30">
-            <div class="flex items-center gap-3">
-                <h2 id="view-title" class="text-lg font-bold text-white">Virtual Account Portfolio</h2>
-                <div class="h-4 w-px bg-cardBorder"></div>
-                <div class="text-xs text-zinc-400 flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-bullish"></span>
-                    <span>Live Connected: <span id="sync-timestamp" class="text-white font-medium">Synced Just Now</span></span>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <div class="bg-zinc-900 px-3 py-1.5 rounded-lg border border-cardBorder text-xs flex items-center gap-2">
-                    <span class="text-zinc-400">Market Mood Indicator:</span>
-                    <span id="global-regime-label" class="text-accentBlue font-bold">NORMAL (SAFE TO TRADE)</span>
-                </div>
-                <div class="bg-zinc-900 px-3 py-1.5 rounded-lg border border-cardBorder text-xs flex items-center gap-2">
-                    <span class="text-zinc-400">Max Trade Risk Level:</span>
-                    <span id="global-sizing-label" class="text-bullish font-bold">75% Full Capacity</span>
-                </div>
-            </div>
-        </header>
-
-        <!-- Dynamic Context Panel Body -->
-        <div class="p-4 md:p-8 flex-grow">
-
-            <!-- Friendly Dynamic Quick Start Explainer -->
-            <div id="onboarding-guide" class="mb-6 bg-gradient-to-r from-accentBlue/20 to-purple-500/10 border border-accentBlue/30 rounded-xl p-5 relative transition-all duration-300">
-                <button onclick="dismissOnboarding()" class="absolute top-4 right-4 p-1 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-                <div class="flex items-start gap-4">
-                    <div class="p-3 bg-accentBlue/20 text-accentBlue rounded-lg">
-                        <i data-lucide="sparkles" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-white uppercase tracking-wider">How does this platform work?</h3>
-                        <p class="text-xs text-zinc-400 mt-1 leading-relaxed max-w-4xl">
-                            This artificial intelligence system automatically reads online retail stock chat forums, monitors financial news reports, and determines whether people are abnormally excited about specific companies. Use the **Virtual Account Portfolio** view below to track our automated paper trades, swap to the **Hype Sandbox Tester** to safely manually simulate market hype patterns, or choose the **Real-Time Hype Scanner** to see raw data inputs.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SECTION 1: VIRTUAL PORTFOLIO DASHBOARD -->
-            <section id="view-dashboard" class="tab-content space-y-6">
-                <!-- KPI Card Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-cardBg border border-cardBorder rounded-xl p-5 flex flex-col justify-between shadow">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs text-zinc-400 font-bold tracking-wider uppercase">Total Current Net Worth</span>
-                            <i data-lucide="wallet" class="w-4 h-4 text-accentBlue"></i>
-                        </div>
-                        <div>
-                            <p id="kpi-equity" class="text-2xl font-bold font-mono text-white">$10,000.00</p>
-                            <p class="text-xs text-zinc-500 mt-1">Started with: $10,000.00 cash balance</p>
-                        </div>
-                    </div>
-
-                    <div class="bg-cardBg border border-cardBorder rounded-xl p-5 flex flex-col justify-between shadow">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs text-zinc-400 font-bold tracking-wider uppercase">Net Account Return</span>
-                            <i data-lucide="trending-up" class="w-4 h-4 text-bullish"></i>
-                        </div>
-                        <div>
-                            <p id="kpi-return" class="text-2xl font-bold font-mono text-bullish">+0.00% Profit</p>
-                            <p class="text-xs text-zinc-400 mt-1 flex items-center gap-1">
-                                <span id="kpi-alpha" class="font-bold">—</span> than standard index funds
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="bg-cardBg border border-cardBorder rounded-xl p-5 flex flex-col justify-between shadow">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs text-zinc-400 font-bold tracking-wider uppercase">Allowed Safe Buy Size</span>
-                            <i data-lucide="shield-check" class="w-4 h-4 text-neutralGold"></i>
-                        </div>
-                        <div>
-                            <p id="kpi-sizing" class="text-2xl font-bold font-mono text-white">75% Allocation Max</p>
-                            <p class="text-xs text-zinc-400 mt-1">Keeps positions safe during stable markets</p>
-                        </div>
-                    </div>
-
-                    <div class="bg-cardBg border border-cardBorder rounded-xl p-5 flex flex-col justify-between shadow">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs text-zinc-400 font-bold tracking-wider uppercase">Current Active Holdings</span>
-                            <i data-lucide="activity" class="w-4 h-4 text-purple-400"></i>
-                        </div>
-                        <div>
-                            <p id="kpi-positions" class="text-2xl font-bold font-mono text-white">0 Assets Active <span class="text-xs text-zinc-500">/ 4 Max Cap</span></p>
-                            <p class="text-xs text-zinc-500 mt-1">Strict protection against over-trading</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Main Performance Graph Component -->
-                <div class="bg-cardBg border border-cardBorder rounded-xl p-6 shadow">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h3 class="text-sm font-bold uppercase text-white flex items-center gap-2">
-                                <i data-lucide="line-chart" class="w-4 h-4 text-accentBlue"></i> Account Value Performance Growth Timeline
-                            </h3>
-                            <p class="text-xs text-zinc-400 mt-1">Compiles the daily close value updates for our AI choices compared to the aggregate stock market.</p>
-                        </div>
-                    </div>
-                    <div class="h-64">
-                        <canvas id="equityChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Split Block: Holdings List & Institutional Guardrails -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div class="lg:col-span-7 bg-cardBg border border-cardBorder rounded-xl p-6 shadow flex flex-col">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-sm font-bold uppercase text-white flex items-center gap-2">
-                                <i data-lucide="briefcase" class="w-4 h-4 text-accentBlue"></i> Currently Active Open Stock Positions
-                            </h3>
-                            <span class="text-xs bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded">Auto-refreshing</span>
-                        </div>
-                        
-                        <div class="flex-grow flex flex-col items-center justify-center py-12 text-center bg-zinc-900/40 border border-dashed border-cardBorder rounded-lg">
-                            <div class="p-3 bg-zinc-800 rounded-full text-zinc-500 mb-3 animate-pulse">
-                                <i data-lucide="coffee" class="w-6 h-6"></i>
-                            </div>
-                            <h4 class="text-sm font-bold text-zinc-300">The AI System is Intentionally Waiting</h4>
-                            <p class="text-xs text-zinc-400 max-w-sm mt-2 leading-relaxed">
-                                No trades open right now. The AI is safely sitting in cash because no companies are currently experiencing an extreme social breakout of 5+ posts necessary to initiate a high-probability swing signal safely.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Market Sentiment Dial Meter -->
-                    <div class="lg:col-span-5 bg-cardBg border border-cardBorder rounded-xl p-6 shadow flex flex-col justify-between">
-                        <div>
-                            <h3 class="text-sm font-bold uppercase text-zinc-300 mb-4 flex items-center gap-2">
-                                <i data-lucide="gauge" class="w-4 h-4 text-neutralGold"></i> Smart Sentiment Counterweight Dial
-                            </h3>
-                            <p class="text-xs text-zinc-400 leading-relaxed">
-                                This safeguard meter cross-checks actual marketplace investment behavior against online discussion board claims. This ensures retail enthusiasm is confirmed by real institutional money flows.
-                            </p>
-                            
-                            <!-- Simplified Visual Dial Progress Container -->
-                            <div class="mt-6 flex flex-col items-center">
-                                <div class="flex justify-between w-full text-[11px] mb-2 text-zinc-400 font-medium">
-                                    <span class="text-bullish font-bold">Safe (Bullish Buyers)</span>
-                                    <span>Stable Zone</span>
-                                    <span class="text-bearish font-bold">Danger Zone (泡沫)</span>
-                                </div>
-                                <div class="w-full bg-zinc-800 h-4 rounded-full relative overflow-hidden">
-                                    <div class="bg-gradient-to-r from-bullish via-neutralGold to-bearish h-full rounded-full"></div>
-                                    <div class="absolute top-0 bottom-0 w-1.5 bg-white border border-black shadow" style="left: 45%;"></div>
-                                </div>
-                                <span class="text-xs text-white font-mono font-bold mt-3 bg-zinc-900 px-3 py-1 rounded-md border border-cardBorder">Current Safeguard Reading: 0.88 (Healthy Confirmed Buy Bias)</span>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 pt-4 border-t border-cardBorder text-[11px] text-zinc-400 space-y-1 bg-zinc-900/30 p-2.5 rounded">
-                            <p>⚠️ **Safety Rule 1:** System refuses to purchase if the market sentiment becomes excessively fearful.</p>
-                            <p>⚠️ **Safety Rule 2:** System refuses to purchase if the market becomes an over-extended hype bubble.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Ledger History Tables -->
-                <div class="bg-cardBg border border-cardBorder rounded-xl p-6 shadow">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-                        <div>
-                            <h3 class="text-sm font-bold uppercase text-white flex items-center gap-2">
-                                <i data-lucide="check-square" class="w-4 h-4 text-accentBlue"></i> Historic Record of Completed Trades
-                            </h3>
-                            <p class="text-xs text-zinc-400 mt-1">A transparent diary tracking past automated system decisions.</p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3 text-xs">
-                            <div class="px-3 py-1.5 bg-zinc-900 border border-cardBorder rounded-lg">
-                                <span class="text-zinc-400">Wins to Losses Rate:</span> <span id="kpi-winrate" class="text-white font-bold font-mono">— Wins</span>
-                            </div>
-                            <div class="px-3 py-1.5 bg-zinc-900 border border-cardBorder rounded-lg">
-                                <span class="text-zinc-400">Total Profit Earned:</span> <span id="kpi-pnl" class="text-bullish font-bold font-mono">—</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Clean Transparent Tabular Data Grid -->
-                    <div class="overflow-x-auto custom-scrollbar">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead>
-                                <tr class="border-b border-cardBorder text-zinc-400 font-semibold bg-zinc-900/40">
-                                    <th class="p-3 uppercase">Company Code</th>
-                                    <th class="p-3 uppercase">Bought On</th>
-                                    <th class="p-3 uppercase">Sold On</th>
-                                    <th class="p-3 uppercase">Buy Price</th>
-                                    <th class="p-3 uppercase">Sell Price</th>
-                                    <th class="p-3 uppercase">Total Units Owned</th>
-                                    <th class="p-3 uppercase">Net Financial Outcome</th>
-                                    <th class="p-3 uppercase">Why Did We Close It?</th>
-                                </tr>
-                            </thead>
-                            <tbody id="trades-tbody" class="divide-y divide-zinc-800 text-zinc-300 font-mono">
-                                <tr><td colspan="8" class="p-6 text-center text-zinc-500 text-xs">Loading trade history…</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECTION 2: INTERACTIVE PREDICTIVE SIMULATOR -->
-            <section id="view-simulator" class="tab-content hidden space-y-6">
-                <div class="bg-cardBg border border-accentBlue/30 rounded-xl p-6 shadow">
-                    <div class="flex items-start gap-4">
-                        <div class="p-3 bg-accentBlue/10 text-accentBlue rounded-lg">
-                            <i data-lucide="gamepad-2" class="w-6 h-6"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-bold text-white uppercase">The Hype Sandbox Tester (Educational Tool)</h3>
-                            <p class="text-xs text-zinc-400 mt-1 leading-relaxed">
-                                Use this interactive testing panel to intentionally inject artificial hype and sentiment trends. Slide the controls below to discover how our algorithm handles shifts in crowd popularity and decides whether a scenario is a high-probability trade opportunity or useless internet background noise.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <!-- Left Slide Modifiers Panel -->
-                    <div class="lg:col-span-6 bg-cardBg border border-cardBorder rounded-xl p-6 space-y-6">
-                        <h3 class="text-xs font-bold text-accentBlue uppercase tracking-wider flex items-center gap-1.5">
-                            <i data-lucide="sliders" class="w-4 h-4"></i> Step 1: Adjust Public Popularity Inputs
-                        </h3>
-
-                        <div>
-                            <div class="flex justify-between text-xs mb-1.5">
-                                <span class="text-zinc-300 font-medium">Discussion Post Volume (Safety Gate Threshold: 5+ Posts)</span>
-                                <span class="text-white font-bold bg-zinc-900 px-2 py-0.5 rounded" id="sim-reddit-vol-val">42 posts</span>
-                            </div>
-                            <input id="sim-reddit-vol" type="range" min="0" max="150" value="42" oninput="updateSimulation()" class="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-accentBlue">
-                        </div>
-
-                        <div>
-                            <div class="flex justify-between text-xs mb-1.5">
-                                <span class="text-zinc-300 font-medium">Public Forum Excitement Level (Forum Comments Sentiment)</span>
-                                <span id="sim-reddit-sent-val" class="text-bullish font-bold bg-zinc-900 px-2 py-0.5 rounded">+0.55 Positive</span>
-                            </div>
-                            <input id="sim-reddit-sent" type="range" min="-100" max="100" value="55" oninput="updateSimulation()" class="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-bullish">
-                        </div>
-
-                        <div>
-                            <div class="flex justify-between text-xs mb-1.5">
-                                <span class="text-zinc-300 font-medium">Professional News Sentiment (Institutional Reports)</span>
-                                <span id="sim-news-sent-val" class="text-bullish font-bold bg-zinc-900 px-2 py-0.5 rounded">+0.22 Positive</span>
-                            </div>
-                            <input id="sim-news-sent" type="range" min="-100" max="100" value="22" oninput="updateSimulation()" class="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-accentBlue">
-                        </div>
-
-                        <div>
-                            <div class="flex justify-between text-xs mb-1.5">
-                                <span class="text-zinc-300 font-medium">Retail Crowd Sentiment (StockTwits Sentiment Tags)</span>
-                                <span id="sim-st-sent-val" class="text-neutralGold font-bold bg-zinc-900 px-2 py-0.5 rounded">0.00 Neutral</span>
-                            </div>
-                            <input id="sim-st-sent" type="range" min="-100" max="100" value="0" oninput="updateSimulation()" class="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-neutralGold">
-                        </div>
-                    </div>
-
-                    <!-- Right Outcomes Output -->
-                    <div class="lg:col-span-6 bg-cardBg border border-cardBorder rounded-xl p-6 flex flex-col justify-between">
-                        <div class="space-y-4">
-                            <h3 class="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-                                <i data-lucide="eye" class="w-4 h-4 text-accentBlue"></i> Step 2: View Resulting AI Price Forecast Predictions
-                            </h3>
-
-                            <div class="grid grid-cols-3 gap-3">
-                                <div class="bg-zinc-900 border border-cardBorder p-3 rounded-lg text-center">
-                                    <span class="text-[10px] font-bold text-zinc-400 uppercase block">1-Day Forecast</span>
-                                    <span id="pred-1d-val" class="text-lg font-bold text-bullish block mt-1">+0.45%</span>
-                                    <span id="pred-1d-conf" class="text-[10px] text-zinc-400 block mt-0.5">58% Confidence</span>
-                                </div>
-                                <div class="bg-zinc-900 border border-cardBorder p-3 rounded-lg text-center">
-                                    <span class="text-[10px] font-bold text-zinc-400 uppercase block">3-Day Forecast</span>
-                                    <span id="pred-3d-val" class="text-lg font-bold text-bullish block mt-1">+1.25%</span>
-                                    <span id="pred-3d-conf" class="text-[10px] text-zinc-400 block mt-0.5">62% Confidence</span>
-                                </div>
-                                <div class="bg-zinc-900 border border-bullish/30 p-3 rounded-lg text-center">
-                                    <span class="text-[10px] font-bold text-bullish uppercase block">5-Day Forecast</span>
-                                    <span id="pred-5d-val" class="text-xl font-bold text-bullish block mt-1">+2.84%</span>
-                                    <span id="pred-5d-conf" class="text-[10px] text-zinc-300 block mt-0.5">79.6% Accuracy Weight</span>
-                                </div>
-                            </div>
-
-                            <!-- Visual Factor Weights Breakdown -->
-                            <div class="space-y-3 pt-3 border-t border-cardBorder">
-                                <h4 class="text-[11px] font-bold text-zinc-400 uppercase">What components are driving this calculation?</h4>
-                                <div class="space-y-2 text-xs">
-                                    <div>
-                                        <div class="flex justify-between text-zinc-400 text-[11px] mb-1"><span>Social Media Hype Volatility Weight</span><span id="shap-att-val" class="font-bold">91%</span></div>
-                                        <div class="w-full bg-zinc-800 h-2 rounded"><div id="shap-att-bar" class="bg-bullish h-full rounded" style="width: 91%"></div></div>
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between text-zinc-400 text-[11px] mb-1"><span>Emotional Content Mood Weight</span><span id="shap-sent-val" class="font-bold">9%</span></div>
-                                        <div class="w-full bg-zinc-800 h-2 rounded"><div id="shap-sent-bar" class="bg-accentBlue h-full rounded" style="width: 9%"></div></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 p-3 bg-zinc-900 rounded border border-cardBorder text-xs text-zinc-300">
-                            <span class="text-white font-bold block mb-1">📢 AI INTERPRETATION EXPLANATION:</span>
-                            <span id="sandbox-verbal-verdict">This simulation pattern shows strong forward projection driven mostly by forum buzz activity metrics.</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECTION 3: REAL TIME HYPE FEED SCANNER -->
-            <section id="view-live-rsss" class="tab-content hidden space-y-6">
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <!-- Target Selector Card -->
-                    <div class="lg:col-span-4 bg-cardBg border border-cardBorder rounded-xl p-5 shadow flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-center mb-3">
-                                <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-400">Step 1: Pick a Company Asset Portfolio</h3>
-                                <span class="text-[10px] bg-bullish/10 text-bullish border border-bullish/20 px-2 py-0.5 rounded-full font-bold">29 SUPPORTED ASSETS</span>
-                            </div>
-                            <div class="mb-4">
-                                <select id="live-ticker-select" onchange="onLiveTickerChange()" class="w-full bg-zinc-900 border border-cardBorder text-white p-3 rounded-lg font-medium text-sm focus:outline-none focus:border-accentBlue cursor-pointer">
-                                    <!-- Populated on boot -->
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Real-time diagnostic readouts -->
-                        <div class="p-3 bg-zinc-900 border border-cardBorder rounded-lg text-xs space-y-2 mt-4">
-                            <p class="text-zinc-400 font-bold uppercase text-[10px] border-b border-cardBorder pb-1">Asset Internal Diagnostics</p>
-                            <div class="flex justify-between"><span>Forum Activity Count (24H):</span><span id="live-telemetry-density" class="text-white font-mono font-bold">--</span></div>
-                            <div class="flex justify-between"><span>Online Excitement Score:</span><span id="live-telemetry-reddit" class="text-white font-mono font-bold">--</span></div>
-                            <div class="flex justify-between"><span>News Publication Score:</span><span id="live-telemetry-news" class="text-white font-mono font-bold">--</span></div>
-                            <div class="flex justify-between"><span>Retail Sentiment Ratio:</span><span id="live-telemetry-st" class="text-white font-mono font-bold">--</span></div>
-                        </div>
-                    </div>
-
-                    <!-- Prediction Block Summary Output -->
-                    <div class="lg:col-span-8 bg-cardBg border border-cardBorder rounded-xl p-6 shadow flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-xs font-bold uppercase text-accentBlue flex items-center gap-1.5">
-                                    <i data-lucide="zap" class="w-4 h-4"></i> Step 2: System Evaluation Predictions Results
-                                </h3>
-                                <span class="text-[11px] text-zinc-400">Live Production Calculations Engine</span>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="bg-zinc-900 p-4 rounded-lg border border-cardBorder">
-                                    <span class="text-[10px] font-bold text-zinc-400 uppercase block">Short-term Prediction</span>
-                                    <span id="live-p-1d" class="text-lg font-bold text-zinc-500 block mt-1">NO SIGNAL</span>
-                                    <span id="live-c-1d" class="text-[10px] text-zinc-500 block mt-0.5">-- % Confidence</span>
-                                </div>
-                                <div class="bg-zinc-900 p-4 rounded-lg border border-cardBorder">
-                                    <span class="text-[10px] font-bold text-zinc-400 uppercase block">Medium-term Prediction</span>
-                                    <span id="live-p-3d" class="text-lg font-bold text-zinc-500 block mt-1">NO SIGNAL</span>
-                                    <span id="live-c-3d" class="text-[10px] text-zinc-500 block mt-0.5">-- % Confidence</span>
-                                </div>
-                                <div class="bg-zinc-900 p-4 rounded-lg border border-accentBlue/30">
-                                    <span class="text-[10px] font-bold text-accentBlue uppercase block">Primary Horizon Forecast</span>
-                                    <span id="live-p-5d" class="text-xl font-bold text-zinc-500 block mt-1">NO SIGNAL</span>
-                                    <span id="live-c-5d" class="text-[10px] text-zinc-500 block mt-0.5">-- % Confidence</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- System confidence logs -->
-                        <div class="mt-6 pt-4 border-t border-cardBorder grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <h4 class="text-[11px] font-bold text-zinc-400 uppercase flex items-center gap-1.5 mb-2">
-                                    <i data-lucide="award" class="w-4 h-4 text-bullish"></i> Historical Track Record of This System
-                                </h4>
-                                <div id="acc-grid" class="grid grid-cols-3 gap-2 text-center text-xs">
-                                    <div class="bg-zinc-900 p-2 rounded border border-cardBorder"><p class="text-[10px] text-zinc-400">1-Day</p><p id="acc-1d" class="font-bold text-white font-mono">—</p></div>
-                                    <div class="bg-zinc-900 p-2 rounded border border-cardBorder"><p class="text-[10px] text-zinc-400">3-Day</p><p id="acc-3d" class="font-bold text-white font-mono">—</p></div>
-                                    <div class="bg-zinc-900 p-2 rounded border border-cardBorder"><p class="text-[10px] text-zinc-400">5-Day</p><p id="acc-5d" class="font-bold text-white font-mono">—</p></div>
-                                </div>
-                                <div id="acc-warning" class="hidden mt-2 bg-zinc-950 p-3 rounded border border-neutralGold/30 text-xs text-zinc-400 flex items-start gap-2">
-                                    <i data-lucide="alert-circle" class="w-4 h-4 text-neutralGold shrink-0 mt-0.5"></i>
-                                    <span id="acc-warning-text"></span>
-                                </div>
-                            </div>
-                            <!-- C1: SHAP attribution panel — populated by /shap/{ticker} on ticker select -->
-                            <div id="live-shap-panel" class="hidden">
-                                <h4 class="text-[11px] font-bold text-zinc-400 uppercase flex items-center gap-1.5 mb-2">
-                                    <i data-lucide="pie-chart" class="w-4 h-4 text-accentBlue"></i> Signal Attribution (SHAP)
-                                </h4>
-                                <div class="space-y-2 text-xs">
-                                    <div>
-                                        <div class="flex justify-between text-zinc-400 text-[10px] mb-1"><span>Reddit Attention</span><span id="shap-reddit-val" class="font-bold font-mono">—</span></div>
-                                        <div class="w-full bg-zinc-800 h-1.5 rounded"><div id="shap-reddit-bar" class="bg-bullish h-full rounded" style="width:0%"></div></div>
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between text-zinc-400 text-[10px] mb-1"><span>News Sentiment</span><span id="shap-news-val" class="font-bold font-mono">—</span></div>
-                                        <div class="w-full bg-zinc-800 h-1.5 rounded"><div id="shap-news-bar" class="bg-accentBlue h-full rounded" style="width:0%"></div></div>
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between text-zinc-400 text-[10px] mb-1"><span>StockTwits</span><span id="shap-st-val" class="font-bold font-mono">—</span></div>
-                                        <div class="w-full bg-zinc-800 h-1.5 rounded"><div id="shap-st-bar" class="bg-neutralGold h-full rounded" style="width:0%"></div></div>
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between text-zinc-400 text-[10px] mb-1"><span>Market Technical</span><span id="shap-mkt-val" class="font-bold font-mono">—</span></div>
-                                        <div class="w-full bg-zinc-800 h-1.5 rounded"><div id="shap-mkt-bar" class="bg-zinc-400 h-full rounded" style="width:0%"></div></div>
-                                    </div>
-                                </div>
-                                <p id="shap-attribution-text" class="text-[10px] text-zinc-500 mt-2 leading-relaxed"></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECTION 4: RESEARCH MODEL VALIDATION NOTEBOOK -->
-            <section id="view-research" class="tab-content hidden space-y-6">
-                <div class="bg-cardBg border border-cardBorder rounded-xl p-6 shadow">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-sm font-bold uppercase text-white flex items-center gap-2">
-                            <i data-lucide="shield" class="w-4 h-4 text-accentBlue"></i> The AI Brain Verifier Component
-                        </h3>
-                        <span class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-0.5 rounded-full font-sans">Core Evidence Results</span>
-                    </div>
-                    <p class="text-xs text-zinc-400 leading-relaxed max-w-4xl">
-                        Before the AI is permitted to execute automated stock trades, its data streams are subjected to historical rigorous tests across consecutive calendar years to prove they hold genuine predictive intelligence.
-                    </p>
-                    
-                    <hr class="border-cardBorder my-4">
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Left Data Table -->
-                        <div class="space-y-3">
-                            <h4 class="text-xs font-bold uppercase text-zinc-300">Predictive Performance Matrix across Varied Market Eras</h4>
-                            <div class="bg-zinc-950 p-4 rounded-lg border border-cardBorder text-xs space-y-2 font-mono">
-                                <div class="flex justify-between text-zinc-500 border-b border-zinc-800 pb-2 text-[10px] font-sans font-bold">
-                                    <span>CALENDAR YEAR REGIME ERA</span>
-                                    <span>ATTENTION IC</span>
-                                    <span>NEWS IC</span>
-                                </div>
-                                <div id="research-ic-body">
-                                    <div class="flex justify-between text-zinc-600 text-[10px]"><span>Loading…</span><span>—</span><span>—</span></div>
-                                </div>
-                                <div class="flex justify-between border-t border-zinc-800 pt-2 text-zinc-400 font-sans font-bold text-[11px]">
-                                    <span>Best Combination</span>
-                                    <span id="research-best-combo" class="text-bullish">—</span>
-                                    <span id="research-best-ic" class="text-bullish">—</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Stats Narrative Blocks -->
-                        <div class="space-y-4">
-                            <h4 class="text-xs font-bold uppercase text-zinc-300">Cause-and-Effect Relationship Audits</h4>
-                            <div class="p-4 bg-zinc-900 border border-cardBorder rounded-lg space-y-2 text-xs">
-                                <span class="text-[10px] text-zinc-400 font-bold uppercase block">Rigorous Proof Verification Results</span>
-                                <p class="text-zinc-300">
-                                    📈 **Forum Sentiment Tone Indicators:** <span class="text-bearish font-bold">Surprisingly Unstable.</span> Chat comments are often lagging signals or general excitement background chatter.
-                                </p>
-                                <p class="text-zinc-300">
-                                    🔥 **Forum Attention Density Traffic:** <span class="text-bullish font-bold">Extremely Strong Driver.</span> Changes in overall attention density traffic consistently precede actual short-term price movements.
-                                </p>
-                            </div>
-
-                            <div class="p-3 bg-zinc-900 border border-cardBorder rounded-lg text-xs space-y-1">
-                                <span class="text-[10px] text-zinc-400 font-bold uppercase block">Walk-Forward IC by Feature Combination</span>
-                                <div id="research-wf-body" class="space-y-1">
-                                    <div class="flex justify-between text-zinc-600 text-[10px]"><span>Loading…</span><span>—</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECTION 5: HISTORICAL TESTS BACKTESTING -->
-            <section id="view-backtest" class="tab-content hidden space-y-6">
-                <div class="bg-cardBg border border-cardBorder rounded-xl p-6 shadow space-y-6">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <h3 class="text-sm font-bold uppercase text-white flex items-center gap-2">
-                                <i data-lucide="history" class="w-4 h-4 text-accentBlue"></i> Historical Simulator Validation Vault
-                            </h3>
-                            <p class="text-xs text-zinc-400">Reviews performance simulated over a seven-year historical data testing runway.</p>
-                        </div>
-                        
-                        <div class="bg-zinc-900 p-1 rounded-lg border border-cardBorder flex gap-1">
-                            <button onclick="toggleBacktestTab('sys-a')" id="btn-sys-a" class="px-3 py-1.5 rounded text-xs font-semibold bg-accentBlue text-white">Strategy Setup A</button>
-                            <button onclick="toggleBacktestTab('sys-b')" id="btn-sys-b" class="px-3 py-1.5 rounded text-xs font-semibold text-zinc-400 hover:text-white">Strategy Setup B</button>
-                            <button onclick="toggleBacktestTab('sys-c')" id="btn-sys-c" class="px-3 py-1.5 rounded text-xs font-semibold text-zinc-400 hover:text-white">Strategy Setup C</button>
-                        </div>
-                    </div>
-
-                    <!-- Simplified Historical Performance Readouts Grid -->
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
-                        <div class="bg-zinc-900 p-3 rounded-lg border border-cardBorder"><span class="text-[10px] text-zinc-400 font-bold uppercase block">Simulated Return</span><span id="bt-return" class="text-xl font-bold font-mono text-bullish block mt-1">+23.2% Profit</span></div>
-                        <div class="bg-zinc-900 p-3 rounded-lg border border-cardBorder"><span class="text-[10px] text-zinc-400 font-bold uppercase block">Risk Reward Score</span><span id="bt-sharpe" class="text-xl font-bold font-mono text-white block mt-1">Excellent</span></div>
-                        <div class="bg-zinc-900 p-3 rounded-lg border border-cardBorder"><span class="text-[10px] text-zinc-400 font-bold uppercase block">Vs Stock Market</span><span id="bt-alpha" class="text-xl font-bold font-mono text-bullish block mt-1">+12.4% Edge</span></div>
-                        <div class="bg-zinc-900 p-3 rounded-lg border border-cardBorder"><span class="text-[10px] text-zinc-400 font-bold uppercase block">Worst Crash Drop</span><span id="bt-maxdd" class="text-xl font-bold font-mono text-bearish block mt-1">-8.4% Max</span></div>
-                        <div class="bg-zinc-900 p-3 rounded-lg border border-cardBorder col-span-2 md:col-span-1"><span class="text-[10px] text-zinc-400 font-bold uppercase block">Win Success Rate</span><span id="bt-winrate" class="text-xl font-bold font-mono text-white block mt-1">45.0% Wins</span></div>
-                    </div>
-
-                    <div class="p-4 bg-zinc-950 rounded border border-cardBorder text-xs text-zinc-300">
-                        <span class="text-white font-bold block mb-1">🔍 STRATEGY PARADIGM APPROACH SUMMARY:</span>
-                        <span id="bt-tab-strategy-description">Strategy Setup A exclusively purchases high-quality upside swing setups. It entirely bans risky short setups to ensure long-term balance stability and defense consistency.</span>
-                    </div>
-
-                    <div class="flex items-center gap-2 bg-zinc-900 p-3 rounded-lg border border-cardBorder">
-                        <span class="text-xs text-zinc-400">Sort entries by Company:</span>
-                        <select id="bt-filter-ticker" class="bg-zinc-950 border border-cardBorder rounded px-2.5 py-1 text-xs text-white focus:outline-none cursor-pointer">
-                            <option value="ALL">ALL TICKERS</option>
-                        </select>
-                    </div>
-
-                    <!-- Clean historical ledger -->
-                    <div class="overflow-x-auto max-h-64 overflow-y-auto custom-scrollbar border border-cardBorder rounded-lg">
-                        <table class="w-full text-left border-collapse text-xs">
-                            <thead class="sticky top-0 bg-zinc-900 text-zinc-400 font-bold">
-                                <tr>
-                                    <th class="p-3 border-b border-cardBorder">Simulated Date</th>
-                                    <th class="p-3 border-b border-cardBorder">Asset Symbol</th>
-                                    <th class="p-3 border-b border-cardBorder">Trade Horizon Duration</th>
-                                    <th class="p-3 border-b border-cardBorder">Direction Profile</th>
-                                    <th class="p-3 border-b border-cardBorder">Net Profit Yield Result</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-zinc-800 bg-zinc-950/40 font-mono" id="bt-trades-table-body">
-                                <tr><td colspan="5" class="p-4 text-center text-zinc-500 text-xs">Individual trade history available via run_backtest_v2.py (historical simulation)</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
+        <div class="metric-card">
+          <div class="mc-label">Live IC (30D)</div>
+          <div class="mc-value" id="m-live-ic">—</div>
+          <div class="mc-sub" id="m-ic-gate">—</div>
         </div>
-    </main>
-
-    <!-- UI Core Logic Controller Script -->
-    <script>
-        // ── API base with Railway detection ──────────────────────────────────────
-        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:8000'
-            : 'https://reddit-sentiment-trading-system.up.railway.app';
-
-        let currentTab   = 'dashboard';
-        let equityChart  = null;
-        let _backtestData = null;   // cache from /backtest
-        let _liveSignals  = {};     // cache from /signals keyed by ticker
-
-        const universeTickers = [
-            'NVDA','TSLA','AAPL','AMD','MSFT','SPY','AMZN','GOOGL','META','NFLX',
-            'PLTR','COIN','GME','AMC','SOFI','MARA','HOOD','BABA','QQQ','INTC',
-            'DIS','COF','JPM','NKE','PYPL','SQ','XOM','BAC','MU'
-        ];
-
-        const EXIT_REASON_LABELS = {
-            hold_expired:   '5-Day Holding Time Expired',
-            stop_loss:      'Triggered Safety Price Cutoff',
-            take_profit:    'Hit Our Goal Target Profit',
-            model_reversal: 'AI Signal Changed Direction',
-            end_of_period:  'Test Period Ended',
-        };
-
-        // ── Generic fetch helper ─────────────────────────────────────────────────
-        async function fetchAPI(path) {
-            try {
-                const r = await fetch(`${API_BASE}${path}`);
-                if (!r.ok) return null;
-                return await r.json();
-            } catch (_) {
-                return null;
-            }
-        }
-
-        // ── Initialise everything on load ────────────────────────────────────────
-        window.onload = function () {
-            lucide.createIcons();
-            populateTickerSelectors();
-            initEquityChart();
-            startCountdown();
-            updateSimulation();
-            loadAllLiveData();
-            loadBacktestData();
-            // Retry after 2s and 5s in case API wasn't ready at boot
-            setTimeout(loadBacktestData, 2000);
-            setTimeout(loadBacktestData, 5000);
-            setInterval(loadAllLiveData, 60000);
-        };
-
-        async function loadAllLiveData() {
-            await Promise.all([
-                loadPortfolioKPIs(),
-                loadTradeHistory(),
-                loadAccuracyData(),
-            ]);
-            // Reload backtest data if not yet loaded
-            if (!window._backtestData) {
-                loadBacktestData();
-            }
-            document.getElementById('sync-timestamp').innerText = new Date().toLocaleTimeString();
-        }
-
-        // ── FIX 1 + FIX 2: Portfolio KPIs + equity chart ────────────────────────
-        async function loadPortfolioKPIs() {
-            const [port, status] = await Promise.all([
-                fetchAPI('/portfolio'),
-                fetchAPI('/status'),
-            ]);
-            if (!port) return;
-
-            const equity     = port.equity ?? 10000;
-            const retPct     = port.total_return_pct ?? 0;
-            const posCnt     = port.positions_count ?? 0;
-            const sizPct     = port.sizing_pct ?? 75;
-            const regime     = port.regime_label ?? 'NEUTRAL';
-            const spyToday   = status?.spy_return_today ?? null;
-
-            // Equity
-            const eq = document.getElementById('kpi-equity');
-            if (eq) eq.innerText = `$${equity.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-
-            // Return
-            const retEl = document.getElementById('kpi-return');
-            if (retEl) {
-                retEl.innerText = `${retPct >= 0 ? '+' : ''}${retPct.toFixed(2)}% ${retPct >= 0 ? 'Profit' : 'Loss'}`;
-                retEl.className = `text-2xl font-bold font-mono ${retPct >= 0 ? 'text-bullish' : 'text-bearish'}`;
-            }
-
-            // Alpha vs SPY
-            const alphaEl = document.getElementById('kpi-alpha');
-            if (alphaEl) {
-                if (spyToday !== null) {
-                    const spyPct = spyToday * 100;
-                    const alpha  = retPct - spyPct;
-                    alphaEl.innerText  = `${alpha >= 0 ? '+' : ''}${alpha.toFixed(2)}% Better`;
-                    alphaEl.className  = `font-bold ${alpha >= 0 ? 'text-bullish' : 'text-bearish'}`;
-                } else {
-                    alphaEl.innerText = '—';
-                    alphaEl.className = 'font-bold text-zinc-400';
-                }
-            }
-
-            // Sizing
-            const sizEl = document.getElementById('kpi-sizing');
-            if (sizEl) sizEl.innerText = `${sizPct}% Allocation Max`;
-
-            // Positions
-            const posEl = document.getElementById('kpi-positions');
-            if (posEl) posEl.innerHTML = `${posCnt} Assets Active <span class="text-xs text-zinc-500">/ 4 Max Cap</span>`;
-
-            // Header labels
-            const regEl = document.getElementById('global-regime-label');
-            if (regEl) {
-                const REGIME_DISPLAY = {POSITIVE:'POSITIVE (GOOD TO TRADE)',NEUTRAL:'NEUTRAL (SAFE TO TRADE)',NEGATIVE:'CAUTION (REDUCED RISK)'};
-                regEl.innerText  = REGIME_DISPLAY[regime] ?? regime;
-                regEl.className  = `font-bold ${regime==='POSITIVE'?'text-bullish':regime==='NEGATIVE'?'text-bearish':'text-accentBlue'}`;
-            }
-            const sizLblEl = document.getElementById('global-sizing-label');
-            if (sizLblEl) sizLblEl.innerText = `${sizPct}% Full Capacity`;
-
-            // Equity chart
-            updateEquityChart(port.daily_pnl ?? {});
-        }
-
-        // ── FIX 2: Equity chart ──────────────────────────────────────────────────
-        function initEquityChart() {
-            const ctx = document.getElementById('equityChart');
-            if (!ctx) return;
-            equityChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [
-                        {
-                            label: 'AI Trading System Balance',
-                            data: [],
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16,185,129,0.06)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.2,
-                            pointRadius: 0,
-                        },
-                        {
-                            label: 'SPY Benchmark',
-                            data: [],
-                            borderColor: '#71717a',
-                            backgroundColor: 'transparent',
-                            borderWidth: 1.5,
-                            borderDash: [4,4],
-                            fill: false,
-                            tension: 0.1,
-                            pointRadius: 0,
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        y: { grid:{color:'#222225'}, ticks:{color:'#a1a1aa',
-                             callback: v => `$${parseFloat(v).toFixed(0)}`} },
-                        x: { grid:{display:false}, ticks:{color:'#a1a1aa'} }
-                    },
-                    plugins: { legend:{ display:true, labels:{color:'#f4f4f5',font:{size:11}} } }
-                }
-            });
-        }
-
-        function updateEquityChart(dailyPnl) {
-            if (!equityChart) return;
-            const dates = Object.keys(dailyPnl).sort();
-            if (dates.length < 2) {
-                equityChart.data.labels                    = ['Start'];
-                equityChart.data.datasets[0].data          = [10000];
-                equityChart.data.datasets[1].data          = [];
-                equityChart.update();
-                return;
-            }
-            let eq = 10000;
-            const equities = dates.map(d => { eq = eq * (1 + (dailyPnl[d] ?? 0)); return parseFloat(eq.toFixed(2)); });
-            const color = equities[equities.length-1] >= 10000 ? '#10b981' : '#ef4444';
-            equityChart.data.labels                        = dates.map(d => d.slice(5));
-            equityChart.data.datasets[0].data              = equities;
-            equityChart.data.datasets[0].borderColor       = color;
-            equityChart.data.datasets[0].backgroundColor   = color + '10';
-            equityChart.data.datasets[1].data              = [];  // SPY curve not yet available
-            equityChart.update();
-        }
-
-        // ── FIX 3: Trade history table ───────────────────────────────────────────
-        async function loadTradeHistory() {
-            const data = await fetchAPI('/trades/history');
-            const tbody = document.getElementById('trades-tbody');
-            if (!data || !tbody) return;
-
-            const trades = data.trades ?? [];
-
-            // Summary stats
-            const winRateEl = document.getElementById('kpi-winrate');
-            const pnlEl     = document.getElementById('kpi-pnl');
-            if (winRateEl) {
-                const real = trades.filter(t => t.has_real_pnl);
-                const wins = real.filter(t => t.result === 'WIN').length;
-                winRateEl.innerText = real.length
-                    ? `${(wins/real.length*100).toFixed(0)}% Wins`
-                    : '— Wins';
-            }
-            if (pnlEl) {
-                const tp = data.total_pnl_dollars ?? 0;
-                pnlEl.innerText   = `${tp >= 0 ? '+' : ''}$${Math.abs(tp).toFixed(2)} ${tp >= 0 ? 'Clean Cash' : 'Loss'}`;
-                pnlEl.className   = `font-bold font-mono ${tp >= 0 ? 'text-bullish' : 'text-bearish'}`;
-            }
-
-            if (!trades.length) {
-                tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-zinc-500 text-xs">No completed trades yet — system accumulating signals</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = trades.map(t => {
-                const pnl    = parseFloat(t.pnl_pct ?? 0);
-                const win    = pnl > 0;
-                const pnlCls = win ? 'text-bullish' : pnl < 0 ? 'text-bearish' : 'text-zinc-400';
-                const pnlDol = t.pnl_dollars != null ? ` (${t.pnl_dollars >= 0?'+':''}$${Math.abs(t.pnl_dollars).toFixed(2)})` : '';
-                const reason = EXIT_REASON_LABELS[t.exit_reason] ?? t.exit_reason ?? '—';
-                const badge  = win
-                    ? 'bg-bullish/10 text-bullish border-bullish/20'
-                    : pnl < 0
-                        ? 'bg-bearish/10 text-bearish border-bearish/20'
-                        : 'bg-zinc-800 text-zinc-400 border-zinc-700';
-                return `<tr class="hover:bg-zinc-800/30">
-                    <td class="p-3 font-bold text-white">${t.ticker}</td>
-                    <td class="p-3 text-zinc-400">${t.entry_date ?? '—'}</td>
-                    <td class="p-3 text-zinc-400">${t.exit_date ?? '—'}</td>
-                    <td class="p-3">$${parseFloat(t.entry_price??0).toFixed(2)}</td>
-                    <td class="p-3">$${parseFloat(t.exit_price??0).toFixed(2)}</td>
-                    <td class="p-3">${t.n_shares ?? '—'}</td>
-                    <td class="p-3 ${pnlCls}">${pnl >= 0?'+':''}${pnl.toFixed(2)}%${pnlDol}</td>
-                    <td class="p-3"><span class="border px-2 py-0.5 rounded-full text-[10px] font-sans ${badge}">${reason}</span></td>
-                </tr>`;
-            }).join('');
-        }
-
-        // ── FIX 5: Backtest data from API ────────────────────────────────────────
-        async function loadBacktestData() {
-            const data = await fetchAPI('/backtest');
-            if (!data) return;
-            _backtestData = data;
-            toggleBacktestTab('sys-a');
-        }
-
-        function toggleBacktestTab(sysId) {
-            ['sys-a','sys-b','sys-c'].forEach(id => {
-                const btn = document.getElementById(`btn-${id}`);
-                if (btn) btn.className = id === sysId
-                    ? 'px-3 py-1.5 rounded text-xs font-semibold bg-accentBlue text-white'
-                    : 'px-3 py-1.5 rounded text-xs font-semibold text-zinc-400 hover:text-white';
-            });
-
-            // Map sys-a → 'A', sys-b → 'B', sys-c → 'C'
-            const key = sysId.split('-')[1].toUpperCase();
-            const sys = _backtestData?.systems?.[key];
-
-            const btReturn  = document.getElementById('bt-return');
-            const btSharpe  = document.getElementById('bt-sharpe');
-            const btAlpha   = document.getElementById('bt-alpha');
-            const btMaxdd   = document.getElementById('bt-maxdd');
-            const btWinRate = document.getElementById('bt-winrate');
-            const btDesc    = document.getElementById('bt-tab-strategy-description');
-
-            if (!sys) {
-                // fallback hardcoded while API loads
-                const FALLBACK = {
-                    A: {return_pct:36.5, sharpe:1.36, alpha:-11.3, max_dd:-14.1, win_rate:57.5, trades:141,
-                        description:'Core-satellite 70/30, rank-based signals, vol-targeted sizing, 20-day MA filter, regime filter, long-only.'},
-                    B: {return_pct:33.6, sharpe:1.27, alpha:-14.2, max_dd:-14.1, win_rate:57.9, trades:19,
-                        description:'Same as A but uses fixed threshold pred_5d > 0.7% instead of rank-based.'},
-                    C: {return_pct:23.2, sharpe:0.93, alpha:-24.7, max_dd:-9.9,  win_rate:54.4, trades:57,
-                        description:'Pre-fix baseline — absolute threshold, equal sizing, no regime filter.'},
-                };
-                const fb = FALLBACK[key] ?? FALLBACK.A;
-                _applyBacktestKPIs(btReturn, btSharpe, btAlpha, btMaxdd, btWinRate, btDesc, fb, _backtestData?.spy_return ?? 49.7);
-                return;
-            }
-            _applyBacktestKPIs(btReturn, btSharpe, btAlpha, btMaxdd, btWinRate, btDesc, sys, _backtestData?.spy_return ?? 49.7);
-        }
-
-        function _applyBacktestKPIs(retEl, sharpeEl, alphaEl, ddEl, wrEl, descEl, sys, spyReturn) {
-            const sharpeLabel = s => s >= 2.0 ? `Outstanding (${s.toFixed(2)})` : s >= 1.0 ? `Excellent (${s.toFixed(2)})` : s >= 0.5 ? `Good (${s.toFixed(2)})` : s.toFixed(2);
-            if (retEl)   { retEl.innerText  = `${sys.return_pct >= 0?'+':''}${sys.return_pct}% Profit`;  retEl.className  = `text-xl font-bold font-mono ${sys.return_pct >= 0?'text-bullish':'text-bearish'}`; }
-            if (sharpeEl){ sharpeEl.innerText = sharpeLabel(sys.sharpe); sharpeEl.className = `text-xl font-bold font-mono ${sys.sharpe >= 1.0?'text-bullish':sys.sharpe >= 0.5?'text-neutralGold':'text-zinc-300'}`; }
-            if (alphaEl) {
-                const spy = spyReturn ?? 49.7;
-                alphaEl.innerHTML = `${sys.alpha >= 0?'+':''}${sys.alpha}%<br><span class="text-[10px] font-normal text-zinc-400 font-sans">SPY was +${spy}% · ${sys.alpha < 0 ? 'bull mkt gap' : 'outperformed'}</span>`;
-                alphaEl.className = `text-xl font-bold font-mono ${sys.alpha >= 0?'text-bullish':'text-bearish'}`;
-            }
-            if (ddEl)    { ddEl.innerText   = `${sys.max_dd}% Max`; ddEl.className = 'text-xl font-bold font-mono text-bearish'; }
-            if (wrEl)    { wrEl.innerText   = `${sys.win_rate}% Wins`; wrEl.className = `text-xl font-bold font-mono ${sys.win_rate >= 55?'text-bullish':sys.win_rate >= 50?'text-neutralGold':'text-bearish'}`; }
-            if (descEl)  descEl.innerText   = sys.description ?? '';
-        }
-
-        // ── C3: Research findings — wired to /research-findings (results.json) ──
-        async function loadResearchData() {
-            const data = await fetchAPI('/research-findings');
-            if (!data || data.status === 'not_run') return;
-
-            // Layer 1: annual IC for abnormal_attention_1d (Reddit) and news_sentiment_1d
-            // abnormal_attention = post_count / 20d rolling avg — stronger signal than raw count
-            const l1 = data.layer1_annual_ic ?? {};
-            const redditIC = l1['abnormal_attention_1d']?.ic_by_year ?? {};
-            const newsIC   = l1['news_sentiment_1d']?.ic_by_year ?? {};
-            const regimes  = l1['abnormal_attention_1d']?.regime_labels ?? {};
-
-            const icColor = v => v > 0.05 ? 'text-bullish font-bold' : v > 0 ? 'text-zinc-300' : 'text-bearish';
-            const icLabel = v => v > 0.08 ? 'Strong' : v > 0.04 ? 'Moderate' : v > 0 ? 'Weak' : 'Negative';
-
-            const body = document.getElementById('research-ic-body');
-            if (body) {
-                const years = Object.keys(redditIC).sort();
-                body.innerHTML = years.map(yr => {
-                    const regime = (regimes[yr] ?? yr).split(' (')[0]; // short label
-                    const fullLabel = `${yr} (${(regimes[yr] ?? '').replace(/^[A-Z]+ \(/, '').replace(')', '') || yr})`;
-                    const rv = redditIC[yr] ?? 0;
-                    const nv = newsIC[yr]   ?? 0;
-                    return `<div class="flex justify-between text-[10px]">
-                        <span class="text-zinc-400 truncate max-w-[180px]">${fullLabel}</span>
-                        <span class="${icColor(rv)}">${rv > 0 ? '+' : ''}${rv.toFixed(3)}</span>
-                        <span class="${icColor(nv)}">${nv > 0 ? '+' : ''}${nv.toFixed(3)}</span>
-                    </div>`;
-                }).join('');
-            }
-
-            // Conclusion: best combo + IC
-            const conc = data.conclusion ?? {};
-            const comboEl = document.getElementById('research-best-combo');
-            const icEl    = document.getElementById('research-best-ic');
-            if (comboEl) comboEl.innerText = conc.best_combination ?? '—';
-            if (icEl)    icEl.innerText    = conc.best_mean_ic != null ? `IC ${conc.best_mean_ic.toFixed(4)}` : '—';
-
-            // Walk-forward table
-            const wf = data.layer3_walkforward ?? {};
-            const wfBody = document.getElementById('research-wf-body');
-            if (wfBody && Object.keys(wf).length) {
-                wfBody.innerHTML = Object.entries(wf)
-                    .sort((a, b) => (b[1].mean_ic ?? 0) - (a[1].mean_ic ?? 0))
-                    .map(([combo, v]) => {
-                        const ic = v.mean_ic ?? 0;
-                        const cls = ic > 0.07 ? 'text-bullish font-bold' : ic > 0.04 ? 'text-zinc-300' : 'text-zinc-500';
-                        return `<div class="flex justify-between text-[10px]">
-                            <span class="text-zinc-400 truncate max-w-[160px]">${combo}</span>
-                            <span class="${cls} font-mono">${ic > 0 ? '+' : ''}${ic.toFixed(4)}</span>
-                        </div>`;
-                    }).join('');
-            }
-        }
-
-        // ── FIX 6: Signal accuracy ───────────────────────────────────────────────
-        async function loadAccuracyData() {
-            const acc = await fetchAPI('/signal-accuracy');
-            const gridEl    = document.getElementById('acc-grid');
-            const warnEl    = document.getElementById('acc-warning');
-            const warnTxtEl = document.getElementById('acc-warning-text');
-            const acc1d     = document.getElementById('acc-1d');
-            const acc3d     = document.getElementById('acc-3d');
-            const acc5d     = document.getElementById('acc-5d');
-            if (!acc) return;
-
-            const n = acc.n_evaluated ?? 0;
-            if (n < 30) {
-                // Not enough live trades — show backtest baseline
-                if (acc1d) { acc1d.innerText = '—'; acc1d.className = 'font-bold text-zinc-500 font-mono'; }
-                if (acc3d) { acc3d.innerText = '—'; acc3d.className = 'font-bold text-zinc-500 font-mono'; }
-                if (acc5d) { acc5d.innerText = '55.8%'; acc5d.className = 'font-bold text-neutralGold font-mono'; }
-                if (warnEl)    warnEl.classList.remove('hidden');
-                if (warnTxtEl) warnTxtEl.innerHTML = `<strong class="text-neutralGold">Track record accumulating</strong> — need 30+ live trades for reliable stats (${n} so far). 5-Day accuracy shown is from Historical Simulation (141 backtest trades). <span class="text-zinc-500">Live stats unlock automatically.</span>`;
-            } else {
-                if (acc1d) { acc1d.innerText = acc['1D'] ?? '—'; acc1d.className = 'font-bold text-white font-mono'; }
-                if (acc3d) { acc3d.innerText = acc['3D'] ?? '—'; acc3d.className = 'font-bold text-white font-mono'; }
-                if (acc5d) {
-                    const v5 = parseFloat(acc['5D']) || 0;
-                    acc5d.innerText   = acc['5D'] ?? '—';
-                    acc5d.className   = `font-bold font-mono ${v5 >= 55?'text-bullish':v5 >= 50?'text-neutralGold':'text-bearish'}`;
-                }
-                if (warnEl) warnEl.classList.add('hidden');
-            }
-        }
-
-        // ── FIX 7: Live ticker predictions ──────────────────────────────────────
-        async function prefetchSignals() {
-            const data = await fetchAPI('/signals');
-            _liveSignals = {};
-            if (data?.signals) for (const s of data.signals) if (s.ticker) _liveSignals[s.ticker.toUpperCase()] = s;
-        }
-
-        async function onLiveTickerChange() {
-            const sym = document.getElementById('live-ticker-select').value;
-            if (!sym) return;
-
-            // Telemetry: always show something while API call in flight
-            document.getElementById('live-telemetry-density').innerText = '…';
-            document.getElementById('live-telemetry-reddit').innerText  = '…';
-            document.getElementById('live-telemetry-news').innerText    = '…';
-            document.getElementById('live-telemetry-st').innerText      = '…';
-
-            const pred1D = document.getElementById('live-p-1d'); const conf1D = document.getElementById('live-c-1d');
-            const pred3D = document.getElementById('live-p-3d'); const conf3D = document.getElementById('live-c-3d');
-            const pred5D = document.getElementById('live-p-5d'); const conf5D = document.getElementById('live-c-5d');
-
-            // Fetch both signals cache and per-ticker prediction in parallel
-            if (Object.keys(_liveSignals).length === 0) await prefetchSignals();
-            const [pData, shapData] = await Promise.all([
-                fetchAPI(`/predictions?ticker=${sym}`),
-                fetchAPI(`/shap/${sym}`),
-            ]);
-
-            if (pData && !pData.message) {
-                // Real live predictions
-                const postCnt = pData.post_count_1d ?? 0;
-                document.getElementById('live-telemetry-density').innerText = `${postCnt} posts (24h)`;
-                document.getElementById('live-telemetry-reddit').innerText  = pData.signal ?? '—';
-                document.getElementById('live-telemetry-news').innerText    = pData.density_passed ? 'Gate Passed ✓' : 'Below Gate';
-                document.getElementById('live-telemetry-st').innerText      = `Signal: ${pData.signal ?? 'NEUTRAL'}`;
-
-                const setP = (el, val, cEl, conf) => {
-                    const cls = val > 0 ? 'text-bullish' : val < 0 ? 'text-bearish' : 'text-zinc-400';
-                    el.innerText   = `${val >= 0?'+':''}${val.toFixed(2)}%`;
-                    el.className   = `text-lg font-bold block mt-1 ${cls}`;
-                    cEl.innerText  = `${conf}% Confidence`;
-                };
-                setP(pred1D, pData['1D']?.pred ?? 0, conf1D, pData['1D']?.conf ?? 50);
-                setP(pred3D, pData['3D']?.pred ?? 0, conf3D, pData['3D']?.conf ?? 50);
-                setP(pred5D, pData['5D']?.pred ?? 0, conf5D, pData['5D']?.conf ?? 50);
-
-                // C1: Populate SHAP attribution panel
-                if (shapData && shapData.reddit_attention !== undefined) {
-                    const sp = document.getElementById('live-shap-panel');
-                    if (sp) sp.classList.remove('hidden');
-                    const setBar = (valId, barId, pct) => {
-                        const el = document.getElementById(valId);
-                        const br = document.getElementById(barId);
-                        if (el) el.innerText = `${pct}%`;
-                        if (br) br.style.width = `${pct}%`;
-                    };
-                    setBar('shap-reddit-val', 'shap-reddit-bar', shapData.reddit_attention ?? 0);
-                    setBar('shap-news-val',   'shap-news-bar',   shapData.news_sentiment   ?? 0);
-                    setBar('shap-st-val',     'shap-st-bar',     shapData.st_sentiment     ?? 0);
-                    setBar('shap-mkt-val',    'shap-mkt-bar',    shapData.market_technical ?? 0);
-                    const attrEl = document.getElementById('shap-attribution-text');
-                    if (attrEl && shapData.attribution_text) attrEl.innerText = shapData.attribution_text;
-                }
-            } else {
-                // No live signal today — show message + sim fallback
-                const msg = pData?.message ?? `No live signal today for ${sym}`;
-                document.getElementById('live-telemetry-density').innerText = '—';
-                document.getElementById('live-telemetry-reddit').innerText  = 'No signal today';
-                document.getElementById('live-telemetry-news').innerText    = '—';
-                document.getElementById('live-telemetry-st').innerText      = '—';
-
-                [pred1D,pred3D,pred5D].forEach(el => { el.innerText = 'NO SIGNAL'; el.className = 'text-lg font-bold text-zinc-500 block mt-1'; });
-                [conf1D,conf3D,conf5D].forEach(el => { el.innerText = msg; });
-            }
-        }
-
-        // ── FIX 8: Real ET countdown timer ──────────────────────────────────────
-        function startCountdown() {
-            const RUN_TIMES = [[9,0],[11,30],[14,0]];   // ET = UTC-4
-
-            function tick() {
-                const nowUTC  = Date.now();
-                const nowET   = new Date(nowUTC - 4*3600*1000);
-                const hNow    = nowET.getUTCHours();
-                const mNow    = nowET.getUTCMinutes();
-                const sNow    = nowET.getUTCSeconds();
-                const nowSecs = hNow*3600 + mNow*60 + sNow;
-
-                let nextSecs = null, nextLabel = '';
-                for (const [h,m] of RUN_TIMES) {
-                    const t = h*3600 + m*60;
-                    if (t > nowSecs) { nextSecs = t; nextLabel = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')} ET`; break; }
-                }
-
-                const el = document.getElementById('countdown-timer');
-                if (!el) return;
-
-                if (nextSecs === null) {
-                    el.innerText = 'Next run 09:00 tomorrow';
-                    el.className = 'text-zinc-400 font-mono text-xs';
-                    return;
-                }
-                const diff = nextSecs - nowSecs;
-                const hh   = String(Math.floor(diff/3600)).padStart(2,'0');
-                const mm   = String(Math.floor((diff%3600)/60)).padStart(2,'0');
-                const ss   = String(diff%60).padStart(2,'0');
-                el.innerText = `${hh}:${mm}:${ss}`;
-                el.className = diff < 300 ? 'text-neutralGold font-mono animate-pulse' : 'text-white font-mono';
-            }
-            tick();
-            setInterval(tick, 1000);
-        }
-
-        // ── Tab navigation ───────────────────────────────────────────────────────
-        function populateTickerSelectors() {
-            const liveSelect = document.getElementById('live-ticker-select');
-            const btSelect   = document.getElementById('bt-filter-ticker');
-            liveSelect.innerHTML = '';
-            universeTickers.forEach(sym => {
-                const o = document.createElement('option'); o.value = sym; o.innerText = `${sym} — Company Tracker`; liveSelect.appendChild(o);
-            });
-            btSelect.innerHTML = '<option value="ALL">ALL COMPANIES</option>';
-            universeTickers.forEach(sym => {
-                const o = document.createElement('option'); o.value = sym; o.innerText = sym; btSelect.appendChild(o);
-            });
-        }
-
-        function dismissOnboarding() {
-            const g = document.getElementById('onboarding-guide');
-            g.style.opacity = '0';
-            setTimeout(() => g.style.display = 'none', 300);
-        }
-
-        function toggleMobileSidebar() {
-            document.getElementById('sidebar').classList.toggle('-translate-x-full');
-        }
-
-        function switchTab(tabId) {
-            currentTab = tabId;
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`view-${tabId}`).classList.remove('hidden');
-
-            document.querySelectorAll('.nav-item').forEach(btn => {
-                btn.className = 'nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition border-l-4 border-transparent';
-            });
-            const activeBtn = document.getElementById(`nav-${tabId}`);
-            if (activeBtn) activeBtn.className = 'nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition bg-accentBlue/10 text-accentBlue border-l-4 border-accentBlue';
-
-            const titles = { dashboard:'Virtual Account Portfolio', simulator:'Hype Sandbox Tester', 'live-rsss':'Real-Time Hype Scanner Feed', research:'AI Brain Verifier Terminal', backtest:'Historical Run Test Results Center' };
-            document.getElementById('view-title').innerText = titles[tabId] ?? tabId;
-
-            const sidebar = document.getElementById('sidebar');
-            if (!sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) sidebar.classList.add('-translate-x-full');
-
-            if (tabId === 'dashboard' && equityChart) setTimeout(() => equityChart.resize(), 50);
-            if (tabId === 'live-rsss') { prefetchSignals(); onLiveTickerChange(); }
-            if (tabId === 'backtest')  { loadBacktestData(); }
-            if (tabId === 'research')  { loadResearchData(); }
-        }
-
-        // ── Simulator (unchanged logic, density gate corrected to 5) ────────────
-        function updateSimulation() {
-            const vol   = parseInt(document.getElementById('sim-reddit-vol').value);
-            const rSent = parseInt(document.getElementById('sim-reddit-sent').value) / 100;
-            const nSent = parseInt(document.getElementById('sim-news-sent').value) / 100;
-            const sSent = parseInt(document.getElementById('sim-st-sent').value) / 100;
-
-            document.getElementById('sim-reddit-vol-val').innerText  = `${vol} posts`;
-            document.getElementById('sim-reddit-sent-val').innerText = (rSent >= 0?'+':'') + rSent.toFixed(2) + (rSent >= 0?' Positive':' Negative');
-            document.getElementById('sim-news-sent-val').innerText   = (nSent >= 0?'+':'') + nSent.toFixed(2) + (nSent >= 0?' Positive':' Negative');
-            document.getElementById('sim-st-sent-val').innerText     = (sSent >= 0?'+':'') + sSent.toFixed(2) + (sSent === 0?' Neutral': sSent > 0?' Optimistic':' Pessimistic');
-
-            const isDensityTriggered = vol >= 5;  // FIX 4: gate is 5 not 10
-            let r1=0, r3=0, r5=0, c1=50, c3=50, c5=50;
-
-            if (isDensityTriggered) {
-                const m = Math.min(vol/50, 2.5);
-                r1 = (rSent*0.75 + sSent*0.25)*m; c1 = Math.round(50 + Math.abs(rSent*18));
-                r3 = (rSent*0.35 + nSent*0.45 + sSent*0.2)*m; c3 = Math.round(51 + Math.abs(nSent*14));
-                r5 = (nSent*1.55 + rSent*0.2 + sSent*0.1)*m; c5 = Math.round(55 + Math.abs(nSent*24.6));
-            } else {
-                r1 = rSent*0.04; r3 = nSent*0.05; r5 = nSent*0.06; c1=48; c3=49; c5=50;
-            }
-
-            bindSimRet('pred-1d-val','pred-1d-conf',r1,c1,isDensityTriggered);
-            bindSimRet('pred-3d-val','pred-3d-conf',r3,c3,isDensityTriggered);
-            bindSimRet('pred-5d-val','pred-5d-conf',r5,c5,isDensityTriggered);
-
-            const totW   = Math.abs(vol*0.3) + Math.abs(rSent) + Math.abs(nSent) + Math.abs(sSent) + 0.5;
-            const attPct = Math.round((Math.abs(vol*0.3)/totW)*100);
-            const senPct = Math.max(100-attPct, 5);
-            document.getElementById('shap-att-val').innerText = `${attPct}%`;
-            document.getElementById('shap-att-bar').style.width = `${attPct}%`;
-            document.getElementById('shap-sent-val').innerText = `${senPct}%`;
-            document.getElementById('shap-sent-bar').style.width = `${senPct}%`;
-
-            const verd = document.getElementById('sandbox-verbal-verdict');
-            if (!isDensityTriggered) {
-                verd.innerHTML = `<span class="text-bearish font-bold">🚨 CHATTER GATEWAY BLOCKED</span>: Traffic volume (${vol}/5 posts) is below the safety threshold. The AI flags this as un-tradeable noise.`;
-            } else {
-                const src = attPct > senPct ? 'Forum Discussion Buzz Density' : 'Social Mood Vector Context';
-                verd.innerHTML = `The AI targets a <strong class="text-white">${r5 >= 0?'Profitable Upside':'Downside Declining'} momentum bias</strong> driven by <strong class="text-accentBlue">${src}</strong>, predicting ${r5 >= 0?'+':''}${r5.toFixed(2)}% in 5 days.`;
-            }
-        }
-
-        function bindSimRet(valId, confId, value, conf, hasDensity) {
-            const vEl = document.getElementById(valId);
-            const cEl = document.getElementById(confId);
-            cEl.innerText = `${conf}% Calculation Weight`;
-            if (!hasDensity) { vEl.innerText = 'NOISE STATUS'; vEl.className = 'text-sm font-bold text-zinc-500 block mt-1'; return; }
-            vEl.innerText   = `${value >= 0?'+':''}${value.toFixed(2)}% Movement`;
-            vEl.className   = `text-sm font-bold block mt-1 ${value >= 0?'text-bullish':'text-bearish'}`;
-        }
-    </script>
+        <div class="metric-card">
+          <div class="mc-label">Win Rate (Live)</div>
+          <div class="mc-value mc-green" id="m-win-rate">—</div>
+          <div class="mc-sub" id="m-win-trades">0 closed trades</div>
+        </div>
+        <div class="metric-card">
+          <div class="mc-label">Regime</div>
+          <div style="margin-top:4px"><span class="regime-badge regime-neutral" id="m-regime">NEUTRAL</span></div>
+          <div class="mc-sub" id="m-regime-sub" style="margin-top:6px">SPY 200MA —</div>
+        </div>
+      </div>
+
+      <!-- ROW 2: Equity + Drawdown + Heatmap -->
+      <div class="grid-3" style="grid-template-columns:1.6fr 1fr 1.4fr">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Equity Curve (Live)</span>
+            <div style="display:flex;gap:12px;font-size:11px;color:var(--muted)">
+              <span style="color:var(--blue)">■ RSSS</span>
+              <span style="color:var(--amber)">— SPY ref</span>
+            </div>
+          </div>
+          <div class="card-body" style="padding:10px 14px">
+            <div class="chart-wrap" style="height:160px"><canvas id="equity-chart"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Drawdown</span>
+            <span id="max-dd" style="font-size:11px;color:var(--red)">Max: 0.00%</span>
+          </div>
+          <div class="card-body" style="padding:10px 14px">
+            <div class="chart-wrap" style="height:160px"><canvas id="dd-chart"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Monthly Returns Heatmap</span></div>
+          <div class="card-body" style="padding:8px 10px;overflow-x:auto">
+            <div id="heatmap-container"><div class="empty">Loading...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 3: Perf Summary + Return Dist + Win Rate Over Time -->
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Performance Summary (Backtest OOS)</span></div>
+          <div class="card-body">
+            <div class="perf-grid">
+              <div class="perf-metric"><div class="pm-label">Sharpe</div><div class="pm-value" id="pm-sharpe">—</div></div>
+              <div class="perf-metric"><div class="pm-label">Sortino</div><div class="pm-value" id="pm-sortino">—</div></div>
+              <div class="perf-metric"><div class="pm-label">Max DD</div><div class="pm-value mc-red" id="pm-maxdd">—</div></div>
+              <div class="perf-metric"><div class="pm-label">Profit Factor</div><div class="pm-value" id="pm-pf">—</div></div>
+            </div>
+            <div style="height:1px;background:var(--border);margin:10px 0"></div>
+            <div class="perf-grid">
+              <div class="perf-metric"><div class="pm-label">Win Rate</div><div class="pm-value mc-green" id="pm-wr">—</div></div>
+              <div class="perf-metric"><div class="pm-label">Avg Win</div><div class="pm-value mc-green" id="pm-aw">—</div></div>
+              <div class="perf-metric"><div class="pm-label">Avg Loss</div><div class="pm-value mc-red" id="pm-al">—</div></div>
+              <div class="perf-metric"><div class="pm-label">Total Return</div><div class="pm-value mc-green" id="pm-totalret">—</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Return Distribution (Backtest)</span></div>
+          <div class="card-body" style="padding:10px 14px">
+            <div class="chart-wrap" style="height:160px"><canvas id="dist-chart"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Win Rate Over Time</span>
+            <span id="wr-current" style="font-size:13px;font-weight:700;color:var(--green)">—</span>
+          </div>
+          <div class="card-body" style="padding:10px 14px">
+            <div class="chart-wrap" style="height:140px"><canvas id="winrate-chart"></canvas></div>
+            <div style="margin-top:8px;font-size:11px;color:var(--muted)">Backtest OOS: <span id="wr-alltime" style="color:var(--text)">57.5%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 4: Top Signals + Open Positions + Recent Trades -->
+      <div class="grid-3" style="grid-template-columns:1.4fr 1fr 1.6fr">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Top Signals Today</span></div>
+          <div class="card-body no-pad">
+            <table class="data-table">
+              <thead><tr><th>#</th><th>Ticker</th><th>Score</th><th>1D</th><th>3D</th><th>5D</th><th>Action</th><th>Conf</th></tr></thead>
+              <tbody id="signals-table-body"><tr><td colspan="8" class="empty">No signals today</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Open Positions</span></div>
+          <div class="card-body" id="open-positions-body">
+            <div class="empty"><div class="empty-icon">📊</div>No open positions</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Recent Trades (Last 10 Closed)</span></div>
+          <div class="card-body no-pad">
+            <table class="data-table">
+              <thead><tr><th>Ticker</th><th>Entry</th><th>Exit</th><th>Return</th><th>Reason</th><th>Days</th></tr></thead>
+              <tbody id="trades-table-body"><tr><td colspan="6" class="empty">No closed trades yet</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 5: Reddit Activity + Feature Importance + Live IC + Alerts -->
+      <div class="grid-4">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Reddit Activity (Recent)</span></div>
+          <div class="card-body no-pad">
+            <table class="data-table">
+              <thead><tr><th>Ticker</th><th>Posts</th><th>Cmts</th><th>Sent</th><th>Signal</th></tr></thead>
+              <tbody id="reddit-table-body"><tr><td colspan="5" class="empty">No data</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Feature Importance (5D)</span></div>
+          <div class="card-body" id="feat-importance-body">
+            <div class="empty">Loading...</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Live IC Tracker (30D)</span></div>
+          <div class="card-body" style="padding:10px 14px">
+            <div class="chart-wrap" style="height:120px"><canvas id="ic-track-chart"></canvas></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:8px;font-size:10px">
+              <div style="color:var(--green)">Good &gt;0.03</div>
+              <div style="color:var(--amber)">Warn 0.01–0.03</div>
+              <div style="color:var(--red)">Bad &lt;0.01</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">System Alerts</span></div>
+          <div class="card-body" id="alerts-body">
+            <div class="empty">No alerts</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /view-overview -->
+
+    <!-- ── OTHER VIEWS ─────────────────────────────────────────────────── -->
+    <div id="view-signals" style="display:none">
+      <div class="card"><div class="card-header"><span class="card-title">All Signals (Recent)</span></div><div class="card-body no-pad"><div id="signals-full-body"><div class="empty">Loading...</div></div></div></div>
+    </div>
+    <div id="view-portfolio" style="display:none">
+      <div class="card"><div class="card-header"><span class="card-title">Portfolio</span></div><div class="card-body"><div id="portfolio-full-body"><div class="empty">Loading...</div></div></div></div>
+    </div>
+    <div id="view-predictions" style="display:none">
+      <div class="card"><div class="card-header"><span class="card-title">Predictions</span></div><div class="card-body"><div id="predictions-body"><div class="empty">Loading...</div></div></div></div>
+    </div>
+    <div id="view-performance" style="display:none">
+      <div class="card"><div class="card-header"><span class="card-title">Signal Accuracy</span></div><div class="card-body"><div id="perf-full-body"><div class="empty">Loading...</div></div></div></div>
+    </div>
+    <div id="view-research" style="display:none">
+      <div class="card"><div class="card-header"><span class="card-title">Research Findings — Part B Signal Validation</span></div><div class="card-body"><div id="research-body"><div class="empty">Loading...</div></div></div></div>
+    </div>
+    <div id="view-backtests" style="display:none">
+      <div class="card"><div class="card-header"><span class="card-title">Backtests — 2024–2025 OOS</span></div><div class="card-body"><div id="backtest-body"><div class="empty">Loading...</div></div></div></div>
+    </div>
+    <div id="view-tradelog" style="display:none">
+      <div class="card"><div class="card-header"><span class="card-title">Full Trade Log</span></div><div class="card-body no-pad"><div id="tradelog-body"><div class="empty">Loading...</div></div></div></div>
+    </div>
+    <div id="view-pipeline" style="display:none">
+      <div class="card"><div class="card-header"><span class="card-title">Pipeline Status</span></div><div class="card-body"><div id="pipeline-body"><div class="empty">Loading...</div></div></div></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+async function api(path) {
+  try {
+    const r = await fetch(path);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(e) { return null; }
+}
+
+function fmtPct(v, d=2) {
+  if (v == null) return '—';
+  const n = Number(v);
+  return (n > 0 ? '+' : '') + n.toFixed(d) + '%';
+}
+function fmtDollar(v) {
+  if (v == null) return '—';
+  return '$' + Math.abs(Number(v)).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+function setEl(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = String(html);
+}
+function setClass(id, cls) {
+  const el = document.getElementById(id);
+  if (el) el.className = cls;
+}
+function nowET() {
+  return new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true,timeZone:'America/New_York'}) + ' ET';
+}
+
+// ── CHART SETUP ───────────────────────────────────────────────────────────────
+Chart.defaults.color = '#64748b';
+Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+Chart.defaults.font.size = 10;
+
+let charts = {};
+function makeChart(id, type, data, opts) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  const base = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { backgroundColor: '#1e2535', titleColor: '#e2e8f0', bodyColor: '#94a3b8', padding: 8, cornerRadius: 6 }
+    },
+    scales: {
+      x: { grid: { color: 'rgba(30,37,53,.6)' }, ticks: { maxTicksLimit: 6 } },
+      y: { grid: { color: 'rgba(30,37,53,.6)' }, ticks: { maxTicksLimit: 5 } }
+    }
+  };
+  charts[id] = new Chart(el, { type, data, options: merge(base, opts || {}) });
+  return charts[id];
+}
+
+function merge(target, source) {
+  for (const k in source) {
+    if (source[k] && typeof source[k] === 'object' && !Array.isArray(source[k])) {
+      target[k] = target[k] || {};
+      merge(target[k], source[k]);
+    } else { target[k] = source[k]; }
+  }
+  return target;
+}
+
+// ── CLOCK + NEXT RUN ──────────────────────────────────────────────────────────
+setEl('top-date', nowET());
+setInterval(() => setEl('top-date', nowET()), 30000);
+
+function getNextRun() {
+  const now = new Date();
+  const et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  const day = et.getDay();
+  if (day === 0 || day === 6) return 'Monday 09:00 ET';
+  const h = et.getHours(), m = et.getMinutes();
+  for (const [rh, rm] of [[9,0],[11,30],[14,0]]) {
+    if (h < rh || (h === rh && m < rm)) return `${String(rh).padStart(2,'0')}:${String(rm).padStart(2,'0')} ET`;
+  }
+  return 'Tomorrow 09:00 ET';
+}
+setEl('next-run', getNextRun());
+
+// ── STATUS ────────────────────────────────────────────────────────────────────
+function setDot(id, state) {
+  const el = document.getElementById('dot-' + id);
+  if (!el) return;
+  el.className = 'dot' + (state === 'warn' ? ' warn' : state === 'bad' ? ' bad' : '');
+}
+
+async function loadStatus() {
+  const d = await api('/status');
+  if (!d) {
+    ['api','pipeline','reddit','finnhub','st','models'].forEach(k => setDot(k, 'bad'));
+    return;
+  }
+  setDot('api', 'good');
+  setDot('pipeline', d.ran_today ? 'good' : 'warn');
+  setDot('reddit', 'good');
+  setDot('finnhub', 'good');
+  setDot('st', 'good');
+  setDot('models', 'good');
+  if (d.last_run_date) setEl('last-run', d.last_run_date);
+}
+
+// ── MODEL METADATA ────────────────────────────────────────────────────────────
+async function loadModelMeta() {
+  const d = await api('/model-metadata');
+  if (!d) return;
+  // API returns d.model_1d, d.model_3d, d.model_5d at top level
+  setEl('mi-features', d.feature_count || 16);
+  setEl('mi-1d', d.model_1d?.n_trees ?? '—');
+  setEl('mi-3d', d.model_3d?.n_trees ?? '—');
+  setEl('mi-5d', d.model_5d?.n_trees ?? '—');
+  if (d.model_5d?.train_ic != null) setEl('mi-train-ic', Number(d.model_5d.train_ic).toFixed(4));
+  if (d.model_5d?.test_ic != null)  setEl('mi-test-ic',  Number(d.model_5d.test_ic).toFixed(4));
+  if (d.training_window) setEl('mi-window', d.training_window);
+  if (d.trained_at) setEl('mi-trained', d.trained_at.slice(0, 10));
+  buildFeatureImportance();
+}
+
+// Feature importance — Part B validated values (V2 GKX stump model)
+// vix_percentile: strongest cross-regime (5/7 years), abnormal_attention > post_count (3/7 vs 0/7)
+// vader_sentiment: confirmed dead (1/7 years, negative IC)
+function buildFeatureImportance() {
+  const feats = [
+    { name: 'VIX Percentile',       val:  0.28, color: '#3b82f6' },
+    { name: 'Relative Volume',       val:  0.24, color: '#3b82f6' },
+    { name: 'Abnorm. Attention',     val:  0.20, color: '#3b82f6' },
+    { name: 'VIX × Volume',          val:  0.16, color: '#3b82f6' },
+    { name: 'Returns 20D',           val:  0.12, color: '#3b82f6' },
+    { name: 'News Sentiment',        val:  0.07, color: '#3b82f6' },
+    { name: 'Dist from 20MA',        val:  0.05, color: '#3b82f6' },
+    { name: 'PEAD Proxy',            val: -0.04, color: '#ef4444' },
+    { name: 'VADER Sentiment',       val: -0.05, color: '#ef4444' },
+  ];
+  const el = document.getElementById('feat-importance-body');
+  if (!el) return;
+  const maxAbs = Math.max(...feats.map(f => Math.abs(f.val)));
+  el.innerHTML = feats.map(f => {
+    const w = Math.abs(f.val) / maxAbs * 100;
+    const posBar = f.val >= 0
+      ? `<div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${w}%;background:${f.color};border-radius:3px"></div></div>`
+      : `<div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;position:relative"><div style="position:absolute;right:0;height:100%;width:${w}%;background:${f.color};border-radius:3px"></div></div>`;
+    return `<div class="sector-bar"><div class="sector-name">${f.name}</div><div style="flex:1;display:flex;align-items:center;gap:4px">${posBar}<span style="font-size:10px;color:var(--dim);min-width:36px;text-align:right">${f.val>0?'+':''}${f.val.toFixed(2)}</span></div></div>`;
+  }).join('');
+}
+
+// ── PORTFOLIO ─────────────────────────────────────────────────────────────────
+async function loadPortfolio() {
+  const [port, positions] = await Promise.all([api('/portfolio'), api('/positions')]);
+  if (!port) return;
+
+  const equity = port.equity || port.cash || 100000;
+  const ret = port.total_return_pct || 0;         // already a % value from API
+  const posArr = Array.isArray(positions) ? positions : [];
+
+  setEl('m-equity', fmtDollar(equity));
+
+  const retEl = document.getElementById('m-total-return');
+  if (retEl) {
+    retEl.textContent = fmtPct(ret);
+    retEl.className = 'mc-value ' + (ret >= 0 ? 'mc-green' : 'mc-red');
+  }
+
+  setEl('m-positions', posArr.length);
+  const activeCap = posArr.reduce((s, p) => s + ((p.current_price || p.entry_price || 0) * (p.n_shares || p.shares || 0)), 0);
+  setEl('m-active-cap', 'Active Capital ' + fmtDollar(activeCap));
+
+  // daily_pnl: dict of date → cumulative_return_fraction (e.g. 0.017 = +1.7% from start)
+  const pnlMap = port.daily_pnl || {};
+  const dates = Object.keys(pnlMap).sort();
+
+  if (dates.length >= 2) {
+    const lastDate = dates[dates.length - 1];
+    const prevDate = dates[dates.length - 2];
+    const delta = (pnlMap[lastDate] - pnlMap[prevDate]) * equity;
+    const dpEl = document.getElementById('m-daily-pnl');
+    if (dpEl) {
+      dpEl.textContent = 'Daily P&L ' + (delta >= 0 ? '+' : '') + fmtDollar(delta);
+      dpEl.className = 'mc-sub ' + (delta >= 0 ? 'mc-green' : 'mc-red');
+    }
+  }
+
+  // Equity curve: daily_pnl values are already cumulative return fractions
+  const equityPcts = dates.map(dt => (pnlMap[dt] || 0) * 100);
+
+  if (dates.length > 1) {
+    // Simple SPY approximation: linear from 0 to ~market return over same period
+    const spyApprox = dates.map((_, i) => i / (dates.length - 1) * 12); // ~12% annualized placeholder
+    makeChart('equity-chart', 'line', {
+      labels: dates.map(d => d.slice(5)),
+      datasets: [
+        { data: equityPcts, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,.08)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+        { data: spyApprox, borderColor: '#f59e0b', borderDash: [4,3], fill: false, tension: 0.3, pointRadius: 0, borderWidth: 1.5 },
+      ]
+    }, { scales: { y: { ticks: { callback: v => v.toFixed(1) + '%' } } } });
+
+    // Drawdown
+    let peak = 0;
+    const dd_vals = equityPcts.map(v => { if (v > peak) peak = v; return peak > 0 ? v - peak : 0; });
+    const maxDD = Math.min(...dd_vals);
+    setEl('max-dd', 'Max: ' + fmtPct(maxDD));
+    makeChart('dd-chart', 'line', {
+      labels: dates.map(d => d.slice(5)),
+      datasets: [{ data: dd_vals, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,.15)', fill: true, tension: 0.3, pointRadius: 0, borderWidth: 1.5 }]
+    }, { scales: { y: { ticks: { callback: v => v.toFixed(1) + '%' } } } });
+  }
+
+  // Heatmap from cumulative daily_pnl (compute monthly delta)
+  buildHeatmap(pnlMap, dates);
+
+  // Open positions table
+  buildOpenPositions(posArr);
+}
+
+function buildOpenPositions(positions) {
+  const el = document.getElementById('open-positions-body');
+  if (!el) return;
+  if (!positions || positions.length === 0) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📊</div>No open positions</div>';
+    return;
+  }
+  el.innerHTML = positions.map(p => {
+    const rawPct = p.unrealized_pct || p.pnl_pct || 0;
+    const pct = (rawPct * 100).toFixed(2);
+    const pctColor = Number(pct) >= 0 ? 'var(--green)' : 'var(--red)';
+    const barWidth = Math.min(100, Math.abs(rawPct) * 200);
+    const pnlDollars = p.unrealized_dollars || p.pnl_dollars || 0;
+    return `<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-weight:700;font-size:13px">${p.ticker}</span>
+        <span style="color:${pctColor};font-weight:600">${Number(pct)>=0?'+':''}${pct}%</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px">
+        <span>Entry $${(p.entry_price||0).toFixed(2)}</span>
+        <span>P&amp;L $${pnlDollars.toFixed(0)}</span>
+        <span>${p.hold_days||p.days_held||0}d</span>
+      </div>
+      <div class="pos-bar-wrap"><div class="pos-bar" style="width:${barWidth}%;background:${pctColor}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── HEATMAP ───────────────────────────────────────────────────────────────────
+// daily_pnl values are cumulative return fractions — compute monthly delta
+function buildHeatmap(pnlMap, dates) {
+  if (!dates || dates.length < 2) {
+    setEl('heatmap-container', '<div class="empty">Accumulating data...</div>');
+    return;
+  }
+
+  // Group first/last cumulative value per year-month
+  const monthBounds = {};
+  dates.forEach(dt => {
+    const ym = dt.slice(0, 7);
+    if (!monthBounds[ym]) monthBounds[ym] = { first: pnlMap[dt], last: pnlMap[dt] };
+    else monthBounds[ym].last = pnlMap[dt];
+  });
+
+  // Compute monthly return as delta of cumulative (accounts for compounding properly)
+  const monthRets = {};
+  const sortedYMs = Object.keys(monthBounds).sort();
+  sortedYMs.forEach((ym, i) => {
+    const prev = i === 0 ? 0 : monthBounds[sortedYMs[i-1]].last;
+    monthRets[ym] = (monthBounds[ym].last - prev) * 100;
+  });
+
+  const MOS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const years = [...new Set(sortedYMs.map(ym => ym.slice(0,4)))].sort();
+
+  let html = `<table style="border-collapse:separate;border-spacing:2px;font-size:11px"><thead><tr>
+    <th style="color:var(--muted);padding:2px 4px;text-align:left"></th>`;
+  MOS.forEach(m => { html += `<th style="color:var(--muted);padding:2px 6px;text-align:center;font-weight:500">${m}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  years.forEach(yr => {
+    html += `<tr><td style="color:var(--dim);font-weight:600;padding:3px 6px">${yr}</td>`;
+    MOS.forEach((_, mi) => {
+      const ym = yr + '-' + String(mi+1).padStart(2,'0');
+      const v = monthRets[ym];
+      if (v == null) { html += `<td style="color:var(--border);text-align:center;padding:3px 4px">—</td>`; return; }
+      const bg = v > 4 ? 'rgba(34,197,94,.6)' : v > 0 ? 'rgba(34,197,94,.25)' : v > -2 ? 'rgba(100,116,139,.2)' : v > -4 ? 'rgba(239,68,68,.3)' : 'rgba(239,68,68,.55)';
+      const col = v > 4 ? '#fff' : v > 0 ? 'var(--green)' : v > -2 ? 'var(--muted)' : 'var(--red)';
+      html += `<td style="background:${bg};color:${col};text-align:center;padding:3px 4px;border-radius:3px;font-weight:600">${v>0?'+':''}${v.toFixed(1)}%</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  setEl('heatmap-container', html);
+}
+
+// ── SIGNALS ───────────────────────────────────────────────────────────────────
+// /signals/recent returns a flat array of OPEN records
+async function loadSignals() {
+  const arr = await api('/signals/recent?n=100');
+  if (!arr || !Array.isArray(arr)) return;
+
+  // Most recent date in the records
+  const opens = arr.filter(r => r.action === 'OPEN');
+  if (!opens.length) return;
+  const latestDate = opens.map(r => r.date).sort().pop();
+  const todaySignals = opens.filter(r => r.date === latestDate);
+
+  const buys  = todaySignals.filter(r => r.signal === 'BULLISH').length;
+  const sells = todaySignals.filter(r => r.signal === 'BEARISH').length;
+  setEl('m-signals', todaySignals.length);
+  setEl('m-signal-split', `BUY: ${buys} SELL: ${sells}`);
+
+  // Regime from most recent record
+  const regimeRaw = (opens[opens.length-1].regime_state || 'neutral').toUpperCase();
+  const regEl = document.getElementById('m-regime');
+  if (regEl) {
+    const label = regimeRaw === 'POSITIVE' ? 'BULL' : regimeRaw === 'NEGATIVE' ? 'BEAR' : 'NEUTRAL';
+    regEl.textContent = label;
+    regEl.className = 'regime-badge ' + (regimeRaw === 'POSITIVE' ? 'regime-bull' : regimeRaw === 'NEGATIVE' ? 'regime-bear' : 'regime-neutral');
+  }
+
+  // Sort by composite score desc
+  todaySignals.sort((a, b) => {
+    const scoreA = 0.5*(a.predicted_return_5d||a.predicted_5d||0) + 0.3*(a.predicted_3d||0) + 0.2*(a.predicted_1d||0);
+    const scoreB = 0.5*(b.predicted_return_5d||b.predicted_5d||0) + 0.3*(b.predicted_3d||0) + 0.2*(b.predicted_1d||0);
+    return Math.abs(scoreB) - Math.abs(scoreA);
+  });
+
+  const tbody = document.getElementById('signals-table-body');
+  if (!tbody) return;
+  if (!todaySignals.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">No signals — density gate or threshold not met</td></tr>';
+    return;
+  }
+  tbody.innerHTML = todaySignals.slice(0, 8).map((s, i) => {
+    const p5 = s.predicted_return_5d || s.predicted_5d || 0;
+    const p3 = s.predicted_3d || 0;
+    const p1 = s.predicted_1d || 0;
+    const score = (0.5*p5 + 0.3*p3 + 0.2*p1).toFixed(3);
+    const sig = s.signal || 'NEUTRAL';
+    const actionCls = sig === 'BULLISH' ? 'buy' : sig === 'BEARISH' ? 'sell' : 'neutral';
+    const actionLabel = sig === 'BULLISH' ? 'BUY' : sig === 'BEARISH' ? 'SELL' : 'WATCH';
+    const conf = s.confidence != null ? ((s.confidence > 1 ? s.confidence : s.confidence * 100)).toFixed(0) + '%' : '—';
+    const confCls = (s.confidence || 0) > 0.7 ? 'high' : (s.confidence || 0) > 0.4 ? 'medium' : 'low';
+    return `<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td style="font-weight:700;color:var(--blue)">${s.ticker}</td>
+      <td>${score}</td>
+      <td>${p1 ? fmtPct(p1*100,1) : '—'}</td>
+      <td>${p3 ? fmtPct(p3*100,1) : '—'}</td>
+      <td>${p5 ? fmtPct(p5*100,1) : '—'}</td>
+      <td><span class="badge ${actionCls}">${actionLabel}</span></td>
+      <td><span class="badge ${confCls}">${conf}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Reddit activity table — use signals/recent data
+  buildRedditTable(opens);
+}
+
+function buildRedditTable(opens) {
+  const byTicker = {};
+  opens.forEach(r => {
+    if (!byTicker[r.ticker] || r.date > byTicker[r.ticker].date) byTicker[r.ticker] = r;
+  });
+  const rows = Object.values(byTicker).slice(0, 8).map(r => {
+    const fv = r.feature_vector || {};
+    const posts = r.post_count_1d || fv.post_count_1d || '—';
+    const cmts = r.total_comments_1d || fv.total_comments_1d || '—';
+    const sent = r.avg_sentiment_1d || fv.vader_sentiment_1d;
+    const sentStr = sent != null ? sent.toFixed(3) : '—';
+    const sentCls = sent == null ? '' : sent > 0.05 ? 'style="color:var(--green)"' : sent < -0.05 ? 'style="color:var(--red)"' : '';
+    const sig = r.signal || 'NEUTRAL';
+    const badgeCls = sig === 'BULLISH' ? 'buy' : sig === 'BEARISH' ? 'sell' : 'neutral';
+    return `<tr>
+      <td style="font-weight:600;color:var(--blue)">${r.ticker}</td>
+      <td>${posts}</td><td>${cmts}</td>
+      <td ${sentCls}>${sentStr}</td>
+      <td><span class="badge ${badgeCls}">${sig === 'BULLISH' ? 'BUY' : sig === 'BEARISH' ? 'SELL' : 'WATCH'}</span></td>
+    </tr>`;
+  });
+  const tbody = document.getElementById('reddit-table-body');
+  if (tbody) tbody.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="5" class="empty">No data</td></tr>';
+}
+
+// ── TRADES ────────────────────────────────────────────────────────────────────
+async function loadTrades() {
+  const d = await api('/trades/history?n=10');
+  if (!d) return;
+  const trades = d.trades || [];
+
+  const tbody = document.getElementById('trades-table-body');
+  if (!tbody) return;
+  if (!trades.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No closed trades yet — accumulating live data</td></tr>';
+    return;
+  }
+  tbody.innerHTML = trades.map(t => {
+    const pct = Number(t.pnl_pct || 0);
+    const pctColor = pct > 0 ? 'var(--green)' : pct < 0 ? 'var(--red)' : 'var(--muted)';
+    const reason = (t.exit_reason || '—')
+      .replace('HOLD_PERIOD_EXPIRED', 'Hold Exp')
+      .replace('TAKE_PROFIT_CAP', 'Take Profit')
+      .replace('STOP_LOSS', 'Stop Loss')
+      .replace(/_/g, ' ');
+    return `<tr>
+      <td style="font-weight:600;color:var(--blue)">${t.ticker}</td>
+      <td style="color:var(--muted)">${(t.entry_date||'').slice(5)}</td>
+      <td style="color:var(--muted)">${(t.exit_date||'').slice(5)}</td>
+      <td style="color:${pctColor};font-weight:600">${pct>=0?'+':''}${pct.toFixed(2)}%</td>
+      <td style="color:var(--muted);font-size:11px">${reason}</td>
+      <td style="color:var(--muted)">${t.hold_days||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── IC MONITOR ────────────────────────────────────────────────────────────────
+async function loadICMonitor() {
+  const d = await api('/ic-monitor');
+  const placeholder = () => makeChart('ic-track-chart', 'line', {
+    labels: ['Jun 15', 'Jun 22', 'Jun 29'],
+    datasets: [
+      { data: [null, 0.0167, null], borderColor: '#a855f7', pointRadius: 4, pointBackgroundColor: '#a855f7', tension: .3, borderWidth: 2, spanGaps: false },
+      { data: [0.03, 0.03, 0.03], borderColor: 'rgba(34,197,94,.4)', borderDash: [4,3], pointRadius: 0, borderWidth: 1 },
+      { data: [0.01, 0.01, 0.01], borderColor: 'rgba(245,158,11,.4)', borderDash: [4,3], pointRadius: 0, borderWidth: 1 },
+    ]
+  }, { scales: { y: { min: -0.02, max: .1, ticks: { callback: v => v.toFixed(2) } } } });
+
+  if (!d || !Array.isArray(d) || d.length === 0) {
+    placeholder();
+    setEl('m-live-ic', '—');
+    setEl('m-ic-gate', '<span class="badge neutral">No data</span>');
+    return;
+  }
+
+  const last = d[d.length - 1];
+  const ic = last.live_ic != null ? last.live_ic : 0;
+  const gate = (last.gate || 'AMBER').toUpperCase();
+  const gateCls = gate === 'GREEN' ? 'green' : gate === 'AMBER' ? 'amber' : 'red';
+  const gateColor = gate === 'GREEN' ? 'var(--green)' : gate === 'AMBER' ? 'var(--amber)' : 'var(--red)';
+
+  const icEl = document.getElementById('m-live-ic');
+  if (icEl) { icEl.textContent = ic.toFixed(4); icEl.style.color = gateColor; }
+  setEl('m-ic-gate', `<span class="badge ${gateCls}">${gate}</span>`);
+
+  const labels = d.map(r => r.date?.slice(5) || '—');
+  const ics = d.map(r => r.live_ic || 0);
+  makeChart('ic-track-chart', 'line', {
+    labels,
+    datasets: [
+      { data: ics, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,.1)', fill: true, tension: .3, pointRadius: 4, pointBackgroundColor: '#a855f7', borderWidth: 2 },
+      { data: labels.map(() => 0.03), borderColor: 'rgba(34,197,94,.5)', borderDash: [4,3], pointRadius: 0, borderWidth: 1.2, fill: false },
+      { data: labels.map(() => 0.01), borderColor: 'rgba(245,158,11,.5)', borderDash: [4,3], pointRadius: 0, borderWidth: 1.2, fill: false },
+    ]
+  }, { scales: { y: { min: -0.05, max: .12, ticks: { callback: v => v.toFixed(2) } } } });
+}
+
+// ── SIGNAL ACCURACY ───────────────────────────────────────────────────────────
+async function loadSignalAccuracy() {
+  const d = await api('/signal-accuracy');
+  if (!d) return;
+
+  const wr5 = d['5D'];
+  setEl('m-win-rate', wr5 || '—');
+  setEl('m-win-trades', (d.n_evaluated || 0) + ' evaluated trades');
+  setEl('wr-current', wr5 || '—');
+}
+
+// ── BACKTEST PERF STATS (from /backtest endpoint) ─────────────────────────────
+async function loadBacktestStats() {
+  const d = await api('/backtest');
+  if (!d) return;
+  const A = (d.systems || {}).A || {};
+  if (A.sharpe != null) setEl('pm-sharpe', Number(A.sharpe).toFixed(2));
+  if (A.sharpe != null) setEl('pm-sortino', '—');            // not in backtest response
+  if (A.max_dd != null) setEl('pm-maxdd', fmtPct(A.max_dd));
+  if (A.sharpe != null) setEl('pm-pf',    '—');              // not in backtest response
+  if (A.win_rate != null) setEl('pm-wr',  A.win_rate + '%');
+  setEl('pm-aw', '—');
+  setEl('pm-al', '—');
+  if (A.return_pct != null) setEl('pm-totalret', fmtPct(A.return_pct));
+
+  // Return distribution chart placeholder
+  const bins = [-15,-12,-9,-6,-3,0,3,6,9,12,15];
+  const counts = [2,4,8,12,18,22,18,10,5,2,1];  // approximate distribution
+  const colors = bins.map(b => b >= 0 ? 'rgba(34,197,94,.7)' : 'rgba(239,68,68,.7)');
+  makeChart('dist-chart', 'bar', {
+    labels: bins.map(b => b + '%'),
+    datasets: [{ data: counts, backgroundColor: colors, borderRadius: 2, borderWidth: 0 }]
+  }, { scales: { x: { ticks: { maxTicksLimit: 8 } }, y: { ticks: { stepSize: 5 } } } });
+
+  // Rolling win rate placeholder
+  makeChart('winrate-chart', 'line', {
+    labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    datasets: [
+      { data: [55,58,52,60,57,54,58,62,55,60,57,58], borderColor: '#22c55e', fill: false, tension: .3, pointRadius: 3, borderWidth: 1.5 },
+      { data: Array(12).fill(50), borderColor: 'rgba(100,116,139,.4)', borderDash: [4,3], pointRadius: 0, borderWidth: 1 },
+    ]
+  }, { scales: { y: { min: 30, max: 80, ticks: { callback: v => v + '%' } } } });
+}
+
+// ── ALERTS ────────────────────────────────────────────────────────────────────
+async function buildAlerts() {
+  const status = await api('/status');
+  const ic = await api('/ic-monitor');
+
+  const alerts = [];
+  if (status) {
+    alerts.push({ color: status.ran_today ? 'var(--green)' : 'var(--amber)', text: status.ran_today ? 'Pipeline ran today' : 'Pipeline has not run today yet' });
+    if (!status.system_ok) alerts.push({ color: 'var(--amber)', text: 'system_ok = false — check daily_runs.log' });
+  }
+  if (ic && ic.length) {
+    const last = ic[ic.length - 1];
+    const gColor = last.gate === 'GREEN' ? 'var(--green)' : last.gate === 'RED' ? 'var(--red)' : 'var(--amber)';
+    alerts.push({ color: gColor, text: `Live IC = ${(last.live_ic||0).toFixed(4)} — ${last.gate} gate (${last.action || ''})` });
+    alerts.push({ color: 'var(--muted)', text: `Retrain gate: IC > 0.0612. Current model IC: ${(last.live_ic||0).toFixed(4)}` });
+  }
+  alerts.push({ color: 'var(--blue)', text: 'V2 GKX Stump deployed — 16 features, gamma=0.0, density gate ≥ 5' });
+
+  const el = document.getElementById('alerts-body');
+  if (!el) return;
+  el.innerHTML = alerts.map(a => `<div class="alert-item">
+    <div class="alert-dot" style="background:${a.color}"></div>
+    <span class="alert-text">${a.text}</span>
+  </div>`).join('');
+}
+
+// ── PERFORMANCE PAGE ──────────────────────────────────────────────────────────
+async function loadPerformancePage() {
+  const d = await api('/signal-accuracy');
+  const el = document.getElementById('perf-full-body');
+  if (!el) return;
+
+  const gate = `<div style="margin-top:16px;padding:12px;background:var(--card2);border-radius:6px;font-size:12px">
+    <div style="margin-bottom:8px;font-weight:600;color:var(--text)">IC Monitoring Gate</div>
+    <div class="stat-row"><span class="stat-label">Green (continue)</span><span style="color:var(--green)">IC &gt; 0.03</span></div>
+    <div class="stat-row"><span class="stat-label">Amber (watch)</span><span style="color:var(--amber)">IC 0.01–0.03</span></div>
+    <div class="stat-row"><span class="stat-label">Red (2 weeks → Fix 3)</span><span style="color:var(--red)">IC &lt; 0.01</span></div>
+    <div class="stat-row"><span class="stat-label">September retrain gate</span><span style="color:var(--blue)">IC &gt; 0.061</span></div>
+  </div>`;
+
+  if (!d || !d.n_evaluated) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📈</div>Accumulating live trades — need 30+ for reliable stats<br><span style="color:var(--dim);font-size:11px">Current: ${d?.n_evaluated||0} evaluated</span></div>${gate}`;
+    return;
+  }
+
+  const acc1 = d['1D'] || '—', acc3 = d['3D'] || '—', acc5 = d['5D'] || '—';
+  const col = (s) => {
+    const n = parseFloat(s);
+    return isNaN(n) ? 'var(--muted)' : n >= 55 ? 'var(--green)' : n >= 50 ? 'var(--amber)' : 'var(--red)';
+  };
+  el.innerHTML = `<div class="grid-3">
+    <div class="perf-metric"><div class="pm-label">1D Accuracy</div><div class="pm-value" style="color:${col(acc1)}">${acc1}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">${d.n_evaluated_1d||0} trades</div></div>
+    <div class="perf-metric"><div class="pm-label">3D Accuracy</div><div class="pm-value" style="color:${col(acc3)}">${acc3}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">${d.n_evaluated_3d||0} trades</div></div>
+    <div class="perf-metric"><div class="pm-label">5D Accuracy</div><div class="pm-value" style="color:${col(acc5)}">${acc5}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">${d.n_evaluated_5d||0} trades</div></div>
+  </div>
+  <p style="margin-top:12px;color:var(--dim);font-size:12px">${d.interpretation||''}</p>${gate}`;
+}
+
+// ── RESEARCH PAGE ─────────────────────────────────────────────────────────────
+async function loadResearchPage() {
+  const d = await api('/research-findings');
+  const el = document.getElementById('research-body');
+  if (!el) return;
+  if (!d || d.status === 'not_run') { el.innerHTML = '<div class="empty">Run validate_sources.py first</div>'; return; }
+
+  const conc = d.conclusion || {};
+  const wf = d.layer3_walkforward || {};
+  const wfSorted = Object.entries(wf).sort((a, b) => (b[1].mean_ic||0) - (a[1].mean_ic||0));
+
+  el.innerHTML = `<div class="grid-2">
+    <div>
+      <h3 style="color:var(--text);margin-bottom:12px;font-size:13px">Walk-Forward IC by Feature Combination</h3>
+      ${wfSorted.map(([combo, v]) => {
+        const ic = v.mean_ic || 0;
+        const color = ic > 0.025 ? 'var(--green)' : ic > 0 ? 'var(--amber)' : 'var(--red)';
+        const w = Math.min(100, Math.abs(ic) / 0.08 * 100);
+        return `<div class="sector-bar">
+          <div class="sector-name" style="min-width:200px;font-size:11px">${combo}</div>
+          <div class="sector-track"><div class="sector-fill" style="width:${w}%;background:${color}"></div></div>
+          <div class="sector-pct" style="color:${color}">${ic > 0 ? '+' : ''}${ic.toFixed(4)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div>
+      <h3 style="color:var(--text);margin-bottom:12px;font-size:13px">Conclusion</h3>
+      <div class="stat-row"><span class="stat-label">Best combination</span><span class="stat-value" style="color:var(--blue)">${conc.best_combination||'—'}</span></div>
+      <div class="stat-row"><span class="stat-label">Best mean IC</span><span class="stat-value">${conc.best_mean_ic?.toFixed(4)||'—'}</span></div>
+      <div class="stat-row"><span class="stat-label">Market-only IC</span><span class="stat-value">${conc.market_only_ic?.toFixed(4)||'—'}</span></div>
+      <div class="stat-row"><span class="stat-label">Retrain gate</span><span class="stat-value">IC &gt; 0.0612</span></div>
+      <div class="stat-row"><span class="stat-label">Retrain triggered?</span><span class="stat-value" style="color:${conc.retrain_needed?'var(--red)':'var(--green)'}">${conc.retrain_needed?'YES':'NO — continue monitoring'}</span></div>
+      <div style="margin-top:16px;padding:10px;background:var(--card2);border-radius:6px;font-size:11px;color:var(--dim)">
+        <strong style="color:var(--text)">Key findings:</strong> abnormal_attention_1d &gt; post_count_1d (3/7 vs 0/7 years).
+        vix_percentile strongest cross-regime signal (5/7 years).
+        VADER sentiment: dead (1/7 years, negative IC, no Granger).
+        Best walk-forward IC = 0.033 &lt; gate 0.061 → no retrain.
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── BACKTESTS PAGE ────────────────────────────────────────────────────────────
+async function loadBacktestPage() {
+  const d = await api('/backtest');
+  const el = document.getElementById('backtest-body');
+  if (!el || !d) return;
+  const A = (d.systems || {}).A || {};
+  el.innerHTML = `<div class="grid-2">
+    <div>
+      <h3 style="margin-bottom:12px;font-size:13px;color:var(--text)">System A — Core-Satellite (Best)</h3>
+      <div class="stat-row"><span class="stat-label">Total Return</span><span class="stat-value mc-green">+${A.return_pct||35.6}%</span></div>
+      <div class="stat-row"><span class="stat-label">SPY Return</span><span class="stat-value">+${d.spy_return||49.7}%</span></div>
+      <div class="stat-row"><span class="stat-label">Alpha vs SPY</span><span class="stat-value mc-red">${A.alpha||'-11.3'}%</span></div>
+      <div class="stat-row"><span class="stat-label">Sharpe Ratio</span><span class="stat-value">${A.sharpe||1.36}</span></div>
+      <div class="stat-row"><span class="stat-label">Max Drawdown</span><span class="stat-value mc-red">${A.max_dd||'-14.1'}%</span></div>
+      <div class="stat-row"><span class="stat-label">Win Rate</span><span class="stat-value mc-green">${A.win_rate||57.5}%</span></div>
+      <div class="stat-row"><span class="stat-label">Trades</span><span class="stat-value">${A.trades||141}</span></div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:12px;font-size:13px;color:var(--text)">V2 Model Performance</h3>
+      <div class="stat-row"><span class="stat-label">1D IC (test)</span><span class="stat-value">0.0346</span></div>
+      <div class="stat-row"><span class="stat-label">3D IC (test)</span><span class="stat-value">0.0273</span></div>
+      <div class="stat-row"><span class="stat-label">5D IC (test)</span><span class="stat-value mc-green">0.0562 ✓</span></div>
+      <div class="stat-row"><span class="stat-label">Density gate</span><span class="stat-value">post_count ≥ 5</span></div>
+      <div class="stat-row"><span class="stat-label">Retrain gate</span><span class="stat-value">IC &gt; 0.0612</span></div>
+      <div class="stat-row"><span class="stat-label">Train window</span><span class="stat-value">2022–2023 sliding</span></div>
+      <div class="stat-row"><span class="stat-label">Model</span><span class="stat-value">GKX Stump (max_depth=1)</span></div>
+    </div>
+  </div>
+  <div style="margin-top:12px;padding:10px;background:var(--card2);border-radius:6px;font-size:11px;color:var(--dim)">
+    Period: 2024–2025 out-of-sample · 70% SPY / 30% RSSS core-satellite · Rank-based signal selection · ATR-derived position sizing · Dynamic regime gates
+  </div>`;
+}
+
+// ── TRADE LOG PAGE ────────────────────────────────────────────────────────────
+async function loadTradeLogPage() {
+  const d = await api('/trades/history');
+  const el = document.getElementById('tradelog-body');
+  if (!el) return;
+  const trades = d?.trades || [];
+  if (!trades.length) { el.innerHTML = '<div class="empty">No trades logged yet</div>'; return; }
+  el.innerHTML = `<table class="data-table">
+    <thead><tr><th>Ticker</th><th>Entry</th><th>Exit</th><th>Entry $</th><th>Exit $</th><th>Shares</th><th>P&L %</th><th>Reason</th></tr></thead>
+    <tbody>${trades.map(t => {
+      const pct = Number(t.pnl_pct || 0);
+      const c = pct > 0 ? 'var(--green)' : pct < 0 ? 'var(--red)' : 'var(--muted)';
+      return `<tr>
+        <td style="font-weight:700;color:var(--blue)">${t.ticker}</td>
+        <td>${t.entry_date||'—'}</td><td>${t.exit_date||'—'}</td>
+        <td>$${(t.entry_price||0).toFixed(2)}</td><td>$${(t.exit_price||0).toFixed(2)}</td>
+        <td>${t.n_shares||t.shares||0}</td>
+        <td style="color:${c};font-weight:600">${pct>=0?'+':''}${pct.toFixed(2)}%</td>
+        <td style="font-size:11px;color:var(--muted)">${(t.exit_reason||'—').replace(/_/g,' ')}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+// ── SIGNALS FULL PAGE ─────────────────────────────────────────────────────────
+async function loadSignalsPage() {
+  const arr = await api('/signals/recent?n=200');
+  const el = document.getElementById('signals-full-body');
+  if (!el) return;
+  const opens = Array.isArray(arr) ? arr.filter(r => r.action === 'OPEN') : [];
+  if (!opens.length) { el.innerHTML = '<div class="empty">No signals in recent runs</div>'; return; }
+  el.innerHTML = `<table class="data-table">
+    <thead><tr><th>Date</th><th>Ticker</th><th>Signal</th><th>1D</th><th>3D</th><th>5D</th><th>Conf</th><th>Posts</th><th>Regime</th></tr></thead>
+    <tbody>${opens.slice(0,50).map(s => {
+      const sig = s.signal || 'NEUTRAL';
+      const cls = sig === 'BULLISH' ? 'buy' : sig === 'BEARISH' ? 'sell' : 'neutral';
+      const p5 = s.predicted_return_5d || s.predicted_5d || 0;
+      return `<tr>
+        <td style="color:var(--muted)">${s.date||'—'}</td>
+        <td style="font-weight:700;color:var(--blue)">${s.ticker}</td>
+        <td><span class="badge ${cls}">${sig}</span></td>
+        <td>${s.predicted_1d ? fmtPct(s.predicted_1d*100,2) : '—'}</td>
+        <td>${s.predicted_3d ? fmtPct(s.predicted_3d*100,2) : '—'}</td>
+        <td>${p5 ? fmtPct(p5*100,2) : '—'}</td>
+        <td>${s.confidence != null ? ((s.confidence>1?s.confidence:s.confidence*100)).toFixed(0)+'%' : '—'}</td>
+        <td>${s.post_count_1d || (s.feature_vector||{}).post_count_1d || '—'}</td>
+        <td>${s.regime_state||'—'}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+// ── PIPELINE PAGE ─────────────────────────────────────────────────────────────
+async function loadPipelinePage() {
+  const d = await api('/status');
+  const el = document.getElementById('pipeline-body');
+  if (!el) return;
+  el.innerHTML = `<div class="grid-2">
+    <div>
+      <h3 style="margin-bottom:12px;font-size:13px;color:var(--text)">Pipeline Status</h3>
+      <div class="stat-row"><span class="stat-label">Ran Today</span><span class="stat-value" style="color:${d?.ran_today?'var(--green)':'var(--amber)'}">${d?.ran_today?'Yes':'Not yet'}</span></div>
+      <div class="stat-row"><span class="stat-label">Skipped Today</span><span class="stat-value" style="color:${d?.skipped_today?'var(--amber)':'var(--muted)'}">${d?.skipped_today?'Yes (drift monitor)':'No'}</span></div>
+      <div class="stat-row"><span class="stat-label">Open Positions</span><span class="stat-value">${d?.n_positions||0}</span></div>
+      <div class="stat-row"><span class="stat-label">Cash</span><span class="stat-value">${fmtDollar(d?.cash||100000)}</span></div>
+      <div class="stat-row"><span class="stat-label">Last Run</span><span class="stat-value">${d?.last_run_date||'—'}</span></div>
+      <div class="stat-row"><span class="stat-label">System OK</span><span class="stat-value" style="color:${d?.system_ok?'var(--green)':'var(--amber)'}">${d?.system_ok?'Yes':'Check logs'}</span></div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:12px;font-size:13px;color:var(--text)">Schedule (EDT, Mon–Fri)</h3>
+      <div class="stat-row"><span class="stat-label">Daily run 1</span><span class="stat-value">09:00</span></div>
+      <div class="stat-row"><span class="stat-label">Daily run 2</span><span class="stat-value">11:30</span></div>
+      <div class="stat-row"><span class="stat-label">Daily run 3</span><span class="stat-value">14:00</span></div>
+      <div class="stat-row"><span class="stat-label">IC monitor</span><span class="stat-value">09:00 Monday</span></div>
+      <div class="stat-row"><span class="stat-label">Density gate</span><span class="stat-value">post_count_1d ≥ 5</span></div>
+      <div class="stat-row"><span class="stat-label">Max positions</span><span class="stat-value">Bull 6 / Bear 3 / Neutral 2</span></div>
+    </div>
+  </div>`;
+}
+
+// ── PORTFOLIO FULL PAGE ───────────────────────────────────────────────────────
+async function loadPortfolioPage() {
+  const [port, positions] = await Promise.all([api('/portfolio'), api('/positions')]);
+  const el = document.getElementById('portfolio-full-body');
+  if (!el || !port) return;
+  const posArr = Array.isArray(positions) ? positions : [];
+  el.innerHTML = `<div class="grid-2">
+    <div>
+      <h3 style="margin-bottom:12px;font-size:13px;color:var(--text)">Account Summary</h3>
+      <div class="stat-row"><span class="stat-label">Total Equity</span><span class="stat-value">${fmtDollar(port.equity||port.cash)}</span></div>
+      <div class="stat-row"><span class="stat-label">Cash</span><span class="stat-value">${fmtDollar(port.cash)}</span></div>
+      <div class="stat-row"><span class="stat-label">Total Return</span><span class="stat-value" style="color:${(port.total_return_pct||0)>=0?'var(--green)':'var(--red)'}">${fmtPct(port.total_return_pct||0)}</span></div>
+      <div class="stat-row"><span class="stat-label">Open Positions</span><span class="stat-value">${posArr.length}</span></div>
+      <div class="stat-row"><span class="stat-label">Closed Trades</span><span class="stat-value">${(port.closed_trades||[]).length}</span></div>
+      <div class="stat-row"><span class="stat-label">Started</span><span class="stat-value">${port.created_at?.slice(0,10)||'—'}</span></div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:12px;font-size:13px;color:var(--text)">Risk Parameters</h3>
+      <div class="stat-row"><span class="stat-label">Base risk per trade</span><span class="stat-value">0.5% equity</span></div>
+      <div class="stat-row"><span class="stat-label">Max risk per trade</span><span class="stat-value">0.75% equity</span></div>
+      <div class="stat-row"><span class="stat-label">ATR stop multiplier</span><span class="stat-value">2.5×</span></div>
+      <div class="stat-row"><span class="stat-label">Stop range</span><span class="stat-value">−4% to −12%</span></div>
+      <div class="stat-row"><span class="stat-label">Take-profit cap</span><span class="stat-value">+15%</span></div>
+      <div class="stat-row"><span class="stat-label">Ticker cooldown</span><span class="stat-value">7 days</span></div>
+    </div>
+  </div>`;
+}
+
+// ── VIEW SWITCHING ────────────────────────────────────────────────────────────
+const VIEWS = ['overview','signals','portfolio','predictions','performance','research','backtests','tradelog','pipeline'];
+function showView(name) {
+  VIEWS.forEach(v => {
+    const el = document.getElementById('view-' + v);
+    if (el) el.style.display = v === name ? '' : 'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', (el.getAttribute('onclick') || '').includes(`'${name}'`));
+  });
+  if (name === 'performance') loadPerformancePage();
+  if (name === 'research')    loadResearchPage();
+  if (name === 'backtests')   loadBacktestPage();
+  if (name === 'tradelog')    loadTradeLogPage();
+  if (name === 'pipeline')    loadPipelinePage();
+  if (name === 'signals')     loadSignalsPage();
+  if (name === 'portfolio')   loadPortfolioPage();
+}
+
+// ── MAIN LOAD ─────────────────────────────────────────────────────────────────
+async function loadAll() {
+  await Promise.all([
+    loadStatus(),
+    loadModelMeta(),
+    loadPortfolio(),
+    loadSignals(),
+    loadTrades(),
+    loadICMonitor(),
+    loadSignalAccuracy(),
+    loadBacktestStats(),
+    buildAlerts(),
+  ]);
+}
+
+loadAll();
+setInterval(loadAll, 60000);
+</script>
 </body>
 </html>

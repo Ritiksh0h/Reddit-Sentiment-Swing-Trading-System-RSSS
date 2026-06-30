@@ -224,6 +224,138 @@ def run_backfill_endpoint(
         return {'status': 'error', 'error': str(e)}
 
 
+@router.get('/dashboard-stats')
+def get_dashboard_stats():
+    """
+    Computed dashboard statistics from experiment_c backtest + live paper performance.
+    Returns equity curve, drawdown, monthly returns heatmap, return distribution,
+    rolling win rate, and summary stats (Sharpe, Sortino, Calmar, Profit Factor).
+    Uses precomputed stats from results.json — no recomputation of Sharpe/Sortino.
+    """
+    ec_path = Path('experiments/experiment_c/results.json')
+    if not ec_path.exists():
+        return {'error': 'backtest data not found'}
+
+    with open(ec_path) as f:
+        ec = json.load(f)
+
+    trades    = sorted(ec.get('trade_log', []), key=lambda x: x['exit_date'])
+    raw_curve = ec.get('equity_curve', [])
+    if not trades or not raw_curve:
+        return {'error': 'no trade log found'}
+
+    # Normalize equity curve to 10000 base, paired with exit dates
+    init      = raw_curve[0] if raw_curve[0] != 0 else 1.0
+    spy_total = ec.get('spy_return', 0.261)
+    spy_end   = 10000 * (1 + spy_total)
+    n_pts     = len(raw_curve)
+    dates     = [trades[0]['entry_date']] + [t['exit_date'] for t in trades]
+
+    curve = []
+    for i, (val, date) in enumerate(zip(raw_curve, dates)):
+        curve.append({
+            'date':      date,
+            'portfolio': round(10000 * val / init, 2),
+            'spy':       round(10000 + (spy_end - 10000) * i / max(n_pts - 1, 1), 2),
+        })
+
+    # Drawdown from normalized curve
+    peak = 10000.0
+    drawdown = []
+    for pt in curve:
+        peak = max(peak, pt['portfolio'])
+        drawdown.append({'date': pt['date'], 'dd': round((pt['portfolio'] - peak) / peak * 100, 3)})
+
+    # Per-trade pnl_pct from cost basis: pnl / (entry_price × shares)
+    pnl_pcts = []
+    for t in trades:
+        cost = t.get('entry_price', 0) * t.get('shares', 0)
+        pnl_pcts.append(round(t.get('pnl', 0) / cost * 100 if cost > 0 else 0, 2))
+
+    # Monthly returns — read directly from normalized equity curve to avoid cost-basis inflation
+    # curve[0] = initial equity; curve[i+1] = equity after trades[i] exits
+    month_names  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    eq_list      = [pt['portfolio'] for pt in curve]
+    month_bounds: dict = {}
+    for i, t in enumerate(trades):
+        ym = t['exit_date'][:7]
+        if ym not in month_bounds:
+            month_bounds[ym] = {'start_idx': i, 'end_idx': i}
+        month_bounds[ym]['end_idx'] = i
+
+    monthly_returns: dict = {}
+    for ym, idx in month_bounds.items():
+        start_val = eq_list[idx['start_idx']]      # equity before first exit this month
+        end_val   = eq_list[idx['end_idx'] + 1]    # equity after last exit this month
+        ret = (end_val - start_val) / start_val * 100 if start_val > 0 else 0
+        year, month = ym.split('-')
+        monthly_returns.setdefault(year, {})[month_names[int(month) - 1]] = round(ret, 1)
+
+    # 2026 live data — portfolio_return is cumulative so use first/last pv per month
+    perf_path = Path('data/live/paper_performance.jsonl')
+    if perf_path.exists():
+        live_month_pv: dict = {}  # ym -> {'first': pv, 'last': pv}
+        for line in perf_path.read_text().strip().split('\n'):
+            if not line.strip():
+                continue
+            try:
+                r = json.loads(line)
+                d = r.get('date', '')
+                pv = r.get('portfolio_value', 0)
+                if len(d) >= 7 and pv > 0:
+                    ym = d[:7]
+                    if ym not in live_month_pv:
+                        live_month_pv[ym] = {'first': pv, 'last': pv}
+                    live_month_pv[ym]['last'] = pv
+            except Exception:
+                pass
+        for ym, pvs in live_month_pv.items():
+            year, month = ym.split('-')
+            ret = (pvs['last'] - pvs['first']) / pvs['first'] * 100 if pvs['first'] > 0 else 0
+            monthly_returns.setdefault(year, {})[month_names[int(month) - 1]] = round(ret, 1)
+
+    # Rolling 20-trade win rate
+    rolling_wr = []
+    for i in range(len(pnl_pcts)):
+        subset = pnl_pcts[max(0, i - 19):i + 1]
+        wr = sum(1 for p in subset if p > 0) / len(subset) * 100 if subset else 0
+        rolling_wr.append({'date': trades[i]['exit_date'], 'win_rate': round(wr, 1)})
+
+    # Avg win/loss/expectancy from cost-basis pnl_pcts
+    wins   = [p for p in pnl_pcts if p > 0]
+    losses = [p for p in pnl_pcts if p < 0]
+    wr     = ec.get('win_rate', len(wins) / len(pnl_pcts) if pnl_pcts else 0)
+    avg_win  = round(sum(wins)   / len(wins),   2) if wins   else 0
+    avg_loss = round(sum(losses) / len(losses), 2) if losses else 0
+    expect   = round(wr * avg_win + (1 - wr) * avg_loss, 2)
+
+    total_return_pct = ec.get('total_return', 0) * 100
+    max_dd_pct       = ec.get('max_drawdown',  0) * 100  # negative value
+    calmar = round(abs(total_return_pct / max_dd_pct), 2) if max_dd_pct != 0 else 0
+
+    return _sanitize({
+        'equity_curve':        curve,
+        'drawdown':            drawdown,
+        'monthly_returns':     monthly_returns,
+        'return_distribution': pnl_pcts,
+        'rolling_win_rate':    rolling_wr,
+        'stats': {
+            'sharpe':        round(ec.get('sharpe_ratio',  0), 2),
+            'sortino':       round(ec.get('sortino_ratio', 0), 2),
+            'calmar':        calmar,
+            'profit_factor': round(ec.get('profit_factor', 0), 2),
+            'win_rate':      round(wr * 100, 1),
+            'avg_win':       avg_win,
+            'avg_loss':      avg_loss,
+            'expectancy':    expect,
+            'n_trades':      ec.get('n_trades', len(trades)),
+            'total_return':  round(total_return_pct, 2),
+            'max_drawdown':  round(max_dd_pct, 2),
+        },
+        'period': {'start': trades[0]['entry_date'], 'end': trades[-1]['exit_date']},
+    })
+
+
 @router.get('/model-metadata')
 def get_model_metadata():
     """Return model training metadata. Reads v2 metadata first, falls back to phase3 baseline."""
