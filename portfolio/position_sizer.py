@@ -67,6 +67,7 @@ def compute_position(
     confidence:   float,
     regime:       str,
     signal_rank:  int = 1,
+    below_ma20:   bool = False,
 ) -> dict:
     """
     Dynamic risk-budget position sizing (TASK 3).
@@ -120,7 +121,8 @@ def compute_position(
     # Confidence scaling: maps [0, 1] → [0.5, 1.0]
     conf_scale = 0.5 + min(max(confidence, 0.0), 1.0) * 0.5
 
-    effective_risk = BASE_RISK_PCT * regime_mult * rank_decay * conf_scale
+    ma20_mult = 0.5 if below_ma20 else 1.0
+    effective_risk = BASE_RISK_PCT * regime_mult * rank_decay * conf_scale * ma20_mult
     effective_risk = min(effective_risk, BASE_RISK_PCT_MAX)
 
     risk_dollars = equity * effective_risk

@@ -96,6 +96,7 @@ class SignalRecord:
     pcr_confirmation:  str = 'UNKNOWN'
     pcr_size_multiplier: float = 1.0
     pcr_reason:        str = ''
+    below_ma20:        bool = False
 
 
 def _load_booster_from_pkl(path: Path) -> xgb.Booster:
@@ -397,7 +398,11 @@ def generate_signals(
         except Exception as _e:
             logger.debug(f'earnings_check_error ticker={ticker}: {_e}')
 
-        # Fix 4 — 20-day MA trend filter: only trade tickers above their 20d MA
+        # Fix 4 (softened) — 20-day MA trend flag: below-MA tickers are still
+        # scored by the model (dist_from_20ma_pct is already a trained feature),
+        # but flagged so position sizing can apply a penalty downstream instead
+        # of vetoing the signal entirely before the model sees it.
+        below_ma20 = False
         try:
             import yfinance as _yf_ma
             _hist_ma = _yf_ma.Ticker(ticker).history(period='30d')
@@ -405,13 +410,14 @@ def generate_signals(
                 _ma20 = _hist_ma['Close'].tail(20).mean()
                 _price_now = _hist_ma['Close'].iloc[-1]
                 if _price_now < _ma20:
+                    below_ma20 = True
                     logger.info(
-                        f'ma_filter_skip ticker={ticker} '
-                        f'price={_price_now:.2f} ma20={_ma20:.2f}')
-                    continue
+                        f'ma_filter_flag ticker={ticker} '
+                        f'price={_price_now:.2f} ma20={_ma20:.2f} '
+                        f'(size will be reduced, not skipped)')
         except Exception as _e:
             logger.warning(f'ma_filter_error ticker={ticker}: {_e}')
-            # fail open — do not skip on error
+            # fail open — do not flag on error
 
         try:
             mkt = yf.download(ticker, period='90d',
@@ -556,6 +562,7 @@ def generate_signals(
             pcr_confirmation=pcr_info['confirmation'],
             pcr_size_multiplier=pcr_info['size_multiplier'],
             pcr_reason=pcr_info['reason'],
+            below_ma20=below_ma20,
         ))
 
     bullish = sorted([s for s in signals if s.signal == 'BULLISH'],

@@ -322,6 +322,7 @@ def run(
                 confidence=signal.confidence,
                 regime=regime_label,
                 signal_rank=_sig_rank,
+                below_ma20=getattr(signal, 'below_ma20', False),
             )
 
             if sizing['n_shares'] == 0:
