@@ -242,7 +242,7 @@ nav{flex:1;padding:8px 0;overflow-y:auto}
     <div class="topbar-right">
       <div class="run-info">Last Run <span id="last-run">—</span></div>
       <div class="run-info">Next Run <span id="next-run">—</span></div>
-      <button class="btn-run" onclick="loadAll()">
+      <button class="btn-run" onclick="refresh()">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         Refresh Data
       </button>
@@ -778,8 +778,8 @@ async function loadSignals() {
 
   // Sort by composite score desc
   todaySignals.sort((a, b) => {
-    const scoreA = 0.5*(a.predicted_return_5d||a.predicted_5d||0) + 0.3*(a.predicted_3d||0) + 0.2*(a.predicted_1d||0);
-    const scoreB = 0.5*(b.predicted_return_5d||b.predicted_5d||0) + 0.3*(b.predicted_3d||0) + 0.2*(b.predicted_1d||0);
+    const scoreA = 0.5*(a.predicted_return_5d ?? a.predicted_5d ?? 0) + 0.3*(a.predicted_3d ?? 0) + 0.2*(a.predicted_1d ?? 0);
+    const scoreB = 0.5*(b.predicted_return_5d ?? b.predicted_5d ?? 0) + 0.3*(b.predicted_3d ?? 0) + 0.2*(b.predicted_1d ?? 0);
     return Math.abs(scoreB) - Math.abs(scoreA);
   });
 
@@ -791,8 +791,8 @@ async function loadSignals() {
   }
   tbody.innerHTML = todaySignals.slice(0, 8).map((s, i) => {
     const p5 = s.predicted_return_5d || s.predicted_5d || 0;
-    const p3 = s.predicted_3d || 0;
-    const p1 = s.predicted_1d || 0;
+    const p3 = s.predicted_3d ?? null;
+    const p1 = s.predicted_1d ?? null;
     const score = (0.5*p5 + 0.3*p3 + 0.2*p1).toFixed(3);
     const sig = s.signal || 'NEUTRAL';
     const actionCls = sig === 'BULLISH' ? 'buy' : sig === 'BEARISH' ? 'sell' : 'neutral';
@@ -803,8 +803,8 @@ async function loadSignals() {
       <td style="color:var(--muted)">${i+1}</td>
       <td style="font-weight:700;color:var(--blue)">${s.ticker}</td>
       <td>${score}</td>
-      <td>${p1 ? fmtPct(p1*100,1) : '—'}</td>
-      <td>${p3 ? fmtPct(p3*100,1) : '—'}</td>
+      <td>${p1 != null ? fmtPct(p1*100,1) : '—'}</td>
+      <td>${p3 != null ? fmtPct(p3*100,1) : '—'}</td>
       <td>${p5 ? fmtPct(p5*100,1) : '—'}</td>
       <td><span class="badge ${actionCls}">${actionLabel}</span></td>
       <td><span class="badge ${confCls}">${conf}</span></td>
@@ -1129,8 +1129,8 @@ async function loadSignalsPage() {
         <td style="color:var(--muted)">${s.date||'—'}</td>
         <td style="font-weight:700;color:var(--blue)">${s.ticker}</td>
         <td><span class="badge ${cls}">${sig}</span></td>
-        <td>${s.predicted_1d ? fmtPct(s.predicted_1d*100,2) : '—'}</td>
-        <td>${s.predicted_3d ? fmtPct(s.predicted_3d*100,2) : '—'}</td>
+        <td>${s.predicted_1d != null ? fmtPct(s.predicted_1d*100,2) : '—'}</td>
+        <td>${s.predicted_3d != null ? fmtPct(s.predicted_3d*100,2) : '—'}</td>
         <td>${p5 ? fmtPct(p5*100,2) : '—'}</td>
         <td>${s.confidence != null ? ((s.confidence>1?s.confidence:s.confidence*100)).toFixed(0)+'%' : '—'}</td>
         <td>${s.post_count_1d || (s.feature_vector||{}).post_count_1d || '—'}</td>
@@ -1196,6 +1196,16 @@ async function loadPortfolioPage() {
 
 // ── VIEW SWITCHING ────────────────────────────────────────────────────────────
 const VIEWS = ['overview','signals','portfolio','predictions','performance','research','backtests','tradelog','pipeline'];
+const _lazyLoaders = {
+  signals:     () => loadSignalsPage(),
+  performance: () => loadPerformancePage(),
+  research:    () => loadResearchPage(),
+  backtests:   () => loadBacktestPage(),
+  tradelog:    () => loadTradeLogPage(),
+  pipeline:    () => loadPipelinePage(),
+  portfolio:   () => loadPortfolioPage(),
+};
+
 function showView(name) {
   VIEWS.forEach(v => {
     const el = document.getElementById('view-' + v);
@@ -1204,13 +1214,21 @@ function showView(name) {
   document.querySelectorAll('.nav-item').forEach(el => {
     el.classList.toggle('active', (el.getAttribute('onclick') || '').includes(`'${name}'`));
   });
-  if (name === 'performance') loadPerformancePage();
-  if (name === 'research')    loadResearchPage();
-  if (name === 'backtests')   loadBacktestPage();
-  if (name === 'tradelog')    loadTradeLogPage();
-  if (name === 'pipeline')    loadPipelinePage();
-  if (name === 'signals')     loadSignalsPage();
-  if (name === 'portfolio')   loadPortfolioPage();
+  if (_lazyLoaders[name]) {
+    const el = document.getElementById('view-' + name);
+    if (el && !el.dataset.loaded) {
+      el.dataset.loaded = '1';
+      _lazyLoaders[name]();
+    }
+  }
+}
+
+function refresh() {
+  VIEWS.forEach(v => {
+    const el = document.getElementById('view-' + v);
+    if (el) delete el.dataset.loaded;
+  });
+  loadAll();
 }
 
 // ── MAIN LOAD ─────────────────────────────────────────────────────────────────
