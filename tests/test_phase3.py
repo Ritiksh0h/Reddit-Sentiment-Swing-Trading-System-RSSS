@@ -180,6 +180,8 @@ def test_execution_log_creates_file(tmp_path, monkeypatch):
     """log_signal() appends to paper_trades.jsonl."""
     log_file = tmp_path / 'paper_trades.jsonl'
     monkeypatch.setattr('portfolio.execution_logger.LOG_FILE', str(log_file))
+    monkeypatch.setattr('api.db.insert_trade', lambda r: True)
+    monkeypatch.setattr('api.db._exec', lambda sql, params: True)
 
     log_signal(
         ticker='TSLA', date='2024-01-02',
@@ -201,6 +203,8 @@ def test_execution_log_schema(tmp_path, monkeypatch):
     """Logged record has all required fields from architecture spec."""
     log_file = tmp_path / 'paper_trades.jsonl'
     monkeypatch.setattr('portfolio.execution_logger.LOG_FILE', str(log_file))
+    monkeypatch.setattr('api.db.insert_trade', lambda r: True)
+    monkeypatch.setattr('api.db._exec', lambda sql, params: True)
 
     log_signal(
         ticker='PLTR', date='2024-01-03',

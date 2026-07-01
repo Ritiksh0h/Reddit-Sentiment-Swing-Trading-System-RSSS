@@ -438,6 +438,21 @@ Paper equity too low (June 2026):
   Fix: Changed starting equity to $100,000 across paper_portfolio.json,
        portfolio_engine.py (PortfolioState default), paper_trader.py,
        and daily_run.py starting_capital.
+
+Supabase test pollution (June 30, 2026):
+  Tests wrote to Supabase via unpatched api.db.insert_trade() and api.db._exec()
+  even though JSONL writes were correctly monkeypatched. The API (running under
+  .venv which has psycopg2-binary) hit Supabase first in load_trades() and returned
+  54 stale 2024-dated test records before ever reaching the JSONL fallback.
+  System Python (terminal without venv) lacks psycopg2-binary so load_trades()
+  returns [] there — making the bug invisible in manual testing.
+  Fix: both test fixtures now patch all three write paths:
+    monkeypatch.setattr('portfolio.execution_logger.LOG_FILE', str(log_file))
+    monkeypatch.setattr('api.db.insert_trade', lambda r: True)
+    monkeypatch.setattr('api.db._exec', lambda sql, params: True)
+  Rule: any test that calls log_signal() MUST patch all three paths.
+  Note: GitHub Actions workflow has no pytest step (runs daily_run_live.py only).
+        Railway is API-only — neither runs tests against production Supabase.
 ```
 
 ---
