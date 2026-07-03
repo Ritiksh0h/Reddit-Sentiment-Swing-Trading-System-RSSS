@@ -343,7 +343,8 @@ def run(
             # Apply PCR size multiplier (CAUTION = 50% size; never blocks signal)
             pcr_mult = getattr(signal, 'pcr_size_multiplier', 1.0)
             if pcr_mult < 1.0:
-                reduced_n = max(1, int(sizing['n_shares'] * pcr_mult))
+                original_n = sizing['n_shares']
+                reduced_n  = max(1, int(original_n * pcr_mult))
                 sizing = dict(sizing)
                 sizing['n_shares']         = reduced_n
                 sizing['position_dollars'] = reduced_n * signal.price
@@ -351,7 +352,7 @@ def run(
                     f'pcr_size_reduction ticker={signal.ticker} '
                     f'pcr={getattr(signal, "pcr", None)} '
                     f'conf={getattr(signal, "pcr_confirmation", "?")} '
-                    f'original_n={sizing["n_shares"]} reduced_n={reduced_n}'
+                    f'original_n={original_n} reduced_n={reduced_n}'
                 )
 
             slippage   = compute_slippage(

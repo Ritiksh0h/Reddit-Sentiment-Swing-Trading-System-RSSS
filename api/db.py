@@ -29,7 +29,6 @@ New structured-write helpers:
 
 MongoDB helpers:
   get_mongo_db()            → database handle (or None)
-  ensure_mongo_indexes()    → create indexes
 """
 import json
 import logging

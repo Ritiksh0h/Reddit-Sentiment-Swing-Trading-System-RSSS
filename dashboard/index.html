@@ -558,7 +558,7 @@ async function loadStatus() {
   setDot('pipeline', d.ran_today ? 'good' : 'warn');
   setDot('reddit', 'good');
   setDot('finnhub', 'good');
-  setDot('st', 'good');
+  setDot('st', 'warn');  // disabled — 403 since 2026-07-01
   setDot('models', 'good');
   if (d.last_run_date) setEl('last-run', d.last_run_date);
 }

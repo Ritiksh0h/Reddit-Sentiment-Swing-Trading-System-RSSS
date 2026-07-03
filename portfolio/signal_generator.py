@@ -33,13 +33,15 @@ _TARGET_VOL = 0.02
 _VOL_FLOOR  = 0.005
 _VOL_CAP    = 0.08
 
-with open('experiments/phase3_locked_architecture.json') as f:
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+with open(_PROJECT_ROOT / 'experiments' / 'phase3_locked_architecture.json') as f:
     ARCH = json.load(f)
 
 # V2 feature set — loaded from training_metadata_v2.json (tracked).
 # Falls back to phase3 ARCH features only if file is absent.
 try:
-    with open('models/training_metadata_v2.json') as _f:
+    with open(_PROJECT_ROOT / 'models' / 'training_metadata_v2.json') as _f:
         FEATURES = json.load(_f).get('feature_cols', ARCH['features'])
 except Exception:
     FEATURES = ARCH['features']
@@ -54,7 +56,7 @@ from data.earnings_fetcher import is_safe_to_trade
 def _load_sector_map() -> dict:
     """Load ticker → sector from ticker_registry.json."""
     try:
-        with open('config/ticker_registry.json') as f:
+        with open(_PROJECT_ROOT / 'config' / 'ticker_registry.json') as f:
             reg = json.load(f)
         return {t: v.get('sector', 'Unknown')
                 for t, v in reg.get('tickers', {}).items()}

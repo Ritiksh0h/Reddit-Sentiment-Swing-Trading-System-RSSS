@@ -172,15 +172,10 @@ def main():
             logger.warning(f'yfinance news fetch failed: {e} — continuing without news')
             news_data = {}
 
-    # ── Step 1c: Fetch StockTwits sentiment ───────────────────────────────
-    logger.info('Fetching StockTwits...')
-    try:
-        from data.stocktwits_fetcher import fetch_stocktwits
-        st_data = fetch_stocktwits()
-        logger.info(f'StockTwits ready: {len(st_data)} tickers')
-    except Exception as e:
-        logger.warning(f'StockTwits fetch failed: {e} — continuing without StockTwits')
-        st_data = {}
+    # ── Step 1c: StockTwits disabled — 403 on all tickers since 2026-07-01 ──
+    # st_* features default to 0/0.5 in the merge below (same as API-down behaviour)
+    st_data = {}
+    logger.info('StockTwits disabled (403) — st_data empty')
 
     # ── Step 1d: Merge all sources into unified reddit_counts ─────────────
     # reddit_counts is the dict passed to daily_run.run()
