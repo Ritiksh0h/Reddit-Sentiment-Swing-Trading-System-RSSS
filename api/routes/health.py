@@ -224,7 +224,7 @@ def get_daily_report():
                     'signal':     rec.get('signal', 'BULLISH'),
                     'pred_1d':    rec.get('predicted_1d'),
                     'pred_3d':    rec.get('predicted_3d'),
-                    'pred_5d':    rec.get('predicted_5d'),
+                    'pred_5d':    rec.get('predicted_return_5d') or rec.get('predicted_5d'),
                     'confidence': rec.get('confidence'),
                     'post_count': rec.get('post_count_1d'),
                 })
@@ -234,8 +234,10 @@ def get_daily_report():
                     actions.append({
                         'action': 'BUY',
                         'ticker': ticker,
-                        'price':  rec.get('entry_price'),
-                        'shares': rec.get('shares'),
+                        'price':  rec.get('fill_price'),
+                        'shares': round(rec.get('position_size_dollars', 0) /
+                                        rec.get('fill_price', 1), 1)
+                                  if rec.get('fill_price') else None,
                     })
             elif action in ('CLOSE', 'EXIT'):
                 actions.append({

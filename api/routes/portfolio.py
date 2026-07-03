@@ -58,8 +58,9 @@ def get_portfolio():
     total_return = round((equity - INITIAL_CAPITAL) / INITIAL_CAPITAL * 100, 2)
 
     try:
-        from portfolio.regime_detector import RegimeDetector
-        regime_label = RegimeDetector().get_current_regime().upper()
+        from portfolio.regime_detector import classify_regime
+        _rs = classify_regime()
+        regime_label = _rs.label.upper()
     except Exception:
         regime_label = 'NEUTRAL'
 

@@ -74,16 +74,7 @@ def run(
     # ── 1. Load state ──────────────────────────────────────────────────────
     state = load_portfolio()
 
-    # ── 2. Risk limits ─────────────────────────────────────────────────────
-    limits = check_risk_limits(state, today)
-    if limits['weekly_loss_triggered']:
-        logger.warning('HALT: weekly loss limit hit — pausing system')
-        summary['skipped'] = True
-        summary['reason']  = 'weekly_loss_limit'
-        save_portfolio(state)
-        return summary
-
-    # ── 3. Regime ──────────────────────────────────────────────────────────
+    # ── 2. Regime (must precede risk limits so slot cap is regime-aware) ──────
     try:
         regime = classify_regime(rolling_30d_ic=None)
         logger.info(f'regime label={regime.label} multiplier={regime.multiplier} '
@@ -91,6 +82,16 @@ def run(
     except Exception as e:
         logger.error(f'regime_detection_failed error={e}')
         regime = None
+
+    # ── 3. Risk limits ─────────────────────────────────────────────────────
+    _regime_for_limits = regime.label if regime else 'NEUTRAL'
+    limits = check_risk_limits(state, today, regime=_regime_for_limits)
+    if limits['weekly_loss_triggered']:
+        logger.warning('HALT: weekly loss limit hit — pausing system')
+        summary['skipped'] = True
+        summary['reason']  = 'weekly_loss_limit'
+        save_portfolio(state)
+        return summary
 
     # ── 4. Data drift check ────────────────────────────────────────────────
     drift            = check_drift(reddit_counts)

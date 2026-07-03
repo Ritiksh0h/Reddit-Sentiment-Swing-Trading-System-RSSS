@@ -331,11 +331,11 @@ def insert_daily_run(data: dict) -> bool:
     sql = """
         INSERT INTO daily_runs
           (run_date, run_time, total_posts, tickers_found,
-           tickers_passed_density, signals_generated, trades_executed,
+           tickers_passed_density, tickers_passed_ma, signals_generated, trades_executed,
            regime_label, vix_percentile, spy_price, duration_seconds, source)
         VALUES
           (:run_date, :run_time, :total_posts, :tickers_found,
-           :tickers_passed_density, :signals_generated, :trades_executed,
+           :tickers_passed_density, :tickers_passed_ma, :signals_generated, :trades_executed,
            :regime_label, :vix_percentile, :spy_price, :duration_seconds, :source)
     """
     return _exec(sql, {
@@ -344,6 +344,7 @@ def insert_daily_run(data: dict) -> bool:
         'total_posts':            data.get('total_posts'),
         'tickers_found':          data.get('tickers_found'),
         'tickers_passed_density': data.get('tickers_passed_density'),
+        'tickers_passed_ma':      data.get('tickers_passed_ma'),
         'signals_generated':      data.get('signals_generated'),
         'trades_executed':        data.get('trades_executed'),
         'regime_label':           data.get('regime_label'),

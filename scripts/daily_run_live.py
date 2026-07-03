@@ -99,27 +99,6 @@ def main():
     today = args.date or datetime.now(timezone.utc).strftime('%Y-%m-%d')
     logger.info(f'=== RSSS Daily Run Starting date={today} ===')
 
-    # ── Weekly signal decay monitor (Improvement 5) — runs every Monday ───
-    _today_dt = datetime.fromisoformat(today) if args.date else datetime.now(timezone.utc)
-    if _today_dt.weekday() == 0:  # Monday = 0
-        logger.info('Monday: running signal decay monitor...')
-        try:
-            from scripts.monitor_signal_decay import run_decay_monitor
-            decay_result = run_decay_monitor()
-            logger.info(
-                f'signal_decay status={decay_result["color"]} '
-                f'rolling_ic={decay_result.get("rolling_ic")} '
-                f'n_trades={decay_result["n_trades"]}'
-            )
-            if decay_result['color'] == 'RED':
-                logger.warning(
-                    'SIGNAL DEAD — decay monitor RED. '
-                    'Skipping Reddit-driven signal generation. '
-                    'Require two consecutive RED weeks before Fix 3.'
-                )
-        except Exception as _e:
-            logger.warning(f'signal_decay_monitor_failed: {_e}')
-
     # ── Step 1: Fetch live Reddit data ────────────────────────────────────
     logger.info('Fetching live Reddit data...')
     try:
@@ -368,7 +347,8 @@ def save_run_to_db(summary: dict, today: str, reddit_counts: dict) -> None:
             ),
             'signals_generated':      len(all_signals),
             'trades_executed':        len([a for a in summary.get('actions', [])
-                                          if isinstance(a, dict) and a.get('action') == 'OPEN']),
+                                          if (isinstance(a, str) and a.startswith('OPEN')) or
+                                             (isinstance(a, dict) and a.get('action') == 'OPEN')]),
             'regime_label':           summary.get('regime', {}).get('label') if isinstance(summary.get('regime'), dict) else summary.get('regime'),
             'source':                 source,
         })

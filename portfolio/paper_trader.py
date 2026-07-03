@@ -56,7 +56,7 @@ def record_daily_snapshot(
         'timestamp':        datetime.now(timezone.utc).isoformat(),
     }
 
-    Path('data').mkdir(exist_ok=True)
+    Path('data/live').mkdir(parents=True, exist_ok=True)
     with open(PERF_JSONL, 'a') as f:
         f.write(json.dumps(snapshot) + '\n')
 
@@ -92,7 +92,7 @@ def record_daily_pnl(
         return 0.0
     daily_return = (portfolio_value - prev_portfolio_value) / prev_portfolio_value
 
-    Path('data').mkdir(exist_ok=True)
+    Path('data/live').mkdir(parents=True, exist_ok=True)
     perf = {}
     if Path(PERF_FILE).exists():
         with open(PERF_FILE) as f:

@@ -177,12 +177,12 @@ def fill_pending_targets() -> int:
             if isinstance(mkt.columns, pd.MultiIndex):
                 mkt.columns = mkt.columns.get_level_values(0)
 
-            if len(mkt) < 5:
+            if len(mkt) < 6:
                 still_pending.append(entry)
                 continue
 
             close_t0 = float(mkt['Close'].iloc[0])
-            close_t5 = float(mkt['Close'].iloc[4])
+            close_t5 = float(mkt['Close'].iloc[5])
             target   = (close_t5 - close_t0) / close_t0
 
             entry['target_return_5d'] = round(target, 6)

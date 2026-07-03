@@ -61,7 +61,7 @@ def _load_sector_map() -> dict:
     except Exception:
         return {}
 
-TRADE_UNIVERSE = set(load_tickers(TICKERS_TRADE_PATH)) or None  # None = unrestricted fallback
+TRADE_UNIVERSE = set(load_tickers(TICKERS_TRADE_PATH))  # empty set = no tickers allowed (safe default)
 DROP_TICKERS   = set(load_tickers(TICKERS_DROP_PATH)) or set(ARCH['drop_tickers'])
 # Signal thresholds — calibrated to model prediction distribution
 # Model mean ≈ 0.45%, median ≈ 0.65%, std ≈ 3%; 27% rows > 1.5%, 12% < -1.5%
@@ -256,7 +256,7 @@ def compute_features_live(
     pead_val = 0.0
     for lookback in range(1, 21):
         idx = -1 - lookback
-        if abs(len(close)) <= abs(idx):
+        if abs(idx) >= len(close):
             break
         jump = float(ret_series.iloc[idx])
         if abs(jump) > 0.05:

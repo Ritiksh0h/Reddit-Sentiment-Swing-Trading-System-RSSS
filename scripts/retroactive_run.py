@@ -241,12 +241,11 @@ def run_date(
             log.warning(f'  {ticker} OHLCV fail: {e}')
             continue
 
-        # MA filter: same logic as live pipeline
-        price = float(mkt['Close'].iloc[-1])
-        ma20  = float(mkt['Close'].tail(20).mean())
-        if price < ma20:
-            log.info(f'  {ticker} MA-filter price={price:.2f} ma20={ma20:.2f}')
-            continue
+        price     = float(mkt['Close'].iloc[-1])
+        ma20      = float(mkt['Close'].tail(20).mean())
+        below_ma20 = price < ma20
+        if below_ma20:
+            log.info(f'  ma_filter_flag ticker={ticker} price={price:.2f} ma20={ma20:.2f}')
 
         feats = compute_features_live(
             ticker=ticker,

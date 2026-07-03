@@ -82,7 +82,7 @@ class PortfolioState:
 def load_portfolio() -> PortfolioState:
     """
     Load portfolio state from data/live/paper_portfolio.json.
-    Returns a fresh $10,000 PortfolioState if the file does not exist.
+    Returns a fresh $100,000 PortfolioState if the file does not exist.
     """
     if Path(STATE_FILE).exists():
         with open(STATE_FILE) as f:
@@ -107,7 +107,8 @@ def save_portfolio(state: PortfolioState) -> None:
         json.dump(data, f, indent=2)
 
 
-def check_risk_limits(state: PortfolioState, today: str) -> dict:
+def check_risk_limits(state: PortfolioState, today: str,
+                      regime: str = 'NEUTRAL') -> dict:
     """
     Check all portfolio-level risk limits.
     Returns dict with status and any active limits.
@@ -122,7 +123,7 @@ def check_risk_limits(state: PortfolioState, today: str) -> dict:
     limits = {
         'daily_loss_triggered':  today_pnl < DAILY_LOSS_LIMIT,
         'weekly_loss_triggered': weekly_pnl < WEEKLY_LOSS_LIMIT,
-        'max_positions_reached': state.n_open_positions() >= MAX_POSITIONS,
+        'max_positions_reached': state.n_open_positions() >= get_max_positions(regime),
         'today_pnl_pct':         round(today_pnl, 4),
         'weekly_pnl_pct':        round(weekly_pnl, 4),
     }
