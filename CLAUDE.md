@@ -357,11 +357,15 @@ Reddit:      Arctic Shift API (free, paginated)
 News:        yfinance t.news + FinBERT — 20-35 tickers/day
 
 StockTwits:  Free public API — 38 tickers, native bullish/bearish tags
+             NOTE: began 403-ing all tickers 2026-07-01 (new API restriction).
+             st_sentiment_1d and st_count_1d will be 0 on all live records.
+             Zero-IC contributor — no model impact, not urgent to fix.
 
 Market:      yfinance (period='90d' for features, '5d' for exits)
 ```
 
 Tiingo is blocked (403). Do not use. yfinance is the replacement.
+StockTwits is blocked (403) as of 2026-07-01. st_* features default to 0. Zero-IC contributor — no action required.
 
 ---
 
