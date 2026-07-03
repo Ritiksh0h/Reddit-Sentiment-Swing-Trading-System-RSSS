@@ -20,16 +20,28 @@ def health():
 def get_status():
     today = date.today().isoformat()
 
-    log_path = Path('logs/paper_trades.jsonl')
+    log_path = Path('logs/daily_runs.log')
     ran_today = False
     last_run_date = None
+    skipped_today = False
     if log_path.exists():
-        with open(log_path) as f:
-            lines = [ln for ln in f.readlines() if ln.strip()]
-        if lines:
-            last_entry = json.loads(lines[-1])
-            last_run_date = last_entry.get('date')
-            ran_today = last_run_date == today
+        all_lines = log_path.read_text().splitlines()
+        for line in reversed(all_lines):
+            if not line.strip():
+                continue
+            try:
+                entry = json.loads(line)
+                last_run_date = entry.get('date')
+                if last_run_date == today:
+                    ran_today = True
+                break
+            except Exception:
+                if line.startswith(today):
+                    ran_today = True
+                    last_run_date = today
+                break
+        if any(today in ln and 'SKIP_DAY' in ln for ln in all_lines):
+            skipped_today = True
 
     port_path = Path('data/live/paper_portfolio.json')
     n_positions = 0
@@ -39,13 +51,6 @@ def get_status():
             state = json.load(f)
         n_positions = len(state.get('positions', []))
         cash = state.get('cash', 0.0)
-
-    drift_path = Path('logs/daily_runs.log')
-    skipped_today = False
-    if drift_path.exists():
-        content = drift_path.read_text()
-        if today in content and 'SKIP_DAY' in content:
-            skipped_today = True
 
     # Latest SPY daily return from paper_performance.jsonl
     spy_return_today = None
@@ -66,7 +71,7 @@ def get_status():
         'last_run_date':    last_run_date,
         'n_positions':      n_positions,
         'cash':             round(cash, 2),
-        'system_ok':        ran_today and not skipped_today,
+        'system_ok':        ran_today,
         'spy_return_today': spy_return_today,
     }
 
