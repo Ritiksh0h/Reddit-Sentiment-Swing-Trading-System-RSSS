@@ -1,6 +1,3 @@
-"""
-RSSS API — performance, accuracy, and monitoring routes.
-"""
 import json
 import logging
 import subprocess
@@ -39,12 +36,7 @@ def get_performance():
 
 @router.get('/signal-accuracy')
 def get_signal_accuracy():
-    """
-    Per-horizon directional accuracy (1D, 3D, 5D) from closed paper trades.
-    1D/3D actual prices fetched via yfinance; 5D uses recorded pnl_pct.
-    Signal lookup falls back to logs/paper_trades.jsonl OPEN records.
-    Results cached in data/processed/signal_accuracy_cache.json.
-    """
+    # 1D/3D via yfinance; 5D from recorded pnl_pct; cached in signal_accuracy_cache.json
     import yfinance as yf
     import pandas as pd
     from datetime import datetime, timedelta, date as _date
@@ -226,12 +218,7 @@ def run_backfill_endpoint(
 
 @router.get('/dashboard-stats')
 def get_dashboard_stats():
-    """
-    Computed dashboard statistics from experiment_c backtest + live paper performance.
-    Returns equity curve, drawdown, monthly returns heatmap, return distribution,
-    rolling win rate, and summary stats (Sharpe, Sortino, Calmar, Profit Factor).
-    Uses precomputed stats from results.json — no recomputation of Sharpe/Sortino.
-    """
+    # equity curve, drawdown, monthly heatmap, rolling win rate from experiment_c/results.json
     ec_path = Path('experiments/experiment_c/results.json')
     if not ec_path.exists():
         return {'error': 'backtest data not found'}

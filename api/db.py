@@ -47,7 +47,6 @@ logger = logging.getLogger(__name__)
 # ── PostgreSQL / SQLite ──────────────────────────────────────────────────────
 
 _engine       = None
-_Session      = None
 _tables_ready = False
 
 _LEGACY_DDL = """
@@ -94,26 +93,6 @@ def _get_engine():
         return _engine
     except Exception as exc:
         logger.warning('db_engine_init_failed: %s', exc)
-        return None
-
-
-def get_pg_session():
-    """Return a new SQLAlchemy session (caller must close it)."""
-    global _Session
-    if _Session is None:
-        engine = _get_engine()
-        if engine is None:
-            return None
-        try:
-            from sqlalchemy.orm import sessionmaker
-            _Session = sessionmaker(bind=engine)
-        except Exception as exc:
-            logger.warning('db_session_factory_failed: %s', exc)
-            return None
-    try:
-        return _Session()
-    except Exception as exc:
-        logger.warning('db_session_open_failed: %s', exc)
         return None
 
 
@@ -526,22 +505,3 @@ def get_mongo_db():
         return None
 
 
-def ensure_mongo_indexes() -> bool:
-    """Create MongoDB indexes if not already present."""
-    db = get_mongo_db()
-    if db is None:
-        return False
-    try:
-        from pymongo import ASCENDING, DESCENDING
-        db['reddit_posts'].create_index(
-            [('ticker', ASCENDING), ('date', ASCENDING)])
-        db['reddit_posts'].create_index([('date', ASCENDING)])
-        db['daily_run_reports'].create_index(
-            [('date', ASCENDING)], unique=True)
-        db['backtest_results'].create_index(
-            [('version', ASCENDING), ('created_at', DESCENDING)])
-        logger.info('mongodb_indexes_ready')
-        return True
-    except Exception as exc:
-        logger.warning('mongodb_index_failed: %s', exc)
-        return False

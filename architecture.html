@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>RSSS Architecture</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'SF Mono', 'Fira Code', monospace; background: #0d1117; color: #e6edf3; font-size: 12px; padding: 24px; }
+  h1 { font-size: 16px; color: #58a6ff; margin-bottom: 4px; font-family: sans-serif; }
+  .subtitle { color: #8b949e; font-size: 11px; margin-bottom: 20px; font-family: sans-serif; }
+
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .full { grid-column: 1 / -1; }
+
+  .section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 14px; }
+  .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #f78166; margin-bottom: 10px; font-family: sans-serif; border-bottom: 1px solid #30363d; padding-bottom: 6px; }
+
+  .tree { line-height: 1.7; }
+  .dir { color: #58a6ff; font-weight: 600; }
+  .note { color: #8b949e; font-style: italic; }
+  .badge { display: inline-block; font-size: 9px; padding: 1px 5px; border-radius: 3px; margin-left: 6px; vertical-align: middle; font-family: sans-serif; }
+  .badge-live { background: #1a4a1a; color: #3fb950; border: 1px solid #3fb950; }
+  .badge-lock { background: #3a2000; color: #d29922; border: 1px solid #d29922; }
+  .badge-v2  { background: #1a2a4a; color: #58a6ff; border: 1px solid #58a6ff; }
+
+  .flow { display: flex; flex-direction: column; gap: 6px; }
+  .flow-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .flow-box { background: #161b22; border: 1px solid #30363d; border-radius: 5px; padding: 6px 12px; font-size: 11px; white-space: nowrap; font-family: sans-serif; }
+  .flow-box.source  { border-color: #58a6ff; color: #58a6ff; }
+  .flow-box.process { border-color: #bc8cff; color: #bc8cff; }
+  .flow-box.model   { border-color: #d29922; color: #d29922; }
+  .flow-box.output  { border-color: #3fb950; color: #3fb950; }
+  .arrow { color: #8b949e; font-size: 14px; }
+  .flow-sep { border-top: 1px solid #30363d; margin: 4px 0; }
+
+  .indent1 { padding-left: 16px; }
+  .indent2 { padding-left: 32px; }
+
+  .green  { color: #3fb950; }
+  .yellow { color: #d29922; }
+  .red    { color: #f85149; }
+  .purple { color: #bc8cff; }
+
+  @media print {
+    body { background: #fff; color: #000; }
+    .section { border-color: #ccc; background: #f9f9f9; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Reddit Sentiment Swing Trading System (RSSS)</h1>
+<p class="subtitle">Phase 4 — Paper Trading Live · Started June 15 2026 · $100k starting equity · 40/40 tests passing</p>
+
+<div class="layout">
+
+  <!-- DATA FLOW -->
+  <div class="section full">
+    <div class="section-title">Daily Data Flow (3× per weekday via launchd — 09:00 / 11:30 / 14:00 EDT)</div>
+    <div class="flow">
+      <div class="flow-row">
+        <div class="flow-box source">Arctic Shift API<br><span style="font-size:10px;color:#8b949e">4 subreddits · paginated</span></div>
+        <div class="arrow">→</div>
+        <div class="flow-box source">yfinance News<br><span style="font-size:10px;color:#8b949e">FinBERT offline</span></div>
+        <div class="arrow">→</div>
+        <div class="flow-box source">StockTwits<br><span style="font-size:10px;color:#8b949e">403 as of 2026-07-01</span></div>
+        <div class="arrow">→</div>
+        <div class="flow-box source">yfinance Market<br><span style="font-size:10px;color:#8b949e">OHLCV · 90d window</span></div>
+      </div>
+      <div class="flow-sep"></div>
+      <div class="flow-row">
+        <div class="flow-box process">Drift Monitor<br><span style="font-size:10px;color:#8b949e">skip_day if posts=0</span></div>
+        <div class="arrow">→</div>
+        <div class="flow-box process">Feature Builder<br><span style="font-size:10px;color:#8b949e">14 features · density gate ≥10</span></div>
+        <div class="arrow">→</div>
+        <div class="flow-box model">XGBoost (3 horizons)<br><span style="font-size:10px;color:#8b949e">1D / 3D / 5D · IC=0.0796</span></div>
+        <div class="arrow">→</div>
+        <div class="flow-box process">Signal Generator<br><span style="font-size:10px;color:#8b949e">BULLISH only · 4-gate check</span></div>
+      </div>
+      <div class="flow-sep"></div>
+      <div class="flow-row">
+        <div class="flow-box process">Position Sizer<br><span style="font-size:10px;color:#8b949e">Fractional Kelly · ATR stop</span></div>
+        <div class="arrow">→</div>
+        <div class="flow-box process">Portfolio Engine<br><span style="font-size:10px;color:#8b949e">heat budget · correlation gate</span></div>
+        <div class="arrow">→</div>
+        <div class="flow-box output">Execution Logger<br><span style="font-size:10px;color:#8b949e">JSONL + Supabase dual-write</span></div>
+        <div class="arrow">→</div>
+        <div class="flow-box output">FastAPI + Dashboard<br><span style="font-size:10px;color:#8b949e">port 8000 · always-on</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOLDER TREE LEFT -->
+  <div class="section">
+    <div class="section-title">Folder Structure</div>
+    <div class="tree">
+      <div class="dir">api/</div>
+      <div class="indent1">main.py <span class="note">— FastAPI entry + /dashboard route</span></div>
+      <div class="indent1">_helpers.py <span class="note">— _sanitize, _load_portfolio, _load_trade_log</span></div>
+      <div class="indent1">db.py <span class="note">— Supabase/SQLite engine, insert_trade, _exec</span></div>
+      <div class="indent1 dir">routes/</div>
+      <div class="indent2">health.py · portfolio.py · predictions.py</div>
+      <div class="indent2">performance.py · research.py</div>
+
+      <div class="dir" style="margin-top:8px">config/</div>
+      <div class="indent1">settings.py <span class="note">— env vars, paths, BASE_RISK_PCT=0.005</span></div>
+      <div class="indent1">thresholds.py <span class="note">— ALL magic numbers here only</span></div>
+      <div class="indent1">tickers.txt <span class="note">— 29 tracked tickers</span></div>
+      <div class="indent1">tickers_trade.txt / tickers_watch.txt / focus_tickers.txt</div>
+      <div class="indent1">false_positive_list.txt · ticker_registry.json</div>
+
+      <div class="dir" style="margin-top:8px">data/</div>
+      <div class="indent1 dir">features/ <span class="note">— parquet feature stores</span></div>
+      <div class="indent2">features_full.parquet <span class="note">14,889 rows · PRIMARY (Phase 3)</span></div>
+      <div class="indent2">features_v2.parquet <span class="note">53,592 rows · 27 cols (V2)</span></div>
+      <div class="indent2">features_v2_with_atr.parquet <span class="badge badge-v2">V2</span> <span class="note">31 cols, 100% ATR</span></div>
+      <div class="indent2">features_complete.parquet · features_live_v2.parquet</div>
+      <div class="indent1 dir">live/</div>
+      <div class="indent2">paper_portfolio.json · paper_performance.jsonl</div>
+      <div class="indent1">reddit_live_fetcher.py <span class="note">— Arctic Shift, paginated</span></div>
+      <div class="indent1">finnhub_news_fetcher.py <span class="note">— FinBERT offline mode</span></div>
+      <div class="indent1">stocktwits_fetcher.py <span class="note">— 403 as of 2026-07-01</span></div>
+      <div class="indent1">mention_history.json <span class="note">— 14-day rolling post counts</span></div>
+      <div class="indent1">rsss.db <span class="note">— SQLite local fallback</span></div>
+
+      <div class="dir" style="margin-top:8px">dashboard/</div>
+      <div class="indent1">index.html <span class="note">— single-file dark dashboard</span></div>
+
+      <div class="dir" style="margin-top:8px">logs/</div>
+      <div class="indent1">paper_trades.jsonl <span class="badge badge-live">NEVER DELETE</span></div>
+      <div class="indent1">ic_monitor.jsonl · launchd.log × 3</div>
+      <div class="indent1">api.log · api_error.log · daily_runs.log</div>
+    </div>
+  </div>
+
+  <!-- FOLDER TREE RIGHT -->
+  <div class="section">
+    <div class="section-title">Folder Structure (cont.)</div>
+    <div class="tree">
+      <div class="dir">portfolio/</div>
+      <div class="indent1">signal_generator.py <span class="note">— density gate → XGBoost → signals</span></div>
+      <div class="indent1">position_sizer.py <span class="note">— compute_position() fractional Kelly</span></div>
+      <div class="indent1">regime_detector.py <span class="note">— SPY 200MA + 60d return → label</span></div>
+      <div class="indent1">portfolio_engine.py <span class="note">— heat_budget, correlation gates</span></div>
+      <div class="indent1">execution_logger.py <span class="note">— JSONL + Supabase dual-write</span></div>
+      <div class="indent1">drift_monitor.py <span class="note">— API anomaly, skip_day trigger</span></div>
+      <div class="indent1">paper_trader.py <span class="note">— PnL tracking vs SPY benchmark</span></div>
+
+      <div class="dir" style="margin-top:8px">models/</div>
+      <div class="indent1 dir">registry/</div>
+      <div class="indent2">model_1d.pkl · model_3d.pkl · model_5d.pkl <span class="badge badge-live">LIVE</span></div>
+      <div class="indent2">phase3_model.pkl <span class="note">= model_5d.pkl alias</span></div>
+      <div class="indent2">phase3_model_baseline.json</div>
+      <div class="indent1">model_1d_v2.json · model_3d_v2.json · model_5d_v2.json <span class="badge badge-v2">V2</span></div>
+      <div class="indent1">training_metadata_v2.json · deepseek_classifier.pkl</div>
+      <div class="indent1 dir">backup_pre_retrain_20260629/</div>
+
+      <div class="dir" style="margin-top:8px">scripts/</div>
+      <div class="indent1">daily_run_live.py <span class="note">— outer orchestrator (called by launchd)</span></div>
+      <div class="indent1">daily_run.py <span class="note">— inner portfolio orchestrator</span></div>
+      <div class="indent1">train_phase3_model.py · train_models_v2.py</div>
+      <div class="indent1">build_features_v2.py · add_atr_to_features.py</div>
+      <div class="indent1">run_backtest_v2.py <span class="note">— --atr-stops flag</span></div>
+      <div class="indent1">walk_forward_validation.py · walk_forward_sliding.py</div>
+      <div class="indent1">monitor_live_ic.py · append_live_features.py</div>
+      <div class="indent1">universe_manager.py · leakage_checks.py</div>
+      <div class="indent1">discover_new_tickers.py · retroactive_run.py</div>
+
+      <div class="dir" style="margin-top:8px">experiments/</div>
+      <div class="indent1">phase3_locked_architecture.json <span class="badge badge-lock">READ-ONLY</span></div>
+      <div class="indent1 dir">experiment_c/ <span class="note">— winning baseline (IC=0.111, Sharpe=2.35)</span></div>
+      <div class="indent1 dir">layer1_signal_existence/ <span class="note">— Granger tests (0/6 yrs)</span></div>
+      <div class="indent1 dir">layer2_regime/ · layer3_model/</div>
+      <div class="indent1 dir">source_validation/ <span class="note">— Part B results (attention &gt; sentiment)</span></div>
+      <div class="indent1 dir">walk_forward/ · walk_forward_sliding/ <span class="note">— fold model JSONs</span></div>
+      <div class="indent1 dir">shared/ <span class="note">— canonical compute_ic, trainer, backtest</span></div>
+
+      <div class="dir" style="margin-top:8px">tests/</div>
+      <div class="indent1">test_phase3.py <span class="note">— 32 tests</span></div>
+      <div class="indent1">test_backtest.py <span class="note">— 5 tests</span></div>
+      <div class="indent1">test_leakage_checks.py <span class="note">— 3 tests · 40 total, 1.56s</span></div>
+
+      <div class="dir" style="margin-top:8px">pipeline/ <span class="note">— numbered research pipeline scripts</span></div>
+      <div class="indent1">01_feature_builder.py → 06_feature_importance.py</div>
+
+      <div class="dir" style="margin-top:8px">.github/workflows/</div>
+      <div class="indent1">daily_run.yml <span class="note">— 08:30+13:30 ET · NO pytest step</span></div>
+    </div>
+  </div>
+
+  <!-- MODEL ARCHITECTURE -->
+  <div class="section">
+    <div class="section-title">Model Architecture (Phase 3 — Live)</div>
+    <div class="tree">
+      <div style="color:#d29922;font-weight:600;margin-bottom:8px">XGBoost GKX Stumps · max_depth=1 · Pseudo-Huber loss</div>
+
+      <div style="color:#8b949e;font-family:sans-serif;font-size:10px;margin-bottom:4px">14 FEATURES</div>
+      <div class="indent1">Market (8): returns_1d, returns_5d, returns_20d, rsi_14,</div>
+      <div class="indent2">atr_14, relative_volume, dist_from_20ma, dist_from_50ma</div>
+      <div class="indent1">Attention (3): post_count_1d, mention_growth_1d, mention_growth_7d</div>
+      <div class="indent1">News (1): news_sentiment_1d (FinBERT)</div>
+      <div class="indent1">StockTwits (2): st_sentiment_1d, st_bull_pct</div>
+
+      <div style="color:#8b949e;font-family:sans-serif;font-size:10px;margin:10px 0 4px">TRAINING SPLITS</div>
+      <div class="indent1">Train: 2019–2023 · ~3,200 rows after density gate</div>
+      <div class="indent1">Test:  2024–2025 · 3,582 rows (2-year OOS)</div>
+      <div class="indent1">Density gate: post_count_1d ≥ 10</div>
+      <div class="indent1">Drop: ASTS LCID MSTR RIOT RIVN SMCI WMT</div>
+
+      <div style="color:#8b949e;font-family:sans-serif;font-size:10px;margin:10px 0 4px">TEST IC (Spearman)</div>
+      <div class="indent1">model_1d: noisy (expected)</div>
+      <div class="indent1">model_3d: weak directional assist</div>
+      <div class="indent1 green">model_5d: IC = 0.0796 · Dir accuracy 52.4% ← PRIMARY</div>
+
+      <div style="color:#8b949e;font-family:sans-serif;font-size:10px;margin:10px 0 4px">V2 RESEARCH TRACK (not deployed · gate: IC &gt; 0.0847)</div>
+      <div class="indent1">16 features · IC_5d = 0.0562</div>
+      <div class="indent1">Backtest OOS: +35.6% · Sharpe 1.32 · 167 trades</div>
+      <div class="indent1">Win rate: 57.5% · p=0.063 (borderline)</div>
+
+      <div style="color:#8b949e;font-family:sans-serif;font-size:10px;margin:10px 0 4px">KEY FINDINGS (Part B validation)</div>
+      <div class="indent1">abnormal_attention_1d &gt; raw post_count (primary driver)</div>
+      <div class="indent1">vix_percentile: strongest feature (5/7 years |IC|&gt;0.05)</div>
+      <div class="indent1">VADER sentiment: 1/7 years, negative IC — no signal</div>
+      <div class="indent1">Attention IC=0.031 vs Sentiment IC=0.006 (walk-forward)</div>
+    </div>
+  </div>
+
+  <!-- RISK ENGINE -->
+  <div class="section">
+    <div class="section-title">Risk Engine, Automation &amp; Deployment</div>
+    <div class="tree">
+      <div style="color:#bc8cff;font-weight:600;margin-bottom:8px">Fractional Kelly · ATR-based Position Sizing</div>
+
+      <div style="color:#8b949e;font-family:sans-serif;font-size:10px;margin-bottom:4px">SIZING CONSTANTS (config/settings.py)</div>
+      <div class="indent1">BASE_RISK_PCT     = 0.005  (0.5% equity risk per trade)</div>
+      <div class="indent1">BASE_RISK_PCT_MAX = 0.0075 (0.75% hard ceiling)</div>
+      <div class="indent1">ATR stop: −(2.5 × atr_pct) clamped to [−12%, −4%]</div>
+      <div class="indent1">Slippage: 0.001 + 0.0005 × min(mention_growth_7d, 3.0)</div>
+      <div class="indent1">Ticker cooldown: 7 days · Take-profit cap: 15%</div>
+
+      <div style="color:#8b949e;font-family:sans-serif;font-size:10px;margin:10px 0 4px">REGIME MULTIPLIERS</div>
+      <div class="indent1 green">Bull/Positive  → ×1.0 · cap 20% · 6 slots · 6% heat</div>
+      <div class="indent1 yellow">Neutral/Choppy → ×0.3 · cap 15% · 2 slots · 2% heat</div>
+      <div class="indent1 red">Bear/Negative  → ×0.5 · cap 10% · 3 slots · 3% heat</div>
+
+      <div style="color:#8b949e;font-family:sans-serif;font-size:10px;margin:10px 0 4px">4-GATE CHECK (every signal, in order)</div>
+      <div class="indent1">Gate 1: regime slot limit (max positions)</div>
+      <div class="indent1">Gate 2: n_shares &gt; 0 (sizing produced a trade)</div>
+      <div class="indent1">Gate 3: heat_budget_allows() — total risk$ ≤ heat limit</div>
+      <div class="indent1">Gate 4: correlation_allows() — cluster cap + r&lt;0.70 pairwise</div>
+
+      <div style="color:#8b949e;font-family:sans-serif;font-size:10px;margin:10px 0 4px">LAUNCHD JOBS (macOS EDT)</div>
+      <div class="indent1">com.rsss.api          → always-on · port 8000</div>
+      <div class="indent1">com.rsss.dailyrun     → 09:00 Mon–Fri</div>
+      <div class="indent1">com.rsss.dailyrun.1130 → 11:30 Mon–Fri</div>
+      <div class="indent1">com.rsss.dailyrun.1400 → 14:00 Mon–Fri</div>
+      <div class="indent1">com.rsss.icmonitor    → 09:00 Monday</div>
+      <div class="indent1">com.rsss.discovery    → new 2026-07-01</div>
+
+      <div style="color:#8b949e;font-family:sans-serif;font-size:10px;margin:10px 0 4px">MONITORING GATES (30-day live IC)</div>
+      <div class="indent1 green">Green: &gt; 0.03 → continue</div>
+      <div class="indent1 yellow">Amber: 0.01–0.03 → watch closely</div>
+      <div class="indent1 red">Red:   &lt; 0.01 × 2 consecutive weeks → Fix 3</div>
+
+      <div style="color:#8b949e;font-family:sans-serif;font-size:10px;margin:10px 0 4px">DEPLOYMENT STACK</div>
+      <div class="indent1">Local:   macOS launchd · .venv Python 3.13 · uvicorn</div>
+      <div class="indent1">CI:      GitHub Actions (daily_run_live.py · leakage_checks)</div>
+      <div class="indent1">Cloud:   Railway (Dockerfile · API-only · health /health)</div>
+      <div class="indent1">DB:      Supabase PostgreSQL (primary) · SQLite rsss.db (fallback)</div>
+      <div class="indent1">Logging: JSONL append + Supabase dual-write in log_signal()</div>
+    </div>
+  </div>
+
+</div>
+
+<p style="margin-top:16px;color:#8b949e;font-family:sans-serif;font-size:10px;">
+  RSSS Architecture · Generated 2026-07-03 · Phase 4 Paper Trading Active
+</p>
+
+</body>
+</html>

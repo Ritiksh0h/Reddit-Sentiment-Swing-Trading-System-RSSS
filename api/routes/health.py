@@ -1,6 +1,3 @@
-"""
-RSSS API — health and settings routes.
-"""
 import json
 import re
 from datetime import date, datetime, timezone
@@ -88,13 +85,10 @@ def get_settings():
 
 @router.get('/daily-report')
 def get_daily_report():
-    """
-    Today's daily run report.
-    Source priority: MongoDB daily_run_reports → log file parsing → paper_trades.jsonl.
-    """
+    # Source priority: MongoDB → daily_runs.log → paper_trades.jsonl
     today = date.today().isoformat()
 
-    # ── Try MongoDB first (Railway / production) ─────────────────────────────
+    # MongoDB first (Railway / production)
     try:
         from api.db import get_mongo_db
         mdb = get_mongo_db()
@@ -130,7 +124,7 @@ def get_daily_report():
     except Exception:
         pass
 
-    # ── Parse daily_runs.log for today's lines ──────────────────────────────
+    # Parse daily_runs.log for today's lines
     log_path = Path('logs/daily_runs.log')
     today_lines: list[str] = []
     if log_path.exists():
@@ -138,19 +132,12 @@ def get_daily_report():
             if today in line:
                 today_lines.append(line)
 
-    # Reddit totals
     total_posts = 0
     tickers_found = 0
     subreddit_breakdown: dict[str, int] = {}
-
-    # Density gate results
     density_passed: list[dict] = []
     density_failed: list[dict] = []
-
-    # MA filter blocks
     ma_blocked: list[dict] = []
-
-    # Regime / VIX
     regime_label = None
     regime_multiplier = None
     vix_percentile = None
@@ -211,10 +198,7 @@ def get_daily_report():
     if total_posts == 0 and subreddit_breakdown:
         total_posts = sum(subreddit_breakdown.values())
 
-    # ── Parse paper_trades.jsonl for today's signals and actions ───────────
-    # Always parse this file — it is the primary source on Railway where
-    # daily_runs.log may not exist.  Also acts as a fallback when the log
-    # file had no entries for today (e.g. first run of the day).
+    # paper_trades.jsonl — primary source on Railway; fallback when log has no today entries
     trades_path = Path('logs/paper_trades.jsonl')
     signals: list[dict] = []
     actions: list[dict] = []
@@ -261,15 +245,12 @@ def get_daily_report():
                     'pnl_pct': rec.get('pnl_pct'),
                 })
 
-    # When the log file was absent or had no today-entries, supplement
-    # density_gate.passed from paper_trades so the Railway dashboard
-    # can show qualifying tickers even without daily_runs.log.
+    # Supplement density_gate from trades when log had no today entries (Railway)
     if not density_passed and trades_tickers_seen:
         for sig in signals:
             pc = sig.get('post_count') or 0
             density_passed.append({'ticker': sig['ticker'], 'posts': pc})
 
-    # Similarly fill tickers_found from trades if log didn't provide it
     if not tickers_found and trades_tickers_seen:
         tickers_found = len(trades_tickers_seen)
 
