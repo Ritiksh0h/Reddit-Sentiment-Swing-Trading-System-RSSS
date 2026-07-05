@@ -1216,8 +1216,9 @@ function showView(name) {
   });
   if (_lazyLoaders[name]) {
     const el = document.getElementById('view-' + name);
-    if (el && !el.dataset.loaded) {
-      el.dataset.loaded = '1';
+    const age = Date.now() - parseInt(el?.dataset.loadedAt || '0');
+    if (el && age > 60000) {
+      el.dataset.loadedAt = Date.now();
       _lazyLoaders[name]();
     }
   }
@@ -1226,7 +1227,7 @@ function showView(name) {
 function refresh() {
   VIEWS.forEach(v => {
     const el = document.getElementById('view-' + v);
-    if (el) delete el.dataset.loaded;
+    if (el) delete el.dataset.loadedAt;
   });
   loadAll();
 }
