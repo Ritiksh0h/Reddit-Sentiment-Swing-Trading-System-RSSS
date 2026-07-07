@@ -97,14 +97,18 @@ def load_portfolio() -> PortfolioState:
         from api.db import load_portfolio_state
         remote = load_portfolio_state()
         if remote:
-            logger.debug('portfolio_loaded_from_supabase')
+            # info, not debug — GH Actions runs at LOG_LEVEL=INFO and this line
+            # is the confirmation the runner picked up shared state
+            logger.info('portfolio_loaded_from_supabase')
             return _state_from_dict(remote)
     except Exception as e:
         logger.debug(f'supabase_portfolio_load_skipped: {e}')
 
     if Path(STATE_FILE).exists():
         with open(STATE_FILE) as f:
+            logger.info('portfolio_loaded_from_local_file')
             return _state_from_dict(json.load(f))
+    logger.info('portfolio_new_state cash=100000')
     return PortfolioState(created_at=datetime.utcnow().isoformat())
 
 
