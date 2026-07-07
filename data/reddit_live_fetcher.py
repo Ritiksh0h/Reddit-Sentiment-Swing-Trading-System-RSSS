@@ -186,7 +186,9 @@ def compute_mention_growth(
     Compute mention_growth_1d and mention_growth_7d from accumulated history.
 
     Replaces the 1.0 placeholders after 7+ days of live data.
-    History stored as a rolling 14-day buffer in data/mention_history.json.
+    History stored as a rolling 30-day buffer in data/mention_history.json —
+    30 calendar days ≈ 21 weekday entries, enough for the 20-day rolling
+    baseline behind abnormal_attention_1d (14 days could never hold 20 entries).
     """
     history_path = Path(history_db_path)
     today_str    = date.today().isoformat()
@@ -209,7 +211,7 @@ def compute_mention_growth(
 
     # Update and trim history
     ticker_history[today_str] = current_count
-    cutoff = (date.today() - timedelta(days=14)).isoformat()
+    cutoff = (date.today() - timedelta(days=30)).isoformat()
     ticker_history = {k: v for k, v in ticker_history.items() if k >= cutoff}
     history[ticker] = ticker_history
 
