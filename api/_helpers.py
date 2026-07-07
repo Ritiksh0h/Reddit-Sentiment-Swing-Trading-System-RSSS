@@ -18,6 +18,15 @@ def _sanitize(obj):
 
 
 def _load_portfolio() -> dict:
+    """DB-first (Railway has no local file); local JSON fallback for dev."""
+    try:
+        from api.db import load_portfolio_state
+        remote = load_portfolio_state()
+        if remote:
+            return remote
+    except Exception:
+        pass
+
     path = Path('data/live/paper_portfolio.json')
     if not path.exists():
         return {}

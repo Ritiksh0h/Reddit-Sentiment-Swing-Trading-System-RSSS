@@ -2,8 +2,9 @@ name: RSSS Daily Pipeline
 
 on:
   schedule:
-    - cron: '30 12 * * 1-5'  # 08:30 ET (EDT)
-    - cron: '30 17 * * 1-5'  # 13:30 ET (EDT)
+    - cron: '30 13 * * 1-5'  # 09:30 ET (EDT) — market open
+    - cron: '30 17 * * 1-5'  # 13:30 ET (EDT) — midday
+    - cron: '0 20 * * 1-5'   # 16:00 ET (EDT) — market close (exit checks + discovery)
   workflow_dispatch:  # manual trigger button
 
 jobs:
@@ -76,3 +77,29 @@ jobs:
           name: daily-logs-${{ github.run_number }}
           path: logs/
           retention-days: 30
+
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Only at market close (or manual) — candidate counts overwrite per-day anyway
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 20 * * 1-5'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install --upgrade pip && pip install -r requirements.txt
+      - name: Run discovery scanner
+        env:
+          SUPABASE_URL:    ${{ secrets.SUPABASE_URL }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          LOG_LEVEL:       INFO
+        run: python scripts/discover_new_tickers.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: discovery-logs-${{ github.run_number }}
+          path: logs/discovery*.log
+          retention-days: 14
+          if-no-files-found: ignore

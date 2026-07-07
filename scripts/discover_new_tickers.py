@@ -49,6 +49,14 @@ DISCOVERY_NOISE = FALSE_POSITIVES | {
 
 
 def load_candidates() -> dict:
+    """Supabase kv_store first (survives fresh GH Actions runners), file fallback."""
+    try:
+        from api.db import kv_get
+        remote = kv_get('discovery_candidates')
+        if remote is not None:
+            return remote if isinstance(remote, dict) else {}
+    except Exception:
+        pass
     if CANDIDATES_PATH.exists():
         return json.loads(CANDIDATES_PATH.read_text())
     return {}
@@ -57,6 +65,34 @@ def load_candidates() -> dict:
 def save_candidates(data: dict) -> None:
     CANDIDATES_PATH.parent.mkdir(exist_ok=True)
     CANDIDATES_PATH.write_text(json.dumps(data, indent=2, sort_keys=True))
+    try:
+        from api.db import kv_set
+        kv_set('discovery_candidates', data)
+    except Exception:
+        pass
+
+
+def _load_watch_list() -> set:
+    """Supabase kv_store first, config/tickers_watch.txt fallback."""
+    try:
+        from api.db import kv_get
+        remote = kv_get('tickers_watch')
+        if remote and isinstance(remote, list):
+            return set(remote)
+    except Exception:
+        pass
+    return set(load_tickers(TICKERS_WATCH_PATH))
+
+
+def _save_watch_list(watch_set: set) -> None:
+    with open(Path(TICKERS_WATCH_PATH), 'w') as f:
+        for t in sorted(watch_set):
+            f.write(f'{t}\n')
+    try:
+        from api.db import kv_set
+        kv_set('tickers_watch', sorted(watch_set))
+    except Exception:
+        pass
 
 
 def is_valid_liquid_equity(symbol: str) -> bool:
@@ -129,7 +165,7 @@ def run_discovery():
     logger.info(f'discovery_scan date={today} raw_unknown_tokens={len(today_counts)}')
 
     promoted = []
-    watch_list = set(load_tickers(TICKERS_WATCH_PATH))
+    watch_list = _load_watch_list()
     trade_list = set(load_tickers(TICKERS_TRADE_PATH))
     drop_list  = set(load_tickers(TICKERS_DROP_PATH))
 
@@ -162,14 +198,11 @@ def run_discovery():
                             f'days={qualifying_days} counts={[record["days"][d] for d in qualifying_days]}')
 
     if promoted:
-        watch_path = Path(TICKERS_WATCH_PATH)
-        existing_text = watch_path.read_text() if watch_path.exists() else ''
-        with open(watch_path, 'a') as f:
-            for symbol in promoted:
-                f.write(f'{symbol}\n')
-                candidates.pop(symbol, None)  # remove from candidate tracking once promoted
-        logger.info(f'discovery_complete promoted={promoted} '
-                    f'appended_to={TICKERS_WATCH_PATH}')
+        for symbol in promoted:
+            watch_list.add(symbol)
+            candidates.pop(symbol, None)  # remove from candidate tracking once promoted
+        _save_watch_list(watch_list)
+        logger.info(f'discovery_complete promoted={promoted} appended_to=supabase+local')
     else:
         logger.info('discovery_complete promoted=none')
 

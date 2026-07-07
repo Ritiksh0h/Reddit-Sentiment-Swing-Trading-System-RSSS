@@ -79,32 +79,49 @@ class PortfolioState:
         return days_since < TICKER_COOLDOWN
 
 
+def _state_from_dict(data: dict) -> PortfolioState:
+    """Rebuild PortfolioState (incl. Position objects) from a plain dict."""
+    data = dict(data)
+    positions = [Position(**p) for p in data.pop('positions', [])]
+    state = PortfolioState(**data)
+    state.positions = positions
+    return state
+
+
 def load_portfolio() -> PortfolioState:
     """
-    Load portfolio state from data/live/paper_portfolio.json.
-    Returns a fresh $100,000 PortfolioState if the file does not exist.
+    Load portfolio state — Supabase first (shared with GitHub Actions runners),
+    data/live/paper_portfolio.json fallback, else fresh $100,000 state.
     """
+    try:
+        from api.db import load_portfolio_state
+        remote = load_portfolio_state()
+        if remote:
+            logger.debug('portfolio_loaded_from_supabase')
+            return _state_from_dict(remote)
+    except Exception as e:
+        logger.debug(f'supabase_portfolio_load_skipped: {e}')
+
     if Path(STATE_FILE).exists():
         with open(STATE_FILE) as f:
-            data = json.load(f)
-        positions = [Position(**p) for p in data.pop('positions', [])]
-        state = PortfolioState(**data)
-        state.positions = positions
-        return state
+            return _state_from_dict(json.load(f))
     return PortfolioState(created_at=datetime.utcnow().isoformat())
 
 
 def save_portfolio(state: PortfolioState) -> None:
     """
-    Persist portfolio state to data/live/paper_portfolio.json.
-
-    Args:
-        state: current PortfolioState including positions, cash, and trade history
+    Persist portfolio state to data/live/paper_portfolio.json AND Supabase
+    (best effort — GitHub Actions runners rely on the Supabase copy).
     """
-    Path('data').mkdir(exist_ok=True)
+    Path(STATE_FILE).parent.mkdir(parents=True, exist_ok=True)
     data = asdict(state)
     with open(STATE_FILE, 'w') as f:
         json.dump(data, f, indent=2)
+    try:
+        from api.db import save_portfolio_state
+        save_portfolio_state(data)
+    except Exception as e:
+        logger.debug(f'supabase_portfolio_save_skipped: {e}')
 
 
 def check_risk_limits(state: PortfolioState, today: str,

@@ -26,6 +26,9 @@ New structured-write helpers:
   insert_portfolio_snapshot(data)
   upsert_ic_monitor(data)
   insert_reddit_daily(data)
+  load_portfolio_state()    → latest portfolio state dict (or None)
+  save_portfolio_state(d)   → append snapshot, keep last 30
+  kv_get(key) / kv_set(key, v) → small JSON key-value store
 
 MongoDB helpers:
   get_mongo_db()            → database handle (or None)
@@ -195,11 +198,29 @@ CREATE TABLE IF NOT EXISTS reddit_daily (
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (fetch_date, ticker)
 );
+
+CREATE TABLE IF NOT EXISTS portfolio_state (
+    id         BIGSERIAL   PRIMARY KEY,
+    saved_at   TIMESTAMPTZ DEFAULT NOW(),
+    state_json JSONB       NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS kv_store (
+    key        TEXT        PRIMARY KEY,
+    value_json JSONB       NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 """
 
 # SQLite-compatible version (no BIGSERIAL, no UNIQUE ON CONFLICT)
 _STRUCTURED_DDL_SQLITE = _STRUCTURED_DDL.replace(
     'BIGSERIAL', 'INTEGER'
+).replace(
+    'TIMESTAMPTZ', 'TIMESTAMP'
+).replace(
+    'JSONB', 'TEXT'
+).replace(
+    'DEFAULT NOW()', "DEFAULT (datetime('now'))"
 ).replace(
     'DEFAULT CURRENT_TIMESTAMP', "DEFAULT (datetime('now'))"
 )
@@ -474,6 +495,85 @@ def insert_reddit_daily(data: dict) -> bool:
         'investing':      data.get('investing'),
         'options':        data.get('options'),
     })
+
+
+# ── Portfolio state persistence (GitHub Actions / Railway share state) ──────
+
+def load_portfolio_state() -> dict | None:
+    """Return the most recent portfolio state snapshot, or None (first run / DB down)."""
+    ensure_tables()
+    engine = _get_engine()
+    if engine is None:
+        return None
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            row = conn.execute(text(
+                'SELECT state_json FROM portfolio_state ORDER BY id DESC LIMIT 1'
+            )).fetchone()
+        if not row:
+            return None
+        raw = row[0]
+        return json.loads(raw) if isinstance(raw, str) else dict(raw)
+    except Exception as exc:
+        logger.warning('db_load_portfolio_state_failed: %s', exc)
+        return None
+
+
+def save_portfolio_state(state: dict) -> bool:
+    """Append one portfolio state snapshot; keep the last 30 for audit."""
+    url = _get_pg_url() or ''
+    value = ':s' if url.startswith('sqlite') else 'CAST(:s AS JSONB)'
+    ok = _exec(
+        f'INSERT INTO portfolio_state (state_json) VALUES ({value})',
+        {'s': json.dumps(state, default=str)},
+    )
+    if ok:
+        _exec(
+            'DELETE FROM portfolio_state WHERE id NOT IN '
+            '(SELECT id FROM portfolio_state ORDER BY id DESC LIMIT 30)',
+            {},
+        )
+    return ok
+
+
+# ── Generic JSON key-value store (discovery scanner state, etc.) ────────────
+
+def kv_get(key: str):
+    """Return JSON value for *key* from kv_store, or None when missing / DB down."""
+    ensure_tables()
+    engine = _get_engine()
+    if engine is None:
+        return None
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            row = conn.execute(
+                text('SELECT value_json FROM kv_store WHERE key = :k'), {'k': key}
+            ).fetchone()
+        if not row:
+            return None
+        raw = row[0]
+        return json.loads(raw) if isinstance(raw, str) else raw
+    except Exception as exc:
+        logger.warning('db_kv_get_failed key=%s: %s', key, exc)
+        return None
+
+
+def kv_set(key: str, value) -> bool:
+    """Upsert JSON *value* under *key* in kv_store."""
+    url = _get_pg_url() or ''
+    if url.startswith('sqlite'):
+        sql = 'INSERT OR REPLACE INTO kv_store (key, value_json) VALUES (:k, :v)'
+    else:
+        sql = """
+            INSERT INTO kv_store (key, value_json, updated_at)
+            VALUES (:k, CAST(:v AS JSONB), NOW())
+            ON CONFLICT (key) DO UPDATE
+              SET value_json = EXCLUDED.value_json,
+                  updated_at = NOW()
+        """
+    return _exec(sql, {'k': key, 'v': json.dumps(value, default=str)})
 
 
 # ── MongoDB ──────────────────────────────────────────────────────────────────
