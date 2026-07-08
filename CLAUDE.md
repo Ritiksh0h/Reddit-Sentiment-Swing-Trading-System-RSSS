@@ -71,7 +71,7 @@ data/
   reddit_live_fetcher.py        ← Arctic Shift API, paginated
   stocktwits_fetcher.py         ← StockTwits free API
   news_fetcher.py               ← yfinance news + FinBERT
-  mention_history.json          ← rolling 14-day post count history
+  mention_history.json          ← rolling 30-day post count history (widened from 14 on 2026-07-07)
 
 experiments/
   phase3_locked_architecture.json  ← LOCKED — read-only contract
@@ -178,6 +178,27 @@ ATR stop:        -(2.5 × atr_pct), clamped to [-12%, -4%]; per-position, not gl
 Slippage:        dynamic: 0.001 + 0.0005 × min(mention_growth_7d, 3.0)
 Ticker cooldown: 7 days
 Starting equity: $100,000 paper
+```
+
+---
+
+## Key Architecture Notes
+
+```
+DENSITY_GATE is defined in THREE places — kept in sync manually:
+  1. config/thresholds.py:37          — config/pipeline scripts
+  2. portfolio/signal_generator.py:52 — live pipeline (generate_signals) ← the one live trading uses
+  3. scripts/train_models_v2.py:83    — training gate (does NOT read thresholds.py)
+
+Editing only thresholds.py is a silent no-op for live trading.
+V2 was trained at gate=5. Live gate lowered to 3 on 2026-07-07 for July
+volume conditions — revert when WSB daily posts consistently exceed 300.
+Training gate stays 5 (deployed models trained at 5).
+
+mention_history.json: rolling 30-day buffer (was 14 — widened 2026-07-07 so
+abnormal_attention_1d's 20-day rolling average can actually hold 20 entries).
+Backfilled June 8-16 2026 via scripts/backfill_mention_history.py (June 11
+unrecoverable — Arctic Shift 422s on wsb pagination in that window).
 ```
 
 ---
