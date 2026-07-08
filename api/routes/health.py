@@ -28,8 +28,9 @@ def get_status():
     # is diagnosable from a single curl instead of container log spelunking.
     db_status = 'no_engine'
     try:
-        from api.db import _get_engine
+        from api.db import _get_engine, _get_pg_url
         from sqlalchemy import text as _text
+        _url_prefix = re.sub(r':[^:@/\s]+@', ':****@', _get_pg_url() or '')[:45]
         engine = _get_engine()
         if engine:
             with engine.connect() as conn:
@@ -45,7 +46,7 @@ def get_status():
                 )).fetchone()
                 if snap:
                     spy_return_today = snap[0]
-            db_status = 'ok'
+            db_status = f'ok url={_url_prefix}'
     except Exception as e:
         db_status = re.sub(r':[^:@/\s]+@', ':****@', str(e))[:200]
 
