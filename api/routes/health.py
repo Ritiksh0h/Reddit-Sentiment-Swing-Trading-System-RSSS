@@ -17,49 +17,71 @@ def health():
 def get_status():
     today = date.today().isoformat()
 
-    log_path = Path('logs/daily_runs.log')
     ran_today = False
     last_run_date = None
     skipped_today = False
+    spy_return_today = None
+
+    # DB-first — Railway has no local logs; every pipeline run (GH Actions,
+    # launchd, manual) writes a daily_runs row and a portfolio snapshot
+    try:
+        from api.db import _get_engine
+        from sqlalchemy import text as _text
+        engine = _get_engine()
+        if engine:
+            with engine.connect() as conn:
+                row = conn.execute(_text(
+                    'SELECT MAX(run_date) FROM daily_runs'
+                )).fetchone()
+                if row and row[0]:
+                    last_run_date = str(row[0])
+                    ran_today = last_run_date == today
+                snap = conn.execute(_text(
+                    'SELECT spy_return_today FROM portfolio_snapshots '
+                    'ORDER BY snapshot_date DESC LIMIT 1'
+                )).fetchone()
+                if snap:
+                    spy_return_today = snap[0]
+    except Exception:
+        pass
+
+    # Local-file fallback (dev without DB) + SKIP_DAY marker (local only)
+    log_path = Path('logs/daily_runs.log')
     if log_path.exists():
         all_lines = log_path.read_text().splitlines()
-        for line in reversed(all_lines):
-            if not line.strip():
-                continue
-            try:
-                entry = json.loads(line)
-                last_run_date = entry.get('date')
-                if last_run_date == today:
-                    ran_today = True
-                break
-            except Exception:
-                if line.startswith(today):
-                    ran_today = True
-                    last_run_date = today
-                break
+        if last_run_date is None:
+            for line in reversed(all_lines):
+                if not line.strip():
+                    continue
+                try:
+                    entry = json.loads(line)
+                    last_run_date = entry.get('date')
+                    if last_run_date == today:
+                        ran_today = True
+                    break
+                except Exception:
+                    if line.startswith(today):
+                        ran_today = True
+                        last_run_date = today
+                    break
         if any(today in ln and 'SKIP_DAY' in ln for ln in all_lines):
             skipped_today = True
 
-    port_path = Path('data/live/paper_portfolio.json')
-    n_positions = 0
-    cash = 0.0
-    if port_path.exists():
-        with open(port_path) as f:
-            state = json.load(f)
-        n_positions = len(state.get('positions', []))
-        cash = state.get('cash', 0.0)
+    from api._helpers import _load_portfolio
+    state = _load_portfolio()
+    n_positions = len(state.get('positions', []))
+    cash = state.get('cash', 0.0)
 
-    # Latest SPY daily return from paper_performance.jsonl
-    spy_return_today = None
-    perf_path = Path('data/live/paper_performance.jsonl')
-    if perf_path.exists():
-        try:
-            lines = [ln for ln in perf_path.read_text().splitlines() if ln.strip()]
-            if lines:
-                last_snap = json.loads(lines[-1])
-                spy_return_today = last_snap.get('spy_return_today')
-        except Exception:
-            pass
+    if spy_return_today is None:
+        perf_path = Path('data/live/paper_performance.jsonl')
+        if perf_path.exists():
+            try:
+                lines = [ln for ln in perf_path.read_text().splitlines() if ln.strip()]
+                if lines:
+                    last_snap = json.loads(lines[-1])
+                    spy_return_today = last_snap.get('spy_return_today')
+            except Exception:
+                pass
 
     return {
         'date':             today,
