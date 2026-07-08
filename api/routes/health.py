@@ -23,7 +23,10 @@ def get_status():
     spy_return_today = None
 
     # DB-first — Railway has no local logs; every pipeline run (GH Actions,
-    # launchd, manual) writes a daily_runs row and a portfolio snapshot
+    # launchd, manual) writes a daily_runs row and a portfolio snapshot.
+    # db field surfaces the connection error (password-masked) so a dead DB
+    # is diagnosable from a single curl instead of container log spelunking.
+    db_status = 'no_engine'
     try:
         from api.db import _get_engine
         from sqlalchemy import text as _text
@@ -42,8 +45,9 @@ def get_status():
                 )).fetchone()
                 if snap:
                     spy_return_today = snap[0]
-    except Exception:
-        pass
+            db_status = 'ok'
+    except Exception as e:
+        db_status = re.sub(r':[^:@/\s]+@', ':****@', str(e))[:200]
 
     # Local-file fallback (dev without DB) + SKIP_DAY marker (local only)
     log_path = Path('logs/daily_runs.log')
@@ -92,6 +96,7 @@ def get_status():
         'cash':             round(cash, 2),
         'system_ok':        ran_today,
         'spy_return_today': spy_return_today,
+        'db':               db_status,
     }
 
 
