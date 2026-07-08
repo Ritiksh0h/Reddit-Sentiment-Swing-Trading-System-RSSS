@@ -31,7 +31,10 @@ SENTIMENT_FEATURES_DROPPED: list = [
 ]
 
 # ── Density Gate ────────────────────────────────────────────────────────────
-DENSITY_GATE: int = 5           # post_count_1d must be >= this to pass filter (V2)
+# Lowered from 5 to 3 on 2026-07-07 — July volume too thin at gate=5
+# Revert to 5 when WSB daily posts consistently exceed 300
+# Original value: 5 (set during V2 training analysis)
+DENSITY_GATE: int = 3           # post_count_1d must be >= this to pass filter (V2)
 
 # ── Drop Tickers ────────────────────────────────────────────────────────────
 # Insufficient training rows or persistent data quality issues

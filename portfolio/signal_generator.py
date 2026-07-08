@@ -46,7 +46,10 @@ try:
 except Exception:
     FEATURES = ARCH['features']
 
-DENSITY_GATE = 5
+# Lowered from 5 to 3 on 2026-07-07 — July volume too thin at gate=5
+# Revert to 5 when WSB daily posts consistently exceed 300
+# Original value: 5 (set during V2 training analysis)
+DENSITY_GATE = 3
 
 from config.settings import load_tickers, TICKERS_TRADE_PATH, TICKERS_DROP_PATH
 from data.options_fetcher import fetch_pcr, interpret_pcr
